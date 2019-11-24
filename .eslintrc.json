@@ -1,0 +1,21 @@
+{
+    "extends": ["airbnb-base", "prettier"],
+    "plugins": ["@typescript-eslint", "prettier"],
+    "parser": "@typescript-eslint/parser",
+    "rules": {
+        "prettier/prettier": "error",
+        "import/no-unresolved": 0,
+        "indent": ["error", 4],
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "devDependencies": true
+            }
+        ],
+        "no-unused-vars": "off",
+        "typescript/no-unused-vars": "error"
+    },
+    "env": {
+        "mocha": true
+    }
+}
