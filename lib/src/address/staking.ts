@@ -1,6 +1,6 @@
 import ow from 'ow';
 import KeyPair from '../key_pair';
-import { CustomTypes, Network } from '../types';
+import { CustomTypes } from '../types';
 
 const native = require('../../../native');
 
