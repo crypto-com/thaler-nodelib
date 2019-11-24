@@ -1,0 +1,21 @@
+[package]
+name = "cro-nodelib"
+version = "0.1.0"
+edition = "2018"
+authors = ["Calvin Lau <calvin@crypto.com>"]
+license = "Apache-2.0"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "cro_nodelib"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+neon-build = "0.3.3"
+
+[dependencies]
+neon = "0.3.3"
+chain-core = { git = "https://github.com/calvinlauco/chain", rev = "1e6e255934a7581795c4da16d130b6851fd9147c" }
+client-common = { git = "https://github.com/calvinlauco/chain", rev = "1e6e255934a7581795c4da16d130b6851fd9147c" }
+client-core = { git = "https://github.com/calvinlauco/chain", rev = "1e6e255934a7581795c4da16d130b6851fd9147c" }
