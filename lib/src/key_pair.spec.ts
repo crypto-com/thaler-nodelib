@@ -72,17 +72,17 @@ describe('KeyPair', () => {
         });
     });
 
-    describe('makeRandom', () => {
+    describe('generateRandom', () => {
         it('should generate a new key pair', () => {
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.generateRandom();
 
             expect(keyPair.hasPublicKey()).to.eq(true);
             expect(keyPair.hasPrivateKey()).to.eq(true);
         });
 
         it('should create unique key pair', () => {
-            const firstKeyPair = KeyPair.makeRandom();
-            const secondKeyPair = KeyPair.makeRandom();
+            const firstKeyPair = KeyPair.generateRandom();
+            const secondKeyPair = KeyPair.generateRandom();
 
             expect(firstKeyPair.publicKey).not.to.deep.eq(secondKeyPair.publicKey);
             expect(firstKeyPair.privateKey).not.to.deep.eq(secondKeyPair.privateKey);

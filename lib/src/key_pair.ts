@@ -32,7 +32,7 @@ export default class KeyPair {
         return keyPair;
     }
 
-    public static makeRandom(): KeyPair {
+    public static generateRandom(): KeyPair {
         const privateKey = native.keyPair.newPrivateKey();
 
         return KeyPair.fromPrivateKey(privateKey);
