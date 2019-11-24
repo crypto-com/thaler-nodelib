@@ -1,0 +1,5 @@
+{ 
+    "watch": ["lib/**/*.ts"],
+    "ext": "ts",
+    "exec": "npm run test"
+}
