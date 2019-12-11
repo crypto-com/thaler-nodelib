@@ -88,4 +88,14 @@ describe('KeyPair', () => {
             expect(firstKeyPair.privateKey).not.to.deep.eq(secondKeyPair.privateKey);
         });
     });
+
+    describe('toObject', () => {
+        it('should transform the private public key pair into an object', () => {
+            const keyPair = KeyPair.makeRandom();
+
+            const obj = keyPair.toObject();
+            expect(obj.publicKey).to.deep.eq(keyPair.publicKey);
+            expect(obj.privateKey).to.deep.eq(keyPair.privateKey);
+        });
+    });
 });

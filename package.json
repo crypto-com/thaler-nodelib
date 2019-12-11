@@ -10,9 +10,11 @@
   "author": "Calvin Lau <calvin@crypto.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "bignumber.js": "^9.0.0",
     "ow": "^0.15.0"
   },
   "devDependencies": {
+    "@types/bignumber.js": "^5.0.0",
     "@types/chai": "^4.2.5",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.12.8",

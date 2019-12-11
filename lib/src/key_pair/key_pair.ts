@@ -1,6 +1,6 @@
 import ow from 'ow';
 
-const native = require('../../native');
+const native = require('../../../native');
 
 export default class KeyPair {
     private innerPublicKey?: Buffer;
@@ -65,4 +65,16 @@ export default class KeyPair {
     public get privateKey(): Buffer | undefined {
         return this.innerPrivateKey;
     }
+
+    public toObject(): NativeKeyPair {
+        return {
+            privateKey: this.privateKey,
+            publicKey: this.publicKey,
+        };
+    }
+}
+
+interface NativeKeyPair {
+    privateKey?: Buffer;
+    publicKey?: Buffer;
 }
