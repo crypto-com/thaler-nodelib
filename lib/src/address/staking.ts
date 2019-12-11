@@ -5,6 +5,12 @@ import { owKeyPair } from '../key_pair/types';
 
 const native = require('../../../native');
 
+/**
+ * Create a staking address from a public key
+ * @param options Options of the staking address
+ * @param [options.publicKey] Public key to create with
+ * @param [options.keyPair] KeyPair with public key to create with
+ */
 export function staking(options: StakingOptions): string {
     ow(
         options,

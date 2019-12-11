@@ -2,11 +2,19 @@ import ow from 'ow';
 
 const native = require('../../../native');
 
+/**
+ * Represents a private and public key pair
+ * @class KeyPair
+ */
 export class KeyPair {
     private innerPublicKey?: Buffer;
 
     private innerPrivateKey?: Buffer;
 
+    /**
+     * Create a KeyPair from public key only
+     * @param publicKey public key to create the KeyPair
+     */
     public static fromPublicKey(publicKey: Buffer): KeyPair {
         ow(publicKey, ow.buffer);
 
@@ -18,6 +26,11 @@ export class KeyPair {
         return keyPair;
     }
 
+    /**
+     * Create a KeyPair from private key. The public key will be derived from
+     * the private key
+     * @param privateKey private key to create the KeyPair
+     */
     public static fromPrivateKey(privateKey: Buffer): KeyPair {
         ow(privateKey, ow.buffer);
 
@@ -32,40 +45,58 @@ export class KeyPair {
         return keyPair;
     }
 
+    /**
+     * Generate an random private key and create a KeyPair of it
+     */
     public static generateRandom(): KeyPair {
         const privateKey = native.keyPair.newPrivateKey();
 
         return KeyPair.fromPrivateKey(privateKey);
     }
 
-    public addPublicKey(publicKey: Buffer) {
-        ow(publicKey, ow.buffer);
-
-        this.innerPublicKey = publicKey;
-    }
-
-    public addPrivateKey(privateKey: Buffer) {
+    private addPrivateKey(privateKey: Buffer) {
         ow(privateKey, ow.buffer);
 
         this.innerPrivateKey = privateKey;
     }
 
+    private addPublicKey(publicKey: Buffer) {
+        ow(publicKey, ow.buffer);
+
+        this.innerPublicKey = publicKey;
+    }
+
+    /**
+     * Determine if the KeyPair has public key. Returns true when there is one
+     */
     public hasPublicKey(): boolean {
         return !!this.innerPublicKey;
     }
 
+    /**
+     * Determine if the KeyPair has private key. Returns true when there is one
+     */
     public hasPrivateKey(): boolean {
         return !!this.innerPrivateKey;
     }
 
+    /**
+     * Returns the public key of the KeyPair
+     */
     public get publicKey(): Buffer | undefined {
         return this.innerPublicKey;
     }
 
+    /**
+     * Returns the private key of the KeyPair
+     */
     public get privateKey(): Buffer | undefined {
         return this.innerPrivateKey;
     }
 
+    /**
+     * Transform the KeyPair into an object of private and public key
+     */
     public toObject(): NativeKeyPair {
         return {
             privateKey: this.privateKey,
