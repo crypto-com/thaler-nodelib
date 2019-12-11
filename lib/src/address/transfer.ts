@@ -1,12 +1,13 @@
 import ow from 'ow';
 
-import KeyPair from '../key_pair/key_pair';
+import { KeyPair } from '../key_pair';
 import { owKeyPair } from '../key_pair/types';
-import { owNetwork, Network } from '../network';
+import { Network } from '../network';
+import { owNetwork } from '../network/types';
 
 const native = require('../../../native');
 
-export default function transfer(options: TransferOptions): string {
+export function transfer(options: TransferOptions): string {
     ow(
         options,
         ow.any(
@@ -31,7 +32,10 @@ export default function transfer(options: TransferOptions): string {
         publicKey = options.publicKey as Buffer;
     }
 
-    return native.address.getTransferAddressFromPublicKey(publicKey, options.network);
+    return native.address.getTransferAddressFromPublicKey(
+        publicKey,
+        options.network,
+    );
 }
 
 export interface TransferOptions {

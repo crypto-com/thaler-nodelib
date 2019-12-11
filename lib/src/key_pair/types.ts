@@ -1,6 +1,6 @@
 import ow from 'ow';
 
-import KeyPair from './key_pair';
+import { KeyPair } from './key_pair';
 
 export const owKeyPair = ow.object.validate((value: any) => ({
     validator: value instanceof KeyPair,

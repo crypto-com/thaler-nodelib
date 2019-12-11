@@ -2,7 +2,7 @@ import ow from 'ow';
 
 const native = require('../../../native');
 
-export default class KeyPair {
+export class KeyPair {
     private innerPublicKey?: Buffer;
 
     private innerPrivateKey?: Buffer;

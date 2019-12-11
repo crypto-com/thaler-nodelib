@@ -39,7 +39,9 @@ impl<F> BuilderOptions<F>
 where
     F: FeeAlgorithm,
 {
-    pub fn parse_linear_fee_fn_ctx(ctx: &mut FunctionContext) -> NeonResult<LinearFeeBuilderOptions> {
+    pub fn parse_linear_fee_fn_ctx(
+        ctx: &mut FunctionContext,
+    ) -> NeonResult<LinearFeeBuilderOptions> {
         let options = ctx.argument::<JsObject>(0)?;
 
         let raw_tx_options = BuilderOptions::<LinearFee>::parse_raw_tx_options(ctx, &options)?;
@@ -129,7 +131,9 @@ where
             return ctx.throw_error("Chain id must be 2 hex characters");
         }
 
-        Ok(chain_id.as_bytes()[0])
+        let chain_id = hex::decode(chain_id).chain_neon(ctx, "Unable to deserialize chain Id")?;
+
+        Ok(chain_id[0])
     }
 
     fn parse_input(

@@ -12,7 +12,33 @@ Crypto.com Chain and this library is currently in the alpha development phase an
 
 -   Crypto.com is not liable for any potential damage, loss of data/files arising from the use of the library.
 
+## Installation
+
+Right now the library has not been published to npm yet. It will be available once a publishable version is ready.
+
+## Examples
+
+An example is worth a thousand words, we provide code examples of different use cases below.
+
+If you couldn't find an example for your use case, please [open an issue](https://github.com/crypto-com/cro-nodelib/issues/new) and tell us.
+
+#### Address
+- [Create random transfer address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Create transfer address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Create random staking address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Create staking address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+
+#### View Key
+- [Create random view key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/viewKey.spec.ts)
+
+#### Transaction
+
+- [Create transfer transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
+
+## Browser support
+
+Right now the library does not support Browser.
+
 ## License
 
 [Apache 2.0](./LICENSE)
-

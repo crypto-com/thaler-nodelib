@@ -2,23 +2,29 @@ mod builder_options;
 
 use chain_core::tx::data::access::{TxAccess, TxAccessPolicy};
 use chain_core::tx::data::attribute::TxAttributes;
+// #[cfg(feature = "mock")]
 use chain_core::tx::data::input::TxoIndex;
+// #[cfg(feature = "mock")]
 use chain_core::tx::data::TxId;
 use chain_core::tx::fee::LinearFee;
-use chain_core::tx::{TxAux, TxObfuscated};
+// #[cfg(feature = "mock")]
+use chain_core::tx::TxAux;
+use chain_core::tx::{TransactionId, TxObfuscated};
 // #[cfg(feature = "mock")]
 use chain_core::tx::TxEnclaveAux;
 // #[cfg(not(feature = "mock"))]
-use client_core::cipher::DefaultTransactionObfuscation;
+use client_common::tendermint::{RpcClient, WebsocketRpcClient};
+use client_core::cipher::{DefaultTransactionObfuscation, TransactionObfuscation};
+// #[cfg(feature = "mock-abci")]
+use client_core::cipher::MockAbciTransactionObfuscation;
 // #[cfg(feature = "mock")]
-use client_core::cipher::TransactionObfuscation;
-use client_common::{PrivateKey, Result};
-use client_common::{SignedTransaction, Transaction};
+use client_common::{PrivateKey, Result, SignedTransaction, Transaction};
 use client_core::signer::{KeyPairSigner, Signer};
 use client_core::transaction_builder::RawTransferTransactionBuilder;
 use neon::prelude::*;
 use parity_scale_codec::Encode;
 
+use crate::common::Features;
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
 
@@ -103,7 +109,7 @@ pub fn is_completed_linear_fee(mut ctx: FunctionContext) -> JsResult<JsBoolean> 
     Ok(ctx.boolean(builder.is_completed()))
 }
 
-/// Return transaction Id
+/// Returns transaction Id of builder
 pub fn tx_id_linear_fee(mut ctx: FunctionContext) -> JsResult<JsString> {
     let builder = incomplete_builder_linear_fee_argument(&mut ctx, 0)?;
 
@@ -113,18 +119,20 @@ pub fn tx_id_linear_fee(mut ctx: FunctionContext) -> JsResult<JsString> {
     Ok(ctx.string(tx_id))
 }
 
-/// Finish the transaction and export to broadcast-able hex 
+/// Finish the transaction and export to broadcast-able hex
 pub fn to_hex_linear_fee(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     let builder = incomplete_builder_linear_fee_argument(&mut ctx, 0)?;
-    let tx_query_address = ctx.argument::<JsString>(1)?.value();
-    // TODO: Use feature conditional compilation when ready
-    // https://github.com/neon-bindings/neon/issues/471
-    let is_mock = ctx.argument::<JsBoolean>(2)?.value();
+    let tendermint_address = ctx.argument::<JsString>(1)?.value();
+    let features = Features::argument(&mut ctx, 2)?;
 
-    let tx_aux_result = if is_mock {
-        to_mock_tx_aux_linear_fee(&mut ctx, &builder, &tx_query_address)
-    } else {
-        to_tx_aux_linear_fee(&mut ctx, &builder, &tx_query_address)
+    let tx_aux_result = match features {
+        Features::AllDefault => to_tx_aux_linear_fee(&mut ctx, &builder, &tendermint_address),
+        Features::MockAbci => {
+            to_mock_abci_tx_aux_linear_fee(&mut ctx, &builder, &tendermint_address)
+        }
+        Features::MockObfuscation => {
+            to_mock_tx_aux_linear_fee(&mut ctx, &builder, &tendermint_address)
+        }
     };
     let value = tx_aux_result?.encode();
 
@@ -136,32 +144,108 @@ pub fn to_hex_linear_fee(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     Ok(buffer)
 }
 
-fn to_tx_aux_linear_fee(ctx: &mut FunctionContext, builder: &LinearFeeRawTransferTransactionBuilder, tx_query_address: &str) -> NeonResult<TxAux>{
-    let tx_obfuscation = get_tx_obfuscation(ctx, &tx_query_address)?;
-   
-    builder.to_tx_aux(tx_obfuscation).chain_neon(ctx, "Unable to finish transaction")
-}
-
-fn to_mock_tx_aux_linear_fee(ctx: &mut FunctionContext, builder: &LinearFeeRawTransferTransactionBuilder, tx_query_address: &str) -> NeonResult<TxAux>{
-    let tx_obfuscation = get_mock_tx_obfuscation(ctx, &tx_query_address)?;
-   
-    builder.to_tx_aux(tx_obfuscation).chain_neon(ctx, "Unable to finish transaction")
-}
-
-// #[cfg(not(feature = "mock"))]
-fn get_tx_obfuscation(
+fn to_tx_aux_linear_fee(
     ctx: &mut FunctionContext,
-    tx_query_address: &str,
-) -> NeonResult<DefaultTransactionObfuscation> {
-    DefaultTransactionObfuscation::from_tx_query_address(tx_query_address).chain_neon(
-        ctx,
-        "Unable to create transaction obfuscation from tx query address",
-    )
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    if tendermint_address.starts_with("ws") {
+        to_tx_aux_websocket_linear_fee(ctx, builder, tendermint_address)
+    } else if tendermint_address.starts_with("http") {
+        to_tx_aux_http_linear_fee(ctx, builder, tendermint_address)
+    } else {
+        ctx.throw_error("Unsupported Tendermint client protocol")
+    }
 }
 
-// #[cfg(feature = "mock")]
-fn get_mock_tx_obfuscation(_: &mut FunctionContext, _: &str) -> NeonResult<MockTransactionCipher> {
-    Ok(MockTransactionCipher)
+fn to_tx_aux_websocket_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    let tendermint_client = WebsocketRpcClient::new(&tendermint_address).chain_neon(ctx, "Unable to create Tendermint client from address")?;
+
+    let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
+        .chain_neon(
+            ctx,
+            "Unable to create transaction obfuscation from tx query address",
+        )?;
+
+    builder
+        .to_tx_aux(tx_obfuscation)
+        .chain_neon(ctx, "Unable to finish transaction")
+}
+
+fn to_tx_aux_http_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    let tendermint_client = RpcClient::new(&tendermint_address);
+
+    let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
+        .chain_neon(
+            ctx,
+            "Unable to create transaction obfuscation from tx query address",
+        )?;
+
+    builder
+        .to_tx_aux(tx_obfuscation)
+        .chain_neon(ctx, "Unable to finish transaction")
+}
+
+fn to_mock_abci_tx_aux_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    if tendermint_address.starts_with("ws") {
+        to_mock_abci_tx_aux_websocket_linear_fee(ctx, builder, tendermint_address)
+    } else if tendermint_address.starts_with("http") {
+        to_mock_abci_tx_aux_http_linear_fee(ctx, builder, tendermint_address)
+    } else {
+        ctx.throw_error("Unsupported Tendermint client protocol")
+    }
+}
+
+fn to_mock_abci_tx_aux_websocket_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    let tendermint_client = WebsocketRpcClient::new(&tendermint_address).chain_neon(ctx, "Unable to create Tendermint client from address")?;
+
+    let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
+
+    builder
+        .to_tx_aux(tx_obfuscation)
+        .chain_neon(ctx, "Unable to finish transaction")
+}
+
+fn to_mock_abci_tx_aux_http_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    tendermint_address: &str,
+) -> NeonResult<TxAux> {
+    let tendermint_client = RpcClient::new(&tendermint_address);
+
+    let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
+
+    builder
+        .to_tx_aux(tx_obfuscation)
+        .chain_neon(ctx, "Unable to finish transaction")
+}
+
+fn to_mock_tx_aux_linear_fee(
+    ctx: &mut FunctionContext,
+    builder: &LinearFeeRawTransferTransactionBuilder,
+    _: &str,
+) -> NeonResult<TxAux> {
+    let tx_obfuscation = MockTransactionCipher;
+
+    builder
+        .to_tx_aux(tx_obfuscation)
+        .chain_neon(ctx, "Unable to finish transaction")
 }
 
 /// Verify the provided incomplete RawTransferTransaction hex is a valid
@@ -232,7 +316,7 @@ impl TransactionObfuscation for MockTransactionCipher {
                     inputs: tx.inputs.clone(),
                     no_of_outputs: tx.outputs.len() as TxoIndex,
                     payload: TxObfuscated {
-                        txid: [0; 32],
+                        txid: tx.id(),
                         key_from: 0,
                         init_vector: [0u8; 12],
                         txpayload,
@@ -260,11 +344,11 @@ pub fn register_transfer_transaction_module(ctx: &mut ModuleContext) -> NeonResu
     let is_completed_linear_fee_fn = JsFunction::new(ctx, is_completed_linear_fee)?;
     js_object.set(ctx, "isCompletedLinearFee", is_completed_linear_fee_fn)?;
 
-    let verify_linear_fee_fn = JsFunction::new(ctx, verify_linear_fee)?;
-    js_object.set(ctx, "verifyLinearFee", verify_linear_fee_fn)?;
-
     let tx_id_linear_fee_fn = JsFunction::new(ctx, tx_id_linear_fee)?;
     js_object.set(ctx, "txIdLinearFee", tx_id_linear_fee_fn)?;
+
+    let verify_linear_fee_fn = JsFunction::new(ctx, verify_linear_fee)?;
+    js_object.set(ctx, "verifyLinearFee", verify_linear_fee_fn)?;
 
     let to_hex_linear_fee_fn = JsFunction::new(ctx, to_hex_linear_fee)?;
     js_object.set(ctx, "toHexLinearFee", to_hex_linear_fee_fn)?;

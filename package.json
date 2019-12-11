@@ -10,12 +10,16 @@
   "author": "Calvin Lau <calvin@crypto.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "axios": "0.19.0",
     "bignumber.js": "9.0.0",
+    "lossless-json": "1.0.3",
     "ow": "0.15.0"
   },
   "devDependencies": {
+    "@types/axios": "0.14.0",
     "@types/bignumber.js": "5.0.0",
     "@types/chai": "4.2.5",
+    "@types/lossless-json": "1.0.0",
     "@types/mocha": "5.2.7",
     "@types/node": "12.12.8",
     "@types/sinon": "7.5.0",
@@ -40,8 +44,11 @@
     "neon-build": "neon build",
     "tsc-build": "tsc",
     "build": "npm run neon-build && npm run tsc-build",
-    "nodemon": "NODE_ENV=test nodemon",
+    "clean": "rm -rf ./native/target && rm ./native/index.node",
     "eslint": "eslint 'lib/**'",
-    "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'"
+    "nodemon": "NODE_ENV=test nodemon",
+    "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'",
+    "ci:withdraw-all-stake": "ts-node ./integration-tests/withdraw-all-stake.ts",
+    "integration-tests": "NODE_ENV=integration-test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'integration-tests/**/*.spec.ts'"
   }
 }

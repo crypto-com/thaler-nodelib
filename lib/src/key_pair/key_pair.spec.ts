@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import KeyPair from './key_pair';
+import { KeyPair } from './key_pair';
 
 describe('KeyPair', () => {
     function validPublicKey(): Buffer {

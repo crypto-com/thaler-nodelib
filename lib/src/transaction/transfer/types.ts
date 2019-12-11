@@ -1,7 +1,10 @@
 import ow from 'ow';
 import BigNumber from 'bignumber.js';
-import { owTransferAddress, owCoin } from '../types';
-import { owOptionalNetwork, owOptionalChainId, Network } from '../network';
+
+import { URL } from 'url';
+import { owCoin, owTransferAddress } from '../../types';
+import { Network } from '../../network';
+import { owOptionalNetwork, owOptionalChainId } from '../../network/types';
 
 export interface Input {
     prevTxId: string;
@@ -87,8 +90,27 @@ const owLinearFeeConfig = ow.object.exactShape({
 
 const owOptionalFeeConfig = ow.optional.any(owLinearFeeConfig);
 
-export const owTransferTransactionBuilderOptions = ow.optional.object.exactShape({
-    network: owOptionalNetwork,
-    chainId: owOptionalChainId,
-    feeConfig: owOptionalFeeConfig,
-});
+export const owTransferTransactionBuilderOptions = ow.optional.object.exactShape(
+    {
+        network: owOptionalNetwork,
+        chainId: owOptionalChainId,
+        feeConfig: owOptionalFeeConfig,
+    },
+);
+
+const isURL = (url: string): boolean => {
+    try {
+        // eslint-disable-next-line no-new
+        new URL(url);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
+
+export const owOptionalTendermintAddress = ow.optional.string.validate(
+    (value: string) => ({
+        validator: /^(http|ws)s?/.test(value) && isURL(value),
+        message: 'Expected value to be HTTP or WS tendermint address',
+    }),
+);

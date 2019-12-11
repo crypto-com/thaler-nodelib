@@ -1,8 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import KeyPair from '../key_pair/key_pair';
-import transfer from './transfer';
+import { KeyPair } from '../key_pair';
+import { transfer } from './transfer';
 import { Network } from '../network';
 
 describe('transfer', () => {
@@ -42,7 +42,9 @@ describe('transfer', () => {
                 publicKey,
                 network,
             }),
-        ).to.eq('dcro1c2rf4zk2qpu0trpehtcw5532h2qe4yst6gpc9y4gvevd0eygjjnsj9cayy');
+        ).to.eq(
+            'dcro1c2rf4zk2qpu0trpehtcw5532h2qe4yst6gpc9y4gvevd0eygjjnsj9cayy',
+        );
     });
 
     it('should return Transfer address from Public Key in KeyPair', () => {
@@ -59,7 +61,9 @@ describe('transfer', () => {
                 keyPair,
                 network,
             }),
-        ).to.eq('dcro1c2rf4zk2qpu0trpehtcw5532h2qe4yst6gpc9y4gvevd0eygjjnsj9cayy');
+        ).to.eq(
+            'dcro1c2rf4zk2qpu0trpehtcw5532h2qe4yst6gpc9y4gvevd0eygjjnsj9cayy',
+        );
     });
 
     it('should return Transfer address based on network', () => {
@@ -74,6 +78,8 @@ describe('transfer', () => {
                 publicKey,
                 network,
             }),
-        ).to.eq('cro122spn782r9semev0cepr3a0nclst9yqhsxdfcylyv7ln9cwqal4swarmsv');
+        ).to.eq(
+            'cro122spn782r9semev0cepr3a0nclst9yqhsxdfcylyv7ln9cwqal4swarmsv',
+        );
     });
 });

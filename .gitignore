@@ -8,3 +8,7 @@ native/artifacts.json
 lib/dist
 
 .vscode
+
+lib/dist
+
+chain
