@@ -1,8 +1,9 @@
 import 'mocha';
 import { expect } from 'chai';
-import KeyPair from '../key_pair';
+
+import KeyPair from '../key_pair/key_pair';
 import transfer from './transfer';
-import { Network } from '../types';
+import { Network } from '../network';
 
 describe('transfer', () => {
     it('should throw TypeError when neither KeyPair and PublicKey is provided', () => {

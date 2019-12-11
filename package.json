@@ -10,9 +10,11 @@
   "author": "Calvin Lau <calvin@crypto.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "bignumber.js": "9.0.0",
     "ow": "0.15.0"
   },
   "devDependencies": {
+    "@types/bignumber.js": "5.0.0",
     "@types/chai": "4.2.5",
     "@types/mocha": "5.2.7",
     "@types/node": "12.12.8",
@@ -35,9 +37,11 @@
     "typescript": "3.7.2"
   },
   "scripts": {
-    "build": "neon build",
-    "nodemon": "nodemon",
+    "neon-build": "neon build",
+    "tsc-build": "tsc",
+    "build": "npm run neon-build && npm run tsc-build",
+    "nodemon": "NODE_ENV=test nodemon",
     "eslint": "eslint 'lib/**'",
-    "test": "mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'"
+    "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'"
   }
 }

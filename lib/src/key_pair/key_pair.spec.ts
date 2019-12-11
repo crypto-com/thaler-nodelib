@@ -57,7 +57,7 @@ describe('KeyPair', () => {
 
         it('should return KeyPair with the provided PrivateKey and corresponding PublicKey', () => {
             const privateKey = Buffer.alloc(32, 1);
-            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            const keyPair = KeyPair.fromPrivateKey(privateKey);
 
             expect(keyPair.hasPublicKey()).to.eq(true);
             expect(keyPair.hasPrivateKey()).to.eq(true);
@@ -86,6 +86,16 @@ describe('KeyPair', () => {
 
             expect(firstKeyPair.publicKey).not.to.deep.eq(secondKeyPair.publicKey);
             expect(firstKeyPair.privateKey).not.to.deep.eq(secondKeyPair.privateKey);
+        });
+    });
+
+    describe('toObject', () => {
+        it('should transform the private public key pair into an object', () => {
+            const keyPair = KeyPair.generateRandom();
+
+            const obj = keyPair.toObject();
+            expect(obj.publicKey).to.deep.eq(keyPair.publicKey);
+            expect(obj.privateKey).to.deep.eq(keyPair.privateKey);
         });
     });
 });

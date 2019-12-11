@@ -1,6 +1,7 @@
 import 'mocha';
 import { expect } from 'chai';
-import KeyPair from '../key_pair';
+
+import KeyPair from '../key_pair/key_pair';
 import staking from './staking';
 
 describe('staking', () => {

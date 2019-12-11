@@ -1,6 +1,8 @@
 import ow from 'ow';
-import KeyPair from '../key_pair';
-import { CustomTypes, Network } from '../types';
+
+import KeyPair from '../key_pair/key_pair';
+import { owKeyPair } from '../key_pair/types';
+import { owNetwork, Network } from '../network';
 
 const native = require('../../../native');
 
@@ -10,11 +12,11 @@ export default function transfer(options: TransferOptions): string {
         ow.any(
             ow.object.exactShape({
                 publicKey: ow.buffer,
-                network: CustomTypes.Network,
+                network: owNetwork,
             }),
             ow.object.exactShape({
-                keyPair: CustomTypes.KeyPair,
-                network: CustomTypes.Network,
+                keyPair: owKeyPair,
+                network: owNetwork,
             }),
         ),
     );
