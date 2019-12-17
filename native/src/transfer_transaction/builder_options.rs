@@ -43,14 +43,12 @@ where
         let options = ctx.argument::<JsObject>(0)?;
 
         let raw_tx_options = BuilderOptions::<LinearFee>::parse_raw_tx_options(ctx, &options)?;
-        println!("Raw Tx Options {:#?}", raw_tx_options);
 
         let fee_config = options
             .get(ctx, "feeConfig")?
             .downcast_or_throw::<JsObject, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast feeConfig")?;
         let fee_algorithm = parse_linear_fee_config(ctx, &fee_config)?;
-        println!("Linear Fee {:#?}", fee_algorithm);
 
         Ok(BuilderOptions {
             raw_tx_options,
