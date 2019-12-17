@@ -305,6 +305,52 @@ describe('TransferTransactionBuilder', () => {
 
             expect(builder.inputsLength()).to.eq(1);
         });
+
+        it('should clear signed transaction witness', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(builder.isCompleted()).to.eq(true);
+
+            builder.addInput({
+                prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                prevIndex: 1,
+                prevOutput: {
+                    address: transfer({
+                        keyPair,
+                        network: Network.Mainnet,
+                    }),
+                    value: new BigNumber('1000'),
+                },
+            });
+
+            expect(builder.isCompleted()).to.eq(false);
+        });
     });
 
     describe('addOutput', () => {
@@ -381,6 +427,45 @@ describe('TransferTransactionBuilder', () => {
 
             expect(builder.outputsLength()).to.eq(1);
         });
+
+        it('should clear signed transaction witness', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(builder.isCompleted()).to.eq(true);
+
+            builder.addOutput({
+                address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                value: new BigNumber('1000'),
+            });
+
+            expect(builder.isCompleted()).to.eq(false);
+        });
     });
 
     describe('addViewKey', () => {
@@ -403,6 +488,47 @@ describe('TransferTransactionBuilder', () => {
             );
 
             expect(builder.viewKeysLength()).to.eq(1);
+        });
+
+        it('should clear signed transaction witness', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(builder.isCompleted()).to.eq(true);
+
+            builder.addViewKey(
+                Buffer.from(
+                    '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                    'hex',
+                ),
+            );
+
+            expect(builder.isCompleted()).to.eq(false);
         });
     });
 
@@ -459,7 +585,7 @@ describe('TransferTransactionBuilder', () => {
                         'hex',
                     ),
                 );
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
             expect(() => {
                 builder.signInput(-1, keyPair);
@@ -488,7 +614,7 @@ describe('TransferTransactionBuilder', () => {
                         'hex',
                     ),
                 );
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
             expect(() => {
                 builder.signInput(2, keyPair);
@@ -552,7 +678,7 @@ describe('TransferTransactionBuilder', () => {
                     ),
                 );
 
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
             expect(() => {
                 builder.signInput(0, keyPair);
@@ -564,7 +690,7 @@ describe('TransferTransactionBuilder', () => {
         it('should sign the input', () => {
             const builder = new TransferTransactionBuilder();
 
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
                     prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
@@ -579,7 +705,7 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addOutput({
                     address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
-                    value: new BigNumber('1000'),
+                    value: new BigNumber('2500'),
                 })
                 .addViewKey(
                     Buffer.from(
@@ -597,10 +723,28 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('isCompleted', () => {
+        it('should return false when there transaction has no input', () => {
+            const builder = new TransferTransactionBuilder();
+
+            builder
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('2500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            expect(builder.isCompleted()).to.eq(false);
+        });
+
         it('should return false when there is missing signature in inputs', () => {
             const builder = new TransferTransactionBuilder();
 
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
                     prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
@@ -626,7 +770,7 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addOutput({
                     address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
-                    value: new BigNumber('1000'),
+                    value: new BigNumber('2500'),
                 })
                 .addViewKey(
                     Buffer.from(
@@ -643,7 +787,7 @@ describe('TransferTransactionBuilder', () => {
         it('should return true when all inputs are signed', () => {
             const builder = new TransferTransactionBuilder();
 
-            const keyPair = KeyPair.makeRandom();
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
                     prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
@@ -658,13 +802,127 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addInput({
                     prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
-                    prevIndex: 0,
+                    prevIndex: 1,
                     prevOutput: {
                         address: transfer({
                             keyPair,
                             network: Network.Mainnet,
                         }),
                         value: new BigNumber('2000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('2500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+            builder.signInput(1, keyPair);
+
+            expect(builder.isCompleted()).to.eq(true);
+        });
+    });
+
+    describe('toHex', () => {
+        it('should throw Error when the transaction has unsigned input', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            expect(() => {
+                builder.toHex();
+            }).to.throw('Transaction has unsigned input');
+        });
+
+        it('should throw Error when the transaction output amount exceeds input amount', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(() => {
+                builder.toHex();
+            }).to.throw(
+                'Unable to finish transaction: Verify error: Output amount exceed input amount',
+            );
+        });
+
+        it('should throw Error when the transaction output amount exceeds input amount', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 1,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
                     },
                 })
                 .addOutput({
@@ -681,11 +939,155 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(0, keyPair);
             builder.signInput(1, keyPair);
 
-            expect(builder.isCompleted()).to.eq(true);
+            expect(builder.toHex().toString('hex')).to.eq(
+                '000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001000000000000000000000000000000000000000000710600080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000800569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f00569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000',
+            );
         });
     });
 
-    describe('toHex', () => {});
+    describe('toIncompleteHex', () => {
+        it('should return Hex when transaction does not have input', () => {
+            const builder = new TransferTransactionBuilder();
+
+            builder
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            expect(builder.toIncompleteHex().toString('hex')).to.eq(
+                '00040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+            );
+        });
+
+        it('should return Hex when transaction does not have output', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 1,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            expect(builder.toIncompleteHex().toString('hex')).to.eq(
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+            );
+        });
+
+        it('should return Hex when transaction does not have viewKey', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 1,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                });
+
+            expect(builder.toIncompleteHex().toString('hex')).to.eq(
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000003200',
+            );
+        });
+
+        it('should return Hex when transaction is completed with signatures', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addInput({
+                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 1,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+            builder.signInput(1, keyPair);
+
+            expect(builder.toIncompleteHex().toString('hex')).to.eq(
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de803000000000000000100569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de803000000000000000100569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+            );
+        });
+    });
 
     // TODO
     // describe('signAll');
@@ -693,8 +1095,6 @@ describe('TransferTransactionBuilder', () => {
     // describe('mapInputs')
     // TODO
     // describe('mapOutputs')
-    // TODO
-    // describe('toIncomplete');
     // TODO
     // describe('fromIncomplete')
 });

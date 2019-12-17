@@ -57,7 +57,7 @@ describe('KeyPair', () => {
 
         it('should return KeyPair with the provided PrivateKey and corresponding PublicKey', () => {
             const privateKey = Buffer.alloc(32, 1);
-            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            const keyPair = KeyPair.fromPrivateKey(privateKey);
 
             expect(keyPair.hasPublicKey()).to.eq(true);
             expect(keyPair.hasPrivateKey()).to.eq(true);

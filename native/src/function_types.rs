@@ -22,6 +22,7 @@ pub fn public_key_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<Publ
     PublicKey::deserialize_from(public_key).chain_neon(ctx, "Unable to deserialize public key")
 }
 
+#[allow(dead_code)]
 #[inline]
 pub fn view_key_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<PublicKey> {
     let view_key = ctx.argument::<JsBuffer>(i)?;

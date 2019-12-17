@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "neon build",
-    "nodemon": "nodemon",
+    "nodemon": "NODE_ENV=test nodemon",
     "eslint": "eslint 'lib/**'",
     "test": "mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'"
   }

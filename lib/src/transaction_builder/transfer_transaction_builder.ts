@@ -149,6 +149,8 @@ export default class TransferTransactionBuilder {
             throw new Error('Previous output address does not belongs to the builder network');
         }
 
+        this.clearIncompleteSigningHex();
+
         this.inputs.push(input);
 
         return this;
@@ -160,6 +162,8 @@ export default class TransferTransactionBuilder {
         if (!this.isTransferAddressInNetwork(output.address)) {
             throw new Error('Address does not belongs to the builder network');
         }
+
+        this.clearIncompleteSigningHex();
 
         this.outputs.push(output);
 
@@ -180,6 +184,8 @@ export default class TransferTransactionBuilder {
 
     public addViewKey(viewKey: Buffer): TransferTransactionBuilder {
         ow(viewKey, owViewKey);
+
+        this.clearIncompleteSigningHex();
 
         this.viewKeys.push(viewKey);
 
@@ -230,12 +236,22 @@ export default class TransferTransactionBuilder {
         this.incompleteSigningHex = updatedIncompleteSigningHex;
     }
 
+    public toIncompleteHex(): Buffer {
+        if (this.isSigning()) {
+            return this.incompleteSigningHex!;
+        }
+
+        return this.buildIncompleteHex();
+    }
+
     public isCompleted(): boolean {
-        const incompleteSigningHex = this.prepareIncompleteSigningHex();
+        if (!this.incompleteSigningHex) {
+            return false;
+        }
 
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             return native.transferTransaction.isCompletedLinearFee({
-                incompleteHex: incompleteSigningHex,
+                incompleteHex: this.incompleteSigningHex,
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             });
         }
@@ -243,17 +259,32 @@ export default class TransferTransactionBuilder {
         throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
     }
 
+    public toHex(txQueryAddress: string = 'localhost:25944'): Buffer {
+        ow(txQueryAddress, ow.optional.string);
+
+        if (!this.isCompleted()) {
+            throw new Error('Transaction has unsigned input');
+        }
+
+        return native.transferTransaction.toHexLinearFee(
+            {
+                incompleteHex: this.incompleteSigningHex,
+                feeConfig: parseFeeConfigForNative(this.feeConfig),
+            },
+            txQueryAddress,
+            // TODO: Use feature conditional compilation when ready
+            // https://github.com/neon-bindings/neon/issues/471
+            process.env.NODE_ENV === 'test',
+        );
+    }
+
     private prepareIncompleteSigningHex(): Buffer {
-        if (!this.incompleteSigningHex) {
+        if (!this.isSigning()) {
             this.incompleteSigningHex = this.buildIncompleteHex();
         }
 
-        return this.incompleteSigningHex;
+        return this.incompleteSigningHex!;
     }
-
-    // private clearIncompletHex() {
-    //     this.incompleteHex = undefined;
-    // }
 
     private buildIncompleteHex(): Buffer {
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
@@ -270,6 +301,14 @@ export default class TransferTransactionBuilder {
             viewKeys: this.viewKeys,
             feeConfig: parseFeeConfigForNative(this.feeConfig),
         });
+    }
+
+    private clearIncompleteSigningHex() {
+        this.incompleteSigningHex = undefined;
+    }
+
+    private isSigning(): boolean {
+        return !!this.incompleteSigningHex;
     }
 }
 
