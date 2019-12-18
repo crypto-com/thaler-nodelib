@@ -898,7 +898,7 @@ describe('TransferTransactionBuilder', () => {
             );
         });
 
-        it('should throw Error when the transaction output amount exceeds input amount', () => {
+        it('should return completed Hex', () => {
             const builder = new TransferTransactionBuilder();
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
