@@ -1,1 +1,8 @@
-export { Network, getChainIdByNetwork, getNetworkByChainId } from './network';
+export { Mainnet, Testnet, Devnet, fromChainId } from './network';
+export {
+    NetworkConfig,
+    MainnetConfig,
+    TestnetConfig,
+    DevnetConfig,
+    DevnetOptions,
+} from './types';

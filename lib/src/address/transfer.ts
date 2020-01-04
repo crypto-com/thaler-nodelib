@@ -2,8 +2,7 @@ import ow from 'ow';
 
 import { KeyPair } from '../key_pair';
 import { owKeyPair } from '../key_pair/types';
-import { Network } from '../network';
-import { owNetwork } from '../network/types';
+import { owNetworkConfig, NetworkConfig } from '../network/types';
 
 const native = require('../../../native');
 
@@ -20,11 +19,11 @@ export function transfer(options: TransferOptions): string {
         ow.any(
             ow.object.exactShape({
                 publicKey: ow.buffer,
-                network: owNetwork,
+                network: owNetworkConfig,
             }),
             ow.object.exactShape({
                 keyPair: owKeyPair,
-                network: owNetwork,
+                network: owNetworkConfig,
             }),
         ),
     );
@@ -41,12 +40,12 @@ export function transfer(options: TransferOptions): string {
 
     return native.address.getTransferAddressFromPublicKey(
         publicKey,
-        options.network,
+        options.network.name,
     );
 }
 
 export interface TransferOptions {
     publicKey?: Buffer;
     keyPair?: KeyPair;
-    network: Network;
+    network: NetworkConfig;
 }

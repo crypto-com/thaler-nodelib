@@ -3,11 +3,11 @@ import { expect } from 'chai';
 
 import { KeyPair } from '../key_pair';
 import { transfer } from './transfer';
-import { Network } from '../network';
+import { Mainnet, Devnet } from '../network';
 
 describe('transfer', () => {
     it('should throw TypeError when neither KeyPair and PublicKey is provided', () => {
-        const network = Network.Devnet;
+        const network = Mainnet;
 
         expect(() =>
             transfer({
@@ -20,7 +20,7 @@ describe('transfer', () => {
 
     it('should throw Error when KeyPair has no public key', () => {
         const keyPair = new KeyPair();
-        const network = Network.Devnet;
+        const network = Mainnet;
 
         expect(() =>
             transfer({
@@ -35,7 +35,7 @@ describe('transfer', () => {
             '041ff5820f619d51663efbb233eb03bd5d434f63c352a5633717d8b570daa43c190bddc906ed9b8601c10c2b58e347f6e1cc4035b391b98be1d9afa9c5ead9423b',
             'hex',
         );
-        const network = Network.Devnet;
+        const network = Devnet({ chainId: 'AB' });
 
         expect(
             transfer({
@@ -54,7 +54,7 @@ describe('transfer', () => {
                 'hex',
             ),
         );
-        const network = Network.Devnet;
+        const network = Devnet({ chainId: 'AB' });
 
         expect(
             transfer({
@@ -71,7 +71,7 @@ describe('transfer', () => {
             '043f1d17afa4b881bfdbcee2d82c0f278f09b433b0ddb14ca93fb7cb8d1e16b4b74d9f83587966a9c20243b75b828535b180557302bfd68a0cb37c3fd906b456e8',
             'hex',
         );
-        const network = Network.Mainnet;
+        const network = Mainnet;
 
         expect(
             transfer({

@@ -1,8 +1,8 @@
 import ow from 'ow';
 import BigNumber from 'bignumber.js';
 
-import { Network } from './network';
 import { MAX_COIN_BN, MAX_COIN_FORMATTED } from './init';
+import { NetworkEnum } from './network/network';
 
 const native = require('../../native');
 
@@ -21,13 +21,13 @@ export const owCoin = ow.object.validate((value: object) => ({
 }));
 
 const validateTransferAddress = (value: string): boolean => {
-    let network: Network;
+    let network: NetworkEnum;
     if (value.startsWith('cro')) {
-        network = Network.Mainnet;
+        network = NetworkEnum.Mainnet;
     } else if (value.startsWith('tcro')) {
-        network = Network.Testnet;
+        network = NetworkEnum.Testnet;
     } else if (value.startsWith('dcro')) {
-        network = Network.Devnet;
+        network = NetworkEnum.Devnet;
     } else {
         return false;
     }

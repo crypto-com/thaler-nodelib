@@ -4,25 +4,19 @@ import BigNumber from 'bignumber.js';
 import {
     Input,
     Output,
-    FeeConfig,
     owTransferTransactionBuilderOptions,
-    FeeAlgorithm,
     TransferTransactionBuilderOptions,
     owInput,
     owOutput,
-    LinearFeeConfig,
     owOptionalTendermintAddress,
 } from './types';
-import {
-    Network,
-    getChainIdByNetwork,
-    getNetworkByChainId,
-} from '../../network';
-import { owNetwork, owChainId } from '../../network/types';
+import { NetworkConfig } from '../../network/types';
 import { ViewKey, owViewKey } from '../../types';
 import { KeyPair } from '../../key_pair/key_pair';
 import { owKeyPair } from '../../key_pair/types';
 import { getRustFeaturesFromEnv } from '../../native';
+import { FeeConfig, FeeAlgorithm, LinearFeeConfig } from '../../fee';
+import { Mainnet } from '../../network';
 
 const native = require('../../../../native');
 
@@ -68,7 +62,7 @@ export class TransferTransactionBuilder {
 
     private viewKeys: ViewKey[] = [];
 
-    private chainId!: string;
+    private network!: NetworkConfig;
 
     private feeConfig!: FeeConfig;
 
@@ -78,7 +72,6 @@ export class TransferTransactionBuilder {
      * Creates an instance of TransferTransactionBuilder.
      * @param {TransferTransactionBuilderOptions} [options] Builder options
      * @param {Network} options.network Network the transaction belongs to
-     * @param {string} [options.chainId] ChainId when the network is Devnet
      * @param {FeeConfig} [options.feeConfig=LinearFee] Fee configuration
      * @memberof TransferTransactionBuilder
      */
@@ -90,16 +83,9 @@ export class TransferTransactionBuilder {
 
     private parseOptions(options?: TransferTransactionBuilderOptions) {
         if (options?.network) {
-            if (options?.network === Network.Devnet) {
-                if (!options?.chainId) {
-                    throw new Error('Missing chainId for Devnet');
-                }
-                this.setChainId(options.chainId);
-            } else {
-                this.setChainIdByNetwork(options.network);
-            }
+            this.network = options.network;
         } else {
-            this.setChainIdByNetwork(Network.Mainnet);
+            this.network = Mainnet;
         }
 
         if (options?.feeConfig) {
@@ -114,60 +100,13 @@ export class TransferTransactionBuilder {
     }
 
     /**
-     * Update builder chainId with the network
-     *
-     * @param {Network} network network that chainId belongs to
-     * @returns {TransferTransactionBuilder}
-     * @memberof TransferTransactionBuilder
-     */
-    public setChainIdByNetwork(network: Network): TransferTransactionBuilder {
-        ow(network, owNetwork);
-
-        const chainId = getChainIdByNetwork(network);
-        if (chainId === '') {
-            throw new Error(
-                `Unable to determine chain Id based on network \`${network}\``,
-            );
-        }
-
-        this.setChainId(chainId);
-
-        return this;
-    }
-
-    /**
      * Returns the current network
      *
-     * @returns {Network} current network
+     * @returns {NetworkConfig} current network
      * @memberof TransferTransactionBuilder
      */
-    public getNetwork(): Network {
-        return getNetworkByChainId(this.chainId);
-    }
-
-    /**
-     * Update builder chainId
-     *
-     * @param {string} chainId new chainId
-     * @returns {TransferTransactionBuilder}
-     * @memberof TransferTransactionBuilder
-     */
-    public setChainId(chainId: string): TransferTransactionBuilder {
-        ow(chainId, owChainId);
-
-        this.chainId = chainId;
-
-        return this;
-    }
-
-    /**
-     * Returns current chainId
-     *
-     * @returns {string} current chainId
-     * @memberof TransferTransactionBuilder
-     */
-    public getChainId(): string {
-        return this.chainId;
+    public getNetwork(): Readonly<NetworkConfig> {
+        return this.network;
     }
 
     /**
@@ -231,7 +170,7 @@ export class TransferTransactionBuilder {
     private isTransferAddressInNetwork(address: string): boolean {
         return native.address.isTransferAddressValid(
             address,
-            this.getNetwork(),
+            this.network.name,
         );
     }
 
@@ -302,7 +241,9 @@ export class TransferTransactionBuilder {
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             });
         }
-        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
     /**
@@ -445,7 +386,7 @@ export class TransferTransactionBuilder {
 
     private buildIncompleteHexLinearFee(): Buffer {
         return native.transferTransaction.buildIncompleteHexLinearFee({
-            chainId: this.chainId,
+            chainId: this.network.chainId.toString('hex'),
             inputs: this.inputs.map(parseInputForNative),
             outputs: this.outputs.map(parseOutputForNative),
             viewKeys: this.viewKeys,

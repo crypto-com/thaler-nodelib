@@ -8,7 +8,7 @@ describe('Address', () => {
 
         const address = cro.address.transfer({
             keyPair,
-            network: cro.Network.Mainnet,
+            network: cro.network.Mainnet,
         });
 
         expect(address.startsWith('cro')).to.eq(true);
@@ -20,7 +20,7 @@ describe('Address', () => {
 
         const address = cro.address.transfer({
             keyPair,
-            network: cro.Network.Mainnet,
+            network: cro.network.Mainnet,
         });
 
         expect(address.startsWith('cro')).to.eq(true);
@@ -35,7 +35,7 @@ describe('Address', () => {
 
         const address = cro.address.transfer({
             keyPair,
-            network: cro.Network.Mainnet,
+            network: cro.network.Mainnet,
         });
 
         expect(address.startsWith('cro')).to.eq(true);
@@ -46,7 +46,7 @@ describe('Address', () => {
 
         const address = cro.address.transfer({
             keyPair,
-            network: cro.Network.Testnet,
+            network: cro.network.Testnet,
         });
 
         expect(address.startsWith('tcro')).to.eq(true);

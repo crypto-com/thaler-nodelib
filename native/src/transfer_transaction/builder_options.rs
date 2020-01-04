@@ -63,8 +63,6 @@ where
         ctx: &mut FunctionContext,
         options: &JsObject,
     ) -> NeonResult<RawTransactionOptions> {
-        // let options = ctx.argument::<JsObject>(0)?;
-
         let chain_id = options
             .get(ctx, "chainId")?
             .downcast_or_throw::<JsString, FunctionContext>(ctx)
