@@ -1,5 +1,4 @@
 import 'mocha';
-import BigNumber from 'bignumber.js';
 import * as cro from '../../lib/src';
 import {
     newWalletRequest,
@@ -46,12 +45,12 @@ describe('Transfer Transaction', () => {
 
         const utxo = await walletRpc.transferToAddress(defaultWallet, {
             toAddress: transferAddress,
-            value: new BigNumber(10000000),
+            value: cro.utils.toBigNumber('10000000'),
             viewKeys: [viewKey.publicKey!],
         });
         const utxo2 = await walletRpc.transferToAddress(defaultWallet, {
             toAddress: transferAddress,
-            value: new BigNumber(20000000),
+            value: cro.utils.toBigNumber('20000000'),
             viewKeys: [viewKey.publicKey!],
         });
 
@@ -61,8 +60,8 @@ describe('Transfer Transaction', () => {
             }),
             feeConfig: {
                 algorithm: cro.fee.FeeAlgorithm.LinearFee,
-                constant: new BigNumber(1000),
-                coefficient: new BigNumber(1001),
+                constant: cro.utils.toBigNumber(1000),
+                coefficient: cro.utils.toBigNumber(1001),
             },
         });
 
@@ -85,7 +84,7 @@ describe('Transfer Transaction', () => {
             })
             .addOutput({
                 address: transferAddress,
-                value: new BigNumber(25000000),
+                value: cro.utils.toBigNumber(25000000),
             })
             .addViewKey(viewKey.publicKey!);
 
@@ -118,12 +117,12 @@ describe('Transfer Transaction', () => {
 
         const utxo = await walletRpc.transferToAddress(defaultWallet, {
             toAddress: transferAddress,
-            value: new BigNumber(10000000),
+            value: cro.utils.toBigNumber(10000000),
             viewKeys: [viewKey.publicKey!],
         });
         const utxo2 = await walletRpc.transferToAddress(defaultWallet, {
             toAddress: transferAddress,
-            value: new BigNumber(20000000),
+            value: cro.utils.toBigNumber(20000000),
             viewKeys: [viewKey.publicKey!],
         });
 
@@ -133,8 +132,8 @@ describe('Transfer Transaction', () => {
             }),
             feeConfig: {
                 algorithm: cro.fee.FeeAlgorithm.LinearFee,
-                constant: new BigNumber(1000),
-                coefficient: new BigNumber(1001),
+                constant: cro.utils.toBigNumber(1000),
+                coefficient: cro.utils.toBigNumber(1001),
             },
         });
 
@@ -157,7 +156,7 @@ describe('Transfer Transaction', () => {
             })
             .addOutput({
                 address: transferAddress,
-                value: new BigNumber(25000000),
+                value: cro.utils.toBigNumber(25000000),
             })
             .addViewKey(viewKey.publicKey!);
 
