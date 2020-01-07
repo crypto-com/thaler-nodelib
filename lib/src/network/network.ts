@@ -28,6 +28,7 @@ export const Mainnet: NetworkConfig = {
     name: NetworkEnum.Mainnet,
     chainId: Buffer.from('2A', 'hex'),
     addressPrefix: 'cro',
+    bip44Path: "m/44'/394'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
         constant: new BigNumber(1000),
@@ -46,6 +47,7 @@ export const Testnet: NetworkConfig = {
     name: NetworkEnum.Testnet,
     chainId: Buffer.from('42', 'hex'),
     addressPrefix: 'tcro',
+    bip44Path: "m/44'/1'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
         constant: new BigNumber(1000),
@@ -71,6 +73,7 @@ export const Devnet = (options: DevnetOptions): NetworkConfig => {
     return {
         name: NetworkEnum.Devnet,
         addressPrefix: 'dcro',
+        bip44Path: "m/44'/1'/{ACCOUNT}'/0/{INDEX}",
         ...options,
         chainId,
     };

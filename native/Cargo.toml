@@ -21,6 +21,7 @@ neon-build = "0.3.3"
 neon = "0.3.3"
 hex = "0.4.0"
 parity-scale-codec = { features = ["derive"], version = "1.1" }
+secstr = { version = "0.3.2", features = ["serde"] }
 # chain-core = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0" }
 # client-common = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0", features = ["default", "http-rpc", "websocket-rpc"] }
 # client-core = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0" }
