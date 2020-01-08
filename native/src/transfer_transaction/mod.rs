@@ -48,7 +48,7 @@ pub fn build_incomplete_hex_linear_fee(mut ctx: FunctionContext) -> JsResult<JsB
     let attributes =
         TxAttributes::new_with_access(options.raw_tx_options.chain_id, access_policies);
 
-    let mut builder = RawTransferTransactionBuilder::new(attributes, options.fee_algorithm.clone());
+    let mut builder = RawTransferTransactionBuilder::new(attributes, options.fee_algorithm);
 
     for input in options.raw_tx_options.inputs.iter() {
         builder.add_input(input.to_owned());
@@ -256,7 +256,7 @@ pub fn verify_linear_fee(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
     let incomplete_hex = u8_buffer_argument(&mut ctx, 0)?;
     let fee_config = ctx.argument::<JsObject>(1)?;
 
-    let linear_fee = parse_linear_fee_config(&mut ctx, &fee_config)?;
+    let linear_fee = parse_linear_fee_config(&mut ctx, *fee_config)?;
 
     let builder = RawTransferTransactionBuilder::from_incomplete(incomplete_hex, linear_fee)
         .chain_neon(
@@ -289,7 +289,7 @@ pub fn incomplete_builder_linear_fee_argument(
         .get(ctx, "feeConfig")?
         .downcast_or_throw::<JsObject, FunctionContext>(ctx)
         .chain_neon(ctx, "Unable to downcast feeConfig")?;
-    let linear_fee = parse_linear_fee_config(ctx, &fee_config)?;
+    let linear_fee = parse_linear_fee_config(ctx, *fee_config)?;
 
     RawTransferTransactionBuilder::from_incomplete(incomplete_hex, linear_fee)
         .chain_neon(ctx, "Unable to deserialize raw transfer transaction hex")

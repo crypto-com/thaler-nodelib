@@ -82,6 +82,17 @@ jobs:
               - npm install
               - npm run neon-build || travis_terminate 1
               - npm run test || travis_terminate 1
+        - <<: *rust
+          name: Lint and Audit
+          rust: stable
+          script:
+              - npm install
+              - |
+                rustfmt --version || rustup component add rustfmt
+                cargo-clippy --version || rustup component add clippy
+                cargo-audit -h || cargo install cargo-audit
+              - npm run lint || travis_terminate 1
+              - npm run audit || travis_terminate 1
         - stage: Integration Test
           name: Integration Test
           <<: *rust
