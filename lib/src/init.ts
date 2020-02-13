@@ -19,3 +19,5 @@ export const MAX_CRO_FORMATTED = MAX_CRO_BN.toFormat({
     groupSeparator: ',',
     groupSize: 3,
 });
+
+export const CRO_DECIMAL = '100000000';

@@ -163,7 +163,8 @@ fn to_tx_aux_websocket_linear_fee(
     builder: &LinearFeeRawTransferTransactionBuilder,
     tendermint_address: &str,
 ) -> NeonResult<TxAux> {
-    let tendermint_client = WebsocketRpcClient::new(&tendermint_address).chain_neon(ctx, "Unable to create Tendermint client from address")?;
+    let tendermint_client = WebsocketRpcClient::new(&tendermint_address)
+        .chain_neon(ctx, "Unable to create Tendermint client from address")?;
 
     let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
         .chain_neon(
@@ -213,7 +214,8 @@ fn to_mock_abci_tx_aux_websocket_linear_fee(
     builder: &LinearFeeRawTransferTransactionBuilder,
     tendermint_address: &str,
 ) -> NeonResult<TxAux> {
-    let tendermint_client = WebsocketRpcClient::new(&tendermint_address).chain_neon(ctx, "Unable to create Tendermint client from address")?;
+    let tendermint_client = WebsocketRpcClient::new(&tendermint_address)
+        .chain_neon(ctx, "Unable to create Tendermint client from address")?;
 
     let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
 

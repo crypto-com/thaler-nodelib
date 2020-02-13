@@ -35,6 +35,14 @@ If you couldn't find an example for your use case, please [open an issue](https:
 
 - [Create transfer transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
 
+#### HD Wallet
+
+- [Generate mnemonic words](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
+- [Restore from mnemonic words and create addresses and view key at  bip39 path](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
+- [Create addresses and view key at Crypto.com chain default bip44 path](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
+- [create at particular path with format argument](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
+- [Spend UTXO of transfer address generated with HD wallet](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
+
 ## Browser support
 
 Right now the library does not support Browser.

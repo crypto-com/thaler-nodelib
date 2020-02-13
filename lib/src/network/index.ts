@@ -1,4 +1,4 @@
-export { Mainnet, Testnet, Devnet, fromChainId } from './network';
+export { NetworkEnum, Mainnet, Testnet, Devnet, fromChainId } from './network';
 export {
     NetworkConfig,
     MainnetConfig,

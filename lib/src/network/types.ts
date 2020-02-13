@@ -22,15 +22,17 @@ export type TestnetConfig = FullNetworkConfig & {
 
 export type FullNetworkConfig = {
     name: string;
-    addressPrefix: string;
     chainId: Buffer;
+    addressPrefix: string;
+    bip44Path: string;
     feeConfig: FeeConfig;
 };
 
 export type DevnetConfig = {
     name: NetworkEnum.Devnet;
-    addressPrefix: string;
     chainId: Buffer;
+    addressPrefix: string;
+    bip44Path: string;
 };
 
 export interface DevnetOptions {
@@ -53,6 +55,7 @@ const owMainnet = ow.object
         name: owNetworkEnum,
         chainId: ow.buffer,
         addressPrefix: ow.string,
+        bip44Path: ow.string,
         feeConfig: owFeeConfig,
     })
     .validate((value: any) => ({
@@ -64,6 +67,7 @@ const owTestnet = ow.object
         name: owNetworkEnum,
         chainId: ow.buffer,
         addressPrefix: ow.string,
+        bip44Path: ow.string,
         feeConfig: owFeeConfig,
     })
     .validate((value: any) => ({
@@ -75,6 +79,7 @@ const owDevnet = ow.object
         name: owNetworkEnum,
         chainId: ow.buffer,
         addressPrefix: ow.string,
+        bip44Path: ow.string,
     })
     .validate((value: any) => ({
         validator: value.name === NetworkEnum.Devnet,

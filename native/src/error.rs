@@ -26,3 +26,17 @@ where
         }
     }
 }
+
+impl<T> ClientErrorNeonExt<T> for Option<T> {
+    #[inline]
+    fn chain_neon<'a, C, M>(self, ctx: &mut C, message: M) -> NeonResult<T>
+    where
+        C: Context<'a>,
+        M: Display,
+    {
+        match self {
+            None => ctx.throw_error(format!("{}", message)),
+            Some(v) => Ok(v),
+        }
+    }
+}
