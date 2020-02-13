@@ -1,7 +1,6 @@
 import 'mocha';
 import BigNumber from 'bignumber.js';
 import * as cro from '../../lib/src';
-import { FeeAlgorithm } from '../../lib/src/transaction/transfer';
 import {
     newWalletRequest,
     newWithFeeTendermintRpc,
@@ -14,6 +13,7 @@ import { WalletRpc } from '../common/wallet-rpc';
 const TX_TENDERMINT_ADDRESS = process.env.TENDERMINT_RPC_PORT
     ? `ws://127.0.0.1:${process.env.TENDERMINT_RPC_PORT}/websocket`
     : 'ws://127.0.0.1:26657/websocket';
+const CHAIN_HEX_ID = process.env.CHAIN_HEX_ID || 'AB';
 
 describe('Transfer Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -39,7 +39,9 @@ describe('Transfer Transaction', () => {
 
         const transferAddress = cro.address.transfer({
             keyPair,
-            network: cro.Network.Devnet,
+            network: cro.network.Devnet({
+                chainId: CHAIN_HEX_ID,
+            }),
         });
 
         const utxo = await walletRpc.transferToAddress(defaultWallet, {
@@ -54,10 +56,11 @@ describe('Transfer Transaction', () => {
         });
 
         const builder = new cro.TransferTransactionBuilder({
-            network: cro.Network.Devnet,
-            chainId: process.env.CHAIN_HEX_ID || 'AB',
+            network: cro.network.Devnet({
+                chainId: CHAIN_HEX_ID,
+            }),
             feeConfig: {
-                algorithm: FeeAlgorithm.LinearFee,
+                algorithm: cro.fee.FeeAlgorithm.LinearFee,
                 constant: new BigNumber(1000),
                 coefficient: new BigNumber(1001),
             },
@@ -108,7 +111,9 @@ describe('Transfer Transaction', () => {
 
         const transferAddress = cro.address.transfer({
             keyPair,
-            network: cro.Network.Devnet,
+            network: cro.network.Devnet({
+                chainId: CHAIN_HEX_ID,
+            }),
         });
 
         const utxo = await walletRpc.transferToAddress(defaultWallet, {
@@ -123,10 +128,11 @@ describe('Transfer Transaction', () => {
         });
 
         const builder = new cro.TransferTransactionBuilder({
-            network: cro.Network.Devnet,
-            chainId: process.env.CHAIN_HEX_ID || 'AB',
+            network: cro.network.Devnet({
+                chainId: CHAIN_HEX_ID,
+            }),
             feeConfig: {
-                algorithm: FeeAlgorithm.LinearFee,
+                algorithm: cro.fee.FeeAlgorithm.LinearFee,
                 constant: new BigNumber(1000),
                 coefficient: new BigNumber(1001),
             },

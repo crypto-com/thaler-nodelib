@@ -3,48 +3,18 @@ import { expect } from 'chai';
 import BigNumber from 'bignumber.js';
 
 import { TransferTransactionBuilder } from './transfer_transaction_builder';
-import { Network } from '../../network';
-import { FeeAlgorithm } from './types';
 import { KeyPair } from '../../key_pair';
 import { transfer } from '../../address';
 import { MAX_COIN_BN } from '../../init';
+import { FeeAlgorithm } from '../../fee';
+import { Mainnet, Devnet } from '../../network';
 
 describe('TransferTransactionBuilder', () => {
     describe('constructor', () => {
-        it('should throw Error when network is Devnet but chain Id is not provided', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new TransferTransactionBuilder({
-                    network: Network.Devnet,
-                } as any);
-            }).to.throw('Missing chainId for Devnet');
-        });
-
-        it('should set chainId when network is Mainnet or Testnet', () => {
-            let builder = new TransferTransactionBuilder({
-                network: Network.Mainnet,
-            });
-            expect(builder.getChainId()).to.eq('2A');
-
-            builder = new TransferTransactionBuilder({
-                network: Network.Testnet,
-            });
-            expect(builder.getChainId()).to.eq('42');
-        });
-
-        it('should ignore chainId when network is not Devnet', () => {
-            const builder = new TransferTransactionBuilder({
-                network: Network.Testnet,
-                chainId: '66',
-            });
-
-            expect(builder.getChainId()).not.to.eq('66');
-        });
-
-        it('should set chainId to Mainnet when network is not provided', () => {
+        it('should set network to Mainnet when network is not provided', () => {
             const builder = new TransferTransactionBuilder();
 
-            expect(builder.getNetwork()).to.eq(Network.Mainnet);
+            expect(builder.getNetwork()).to.deep.eq(Mainnet);
         });
 
         it('should throw Error when fee config is invalid', () => {
@@ -120,44 +90,6 @@ describe('TransferTransactionBuilder', () => {
 
             expect(builder.getFeeConfig().algorithm).to.eq(
                 FeeAlgorithm.LinearFee,
-            );
-        });
-    });
-
-    describe('setChainIdByNetwork', () => {
-        it('should throw Error when the network is invalid', () => {
-            const builder = new TransferTransactionBuilder();
-
-            expect(() => {
-                builder.setChainIdByNetwork('Invalid' as any);
-            }).to.throw(
-                'Expected value to be one of the network variants (Mainnet, Testnet, Devnet)',
-            );
-        });
-
-        it('should throw an Error when network is Devnet', () => {
-            const builder = new TransferTransactionBuilder();
-
-            expect(() => {
-                builder.setChainIdByNetwork(Network.Devnet);
-            }).to.throw(
-                'Unable to determine chain Id based on network `Devnet`',
-            );
-        });
-
-        it('should update the builder chainId based on network', () => {
-            const builder = new TransferTransactionBuilder();
-
-            builder.setChainIdByNetwork(Network.Mainnet);
-
-            expect(builder.getChainId()).to.eq('2A');
-        });
-
-        it('should return the builder itself', () => {
-            const builder = new TransferTransactionBuilder();
-
-            expect(builder.setChainIdByNetwork(Network.Mainnet)).to.deep.eq(
-                builder,
             );
         });
     });
@@ -260,7 +192,7 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when previous output address is in different network from the builder', () => {
             const builder = new TransferTransactionBuilder({
-                network: Network.Mainnet,
+                network: Mainnet,
             });
 
             expect(() => {
@@ -347,7 +279,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1500'),
                     },
@@ -375,7 +307,7 @@ describe('TransferTransactionBuilder', () => {
                 prevOutput: {
                     address: transfer({
                         keyPair,
-                        network: Network.Mainnet,
+                        network: Mainnet,
                     }),
                     value: new BigNumber('1000'),
                 },
@@ -409,7 +341,7 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when address is in different network from the builder', () => {
             const builder = new TransferTransactionBuilder({
-                network: Network.Mainnet,
+                network: Mainnet,
             });
 
             expect(() => {
@@ -423,8 +355,9 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when value is invalid', () => {
             const builder = new TransferTransactionBuilder({
-                network: Network.Devnet,
-                chainId: 'AB',
+                network: Devnet({
+                    chainId: 'AB',
+                }),
             });
 
             expect(() => {
@@ -440,8 +373,9 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when value is greater than maximum coin', () => {
             const builder = new TransferTransactionBuilder({
-                network: Network.Devnet,
-                chainId: 'AB',
+                network: Devnet({
+                    chainId: 'AB',
+                }),
             });
 
             expect(() => {
@@ -457,8 +391,9 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when valid from is invalid', () => {
             const builder = new TransferTransactionBuilder({
-                network: Network.Devnet,
-                chainId: 'AB',
+                network: Devnet({
+                    chainId: 'AB',
+                }),
             });
 
             expect(() => {
@@ -497,7 +432,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1500'),
                     },
@@ -562,7 +497,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1500'),
                     },
@@ -745,7 +680,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -802,7 +737,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -814,7 +749,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -848,7 +783,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -860,7 +795,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -897,7 +832,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1500'),
                     },
@@ -931,7 +866,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1500'),
                     },
@@ -969,7 +904,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -1005,7 +940,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -1041,7 +976,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1075,7 +1010,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1113,7 +1048,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1125,7 +1060,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1162,7 +1097,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -1250,7 +1185,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1262,7 +1197,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1291,7 +1226,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1303,7 +1238,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1331,7 +1266,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1343,7 +1278,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Network.Mainnet,
+                            network: Mainnet,
                         }),
                         value: new BigNumber('1000'),
                     },

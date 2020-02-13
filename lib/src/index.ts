@@ -1,9 +1,9 @@
 import * as address from './address';
+import * as fee from './fee';
 import * as network from './network';
 import * as transaction from './transaction';
 
-export { address, network, transaction };
+export { address, fee, network, transaction };
 
 export { KeyPair } from './key_pair';
-export { Network } from './network';
 export { TransferTransactionBuilder } from './transaction/transfer';
