@@ -1,11 +1,11 @@
 import ow from 'ow';
 
-import KeyPair from '../key_pair/key_pair';
+import { KeyPair } from '../key_pair';
 import { owKeyPair } from '../key_pair/types';
 
 const native = require('../../../native');
 
-export default function staking(options: StakingOptions): string {
+export function staking(options: StakingOptions): string {
     ow(
         options,
         ow.any(

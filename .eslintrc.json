@@ -11,8 +11,9 @@
                 "devDependencies": true
             }
         ],
+        "import/prefer-default-export": "off",
         "no-unused-vars": "off",
-        "typescript/no-unused-vars": "error"
+        "@typescript-eslint/no-unused-vars": "error"
     },
     "env": {
         "mocha": true

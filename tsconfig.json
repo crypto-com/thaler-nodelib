@@ -67,8 +67,13 @@
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true  /* Disallow inconsistently-cased references to the same file. */
   },
+  "include": [
+    "lib/src/**/*.ts",
+    "native/index.node",
+  ],
   "exclude": [
+    "**/*.spec.ts",
     "chain",
-    "lib/dist"
+    "lib/dist",
   ]
 }

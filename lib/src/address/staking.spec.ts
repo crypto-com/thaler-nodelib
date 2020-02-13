@@ -1,8 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import KeyPair from '../key_pair/key_pair';
-import staking from './staking';
+import { KeyPair } from '../key_pair';
+import { staking } from './staking';
 
 describe('staking', () => {
     it('should throw TypeError when neither KeyPair nor PublicKey is provided', () => {

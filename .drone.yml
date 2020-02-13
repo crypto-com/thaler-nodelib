@@ -1,0 +1,46 @@
+---
+kind: pipeline
+type: exec
+name: integration-tests
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: Build and Test
+  environment:
+    SPID:
+      from_secret: dev_spid
+    IAS_API_KEY:
+      from_secret: dev_ias_key
+  commands:
+  - export NIX_REMOTE=daemon
+  - export DOCKER_COMPOSE_PREFIX="${DRONE_BRANCH}"
+  - export SGX_MODE=HW
+  - . /etc/profile.d/nix.sh
+  - git clone https://github.com/crypto-com/chain chain
+  - cd chain
+  - nix-shell ci-scripts/drone.nix --run "../ci-scripts/start-devnet-chain.sh"
+- name: Teardown
+  commands:
+  - cd chain/integration-tests
+  - docker-compose -p "${DRONE_BRANCH}" down || exit 0
+  when:
+    status:
+      - success
+      - failure
+
+trigger:
+  branch:
+  - master
+  - staging
+  - trying
+  event:
+  - push
+
+---
+kind: signature
+hmac: 0c58269524d8cee0b1ce9aa1cf614b35ef440a6bf42aa03b0ff4b932c706e2f6
+
+...

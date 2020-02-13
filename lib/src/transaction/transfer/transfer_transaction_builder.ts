@@ -11,19 +11,20 @@ import {
     owInput,
     owOutput,
     LinearFeeConfig,
+    owOptionalTendermintAddress,
 } from './types';
 import {
     Network,
-    owNetwork,
     getChainIdByNetwork,
-    owChainId,
     getNetworkByChainId,
-} from '../network';
-import { ViewKey, owViewKey } from '../types';
-import KeyPair from '../key_pair/key_pair';
-import { owKeyPair } from '../key_pair/types';
+} from '../../network';
+import { owNetwork, owChainId } from '../../network/types';
+import { ViewKey, owViewKey } from '../../types';
+import { KeyPair } from '../../key_pair/key_pair';
+import { owKeyPair } from '../../key_pair/types';
+import { getRustFeaturesFromEnv } from '../../native';
 
-const native = require('../../../native');
+const native = require('../../../../native');
 
 const parseOutputForNative = (output: Output): NativeOutput => {
     const nativeOutput: NativeOutput = {
@@ -49,13 +50,15 @@ const parseFeeConfigForNative = (feeConfig: FeeConfig): NativeFeeConfig => {
         return {
             ...feeConfig,
             constant: (feeConfig as LinearFeeConfig).constant.toString(10),
-            coefficient: (feeConfig as LinearFeeConfig).coefficient.toString(10),
+            coefficient: (feeConfig as LinearFeeConfig).coefficient.toString(
+                10,
+            ),
         };
     }
     throw new Error(`Unsupported fee algorithm: ${feeConfig.algorithm}`);
 };
 
-export default class TransferTransactionBuilder {
+export class TransferTransactionBuilder {
     private inputs: Input[] = [];
 
     private outputs: Output[] = [];
@@ -109,7 +112,9 @@ export default class TransferTransactionBuilder {
 
         const chainId = getChainIdByNetwork(network);
         if (chainId === '') {
-            throw new Error(`Unable to determine chain Id based on network \`${network}\``);
+            throw new Error(
+                `Unable to determine chain Id based on network \`${network}\``,
+            );
         }
 
         this.setChainId(chainId);
@@ -146,7 +151,9 @@ export default class TransferTransactionBuilder {
         ow(input, owInput);
 
         if (!this.isTransferAddressInNetwork(input.prevOutput.address)) {
-            throw new Error('Previous output address does not belongs to the builder network');
+            throw new Error(
+                'Previous output address does not belongs to the builder network',
+            );
         }
 
         this.clearIncompleteSigningHex();
@@ -193,7 +200,10 @@ export default class TransferTransactionBuilder {
     }
 
     private isTransferAddressInNetwork(address: string): boolean {
-        return native.address.isTransferAddressValid(address, this.getNetwork());
+        return native.address.isTransferAddressValid(
+            address,
+            this.getNetwork(),
+        );
     }
 
     public txId(): string {
@@ -205,18 +215,26 @@ export default class TransferTransactionBuilder {
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             });
         }
-        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
     public verify() {
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             return native.transferTransaction.verifyLinearFee();
         }
-        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
     public signInput(index: number, keyPair: KeyPair) {
-        ow(index, 'index', ow.number.greaterThanOrEqual(0).lessThan(this.inputsLength()));
+        ow(
+            index,
+            'index',
+            ow.number.greaterThanOrEqual(0).lessThan(this.inputsLength()),
+        );
         ow(keyPair, 'KeyPair', owKeyPair);
 
         if (!keyPair.hasPrivateKey()) {
@@ -236,7 +254,9 @@ export default class TransferTransactionBuilder {
                 keyPair.toObject(),
             );
         } else {
-            throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+            throw new Error(
+                `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+            );
         }
 
         this.incompleteSigningHex = updatedIncompleteSigningHex;
@@ -262,11 +282,15 @@ export default class TransferTransactionBuilder {
             });
         }
 
-        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
-    public toHex(txQueryAddress: string = 'localhost:25944'): Buffer {
-        ow(txQueryAddress, ow.optional.string);
+    public toHex(
+        tendermintAddress: string = 'ws://localhost:26657/websocket',
+    ): Buffer {
+        ow(tendermintAddress, owOptionalTendermintAddress);
 
         if (!this.isCompleted()) {
             throw new Error('Transaction has unsigned input');
@@ -277,10 +301,10 @@ export default class TransferTransactionBuilder {
                 incompleteHex: this.incompleteSigningHex,
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             },
-            txQueryAddress,
+            tendermintAddress,
             // TODO: Use feature conditional compilation when ready
             // https://github.com/neon-bindings/neon/issues/471
-            process.env.NODE_ENV === 'test',
+            getRustFeaturesFromEnv(process.env.NODE_ENV),
         );
     }
 
@@ -296,7 +320,9 @@ export default class TransferTransactionBuilder {
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             return this.buildIncompleteHexLinearFee();
         }
-        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
     private buildIncompleteHexLinearFee(): Buffer {

@@ -1,13 +1,13 @@
 import 'mocha';
 import { expect } from 'chai';
-
 import BigNumber from 'bignumber.js';
-import TransferTransactionBuilder from './transfer_transaction_builder';
-import { Network } from '../network';
+
+import { TransferTransactionBuilder } from './transfer_transaction_builder';
+import { Network } from '../../network';
 import { FeeAlgorithm } from './types';
-import KeyPair from '../key_pair/key_pair';
-import transfer from '../address/transfer';
-import { MAX_COIN_BN } from '../init';
+import { KeyPair } from '../../key_pair';
+import { transfer } from '../../address';
+import { MAX_COIN_BN } from '../../init';
 
 describe('TransferTransactionBuilder', () => {
     describe('constructor', () => {
@@ -68,7 +68,9 @@ describe('TransferTransactionBuilder', () => {
                         algorithm: 'Invalid',
                     },
                 } as any);
-            }).to.throw('Unsupported fee algorithm: Invalid in object `feeConfig` in object');
+            }).to.throw(
+                'Unsupported fee algorithm: Invalid in object `feeConfig` in object',
+            );
         });
 
         it('should throw Error when Linear fee constant and/or coefficient is invalid', () => {
@@ -102,7 +104,9 @@ describe('TransferTransactionBuilder', () => {
         it('should set fee algorithm as Linear fee when fee algorithm is not provided', () => {
             const builder = new TransferTransactionBuilder();
 
-            expect(builder.getFeeConfig().algorithm).to.eq(FeeAlgorithm.LinearFee);
+            expect(builder.getFeeConfig().algorithm).to.eq(
+                FeeAlgorithm.LinearFee,
+            );
         });
 
         it('should use the fee config provided', () => {
@@ -114,7 +118,9 @@ describe('TransferTransactionBuilder', () => {
                 },
             });
 
-            expect(builder.getFeeConfig().algorithm).to.eq(FeeAlgorithm.LinearFee);
+            expect(builder.getFeeConfig().algorithm).to.eq(
+                FeeAlgorithm.LinearFee,
+            );
         });
     });
 
@@ -134,7 +140,9 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.setChainIdByNetwork(Network.Devnet);
-            }).to.throw('Unable to determine chain Id based on network `Devnet`');
+            }).to.throw(
+                'Unable to determine chain Id based on network `Devnet`',
+            );
         });
 
         it('should update the builder chainId based on network', () => {
@@ -148,7 +156,9 @@ describe('TransferTransactionBuilder', () => {
         it('should return the builder itself', () => {
             const builder = new TransferTransactionBuilder();
 
-            expect(builder.setChainIdByNetwork(Network.Mainnet)).to.deep.eq(builder);
+            expect(builder.setChainIdByNetwork(Network.Mainnet)).to.deep.eq(
+                builder,
+            );
         });
     });
 
@@ -161,7 +171,8 @@ describe('TransferTransactionBuilder', () => {
                     prevTxId: 'INVALID',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 });
@@ -173,7 +184,8 @@ describe('TransferTransactionBuilder', () => {
                     prevTxId: '000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 });
@@ -187,10 +199,12 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: -1,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 });
@@ -199,10 +213,12 @@ describe('TransferTransactionBuilder', () => {
             );
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: '0' as any,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 });
@@ -216,7 +232,8 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: 'invalid0address',
@@ -228,7 +245,8 @@ describe('TransferTransactionBuilder', () => {
             );
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: 'cro0invalid0address',
@@ -247,14 +265,18 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'dcro1pe7qg5gshrdl99m9q3ecpzvfr8zuk4h5qqgjyv6y24n80zye42as88x8tg',
+                        address:
+                            'dcro1pe7qg5gshrdl99m9q3ecpzvfr8zuk4h5qqgjyv6y24n80zye42as88x8tg',
                         value: new BigNumber('1000'),
                     },
                 });
-            }).to.throw('Previous output address does not belongs to the builder network');
+            }).to.throw(
+                'Previous output address does not belongs to the builder network',
+            );
         });
 
         it('should throw Error when previous output value is invalid', () => {
@@ -262,10 +284,12 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: '1000' as any,
                     },
                 });
@@ -279,10 +303,12 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                         validFrom: 0 as any,
                     },
@@ -296,10 +322,12 @@ describe('TransferTransactionBuilder', () => {
             const builder = new TransferTransactionBuilder();
 
             builder.addInput({
-                prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000000',
                 prevIndex: 0,
                 prevOutput: {
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 },
             });
@@ -313,18 +341,20 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
                             keyPair,
                             network: Network.Mainnet,
                         }),
-                        value: new BigNumber('500'),
+                        value: new BigNumber('1500'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -339,7 +369,8 @@ describe('TransferTransactionBuilder', () => {
             expect(builder.isCompleted()).to.eq(true);
 
             builder.addInput({
-                prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000000',
                 prevIndex: 1,
                 prevOutput: {
                     address: transfer({
@@ -363,13 +394,17 @@ describe('TransferTransactionBuilder', () => {
                     address: 'invalid0address',
                     value: new BigNumber('1000'),
                 });
-            }).to.throw('Expected property value to be a valid transfer address in object');
+            }).to.throw(
+                'Expected property value to be a valid transfer address in object',
+            );
             expect(() => {
                 builder.addOutput({
                     address: 'cro0invalid0address',
                     value: new BigNumber('1000'),
                 });
-            }).to.throw('Expected property value to be a valid transfer address in object');
+            }).to.throw(
+                'Expected property value to be a valid transfer address in object',
+            );
         });
 
         it('should throw Error when address is in different network from the builder', () => {
@@ -379,7 +414,8 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addOutput({
-                    address: 'dcro1pe7qg5gshrdl99m9q3ecpzvfr8zuk4h5qqgjyv6y24n80zye42as88x8tg',
+                    address:
+                        'dcro1pe7qg5gshrdl99m9q3ecpzvfr8zuk4h5qqgjyv6y24n80zye42as88x8tg',
                     value: new BigNumber('1000'),
                 });
             }).to.throw('Address does not belongs to the builder network');
@@ -393,7 +429,8 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: '1000' as any,
                 });
             }).to.throw(
@@ -409,7 +446,8 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: MAX_COIN_BN.plus(1),
                 });
             }).to.throw(
@@ -425,7 +463,8 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                     validFrom: 0 as any,
                 });
@@ -438,7 +477,8 @@ describe('TransferTransactionBuilder', () => {
             const builder = new TransferTransactionBuilder();
 
             builder.addOutput({
-                address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                address:
+                    'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                 value: new BigNumber('1000'),
             });
 
@@ -451,18 +491,20 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
                             keyPair,
                             network: Network.Mainnet,
                         }),
-                        value: new BigNumber('2500'),
+                        value: new BigNumber('1500'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -477,7 +519,8 @@ describe('TransferTransactionBuilder', () => {
             expect(builder.isCompleted()).to.eq(true);
 
             builder.addOutput({
-                address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                address:
+                    'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                 value: new BigNumber('1000'),
             });
 
@@ -513,7 +556,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -524,7 +568,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -555,15 +600,18 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -576,7 +624,9 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.signInput(-1, keyPair);
-            }).to.throw('Expected number `index` to be greater than or equal to 0, got -1');
+            }).to.throw(
+                'Expected number `index` to be greater than or equal to 0, got -1',
+            );
         });
 
         it('should throw Error when the input index is out of bound', () => {
@@ -584,15 +634,18 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -613,15 +666,18 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -647,15 +703,18 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -680,7 +739,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -691,7 +751,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('2500'),
                 })
                 .addViewKey(
@@ -715,7 +776,8 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('2500'),
                 })
                 .addViewKey(
@@ -734,7 +796,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -745,7 +808,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -756,7 +820,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('2500'),
                 })
                 .addViewKey(
@@ -777,7 +842,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -788,7 +854,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 1,
                     prevOutput: {
                         address: transfer({
@@ -799,7 +866,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('2500'),
                 })
                 .addViewKey(
@@ -823,7 +891,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -834,7 +903,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -845,7 +915,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.txId()).to.eq(
-                '2256fdd23a1d6bd38865b19e0693bdd7cdbe069e7d8fdca1140345c555df2fb6',
+                'bc559df5eab96930849e5d12a5b04b7b577420094481831c1d393add3deffe14',
             );
         });
 
@@ -855,7 +925,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -866,7 +937,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 })
                 .addViewKey(
@@ -885,13 +957,86 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('toHex', () => {
+        it('should throw Error when the tendermint address is not http nor ws', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('2000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(() => {
+                builder.toHex('tcp://127.0.0.1');
+            }).to.throw('Expected value to be HTTP or WS tendermint address');
+        });
+
+        it('should throw Error when the tendermint address is invalid URL', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('2000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(() => {
+                builder.toHex('ws://tendermint:999999');
+            }).to.throw('Expected value to be HTTP or WS tendermint address');
+        });
+
         it('should throw Error when the transaction has unsigned input', () => {
             const builder = new TransferTransactionBuilder();
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -902,7 +1047,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('500'),
                 })
                 .addViewKey(
@@ -923,7 +1069,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -934,7 +1081,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -959,7 +1107,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -970,7 +1119,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 1,
                     prevOutput: {
                         address: transfer({
@@ -981,7 +1131,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -995,7 +1146,72 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(1, keyPair);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001000000000000000000000000000000000000000000710600080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000800569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f00569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000',
+                '000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001000000000000000000000000000000000000000000710600080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00080075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078fc9e4f91671e134a720f3391b904692f7b2a53a8deb478b8be11b9f4a4fe4e11f',
+            );
+        });
+
+        it('should return completed Hex given correct tendermint address', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Network.Mainnet,
+                        }),
+                        value: new BigNumber('2000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(
+                builder.toHex('ws://127.0.0.1/websocket').toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+            );
+            expect(
+                builder.toHex('ws://localhost/websocket').toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+            );
+            expect(
+                builder
+                    .toHex('ws://tendermint-zerofee:26657/websocket')
+                    .toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+            );
+            expect(
+                builder.toHex('wss://localhost/websocket').toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+            );
+            expect(
+                builder.toHex('http://localhost:26657').toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+            );
+            expect(
+                builder.toHex('https://chain.crypto.com').toString('hex'),
+            ).to.eq(
+                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
             );
         });
     });
@@ -1006,7 +1222,8 @@ describe('TransferTransactionBuilder', () => {
 
             builder
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -1017,7 +1234,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '00040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '00040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
             );
         });
 
@@ -1027,7 +1244,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -1038,7 +1256,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 1,
                     prevOutput: {
                         address: transfer({
@@ -1056,7 +1275,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
             );
         });
 
@@ -1066,7 +1285,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -1077,7 +1297,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 1,
                     prevOutput: {
                         address: transfer({
@@ -1088,12 +1309,13 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1500'),
                 });
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000003200',
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a00',
             );
         });
 
@@ -1103,7 +1325,8 @@ describe('TransferTransactionBuilder', () => {
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
                         address: transfer({
@@ -1114,7 +1337,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addInput({
-                    prevTxId: '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 1,
                     prevOutput: {
                         address: transfer({
@@ -1125,7 +1349,8 @@ describe('TransferTransactionBuilder', () => {
                     },
                 })
                 .addOutput({
-                    address: 'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -1139,7 +1364,7 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(1, keyPair);
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de803000000000000000100569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de803000000000000000100569bacca3b4eb07c39beb59049bf436b2f894ffd015efad963b73db863309299d8ccbcc67fb41cb194333702bc3082e217a3db7fe4c6a5c4e7aa9b8fbc2cf8a2e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc050000000000000032040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000010075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000010075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
             );
         });
     });
