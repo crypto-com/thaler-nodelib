@@ -12,12 +12,9 @@ pub fn get_transfer_address_from_public_key(mut ctx: FunctionContext) -> JsResul
     let network = network_argument(&mut ctx, 1)?;
 
     let required_signers = 1;
-    let multi_sig_address = MultiSigAddress::new(
-        vec![public_key.clone()],
-        public_key.clone(),
-        required_signers,
-    )
-    .chain_neon(&mut ctx, "Unable to create MultiSig address")?;
+    let multi_sig_address =
+        MultiSigAddress::new(vec![public_key.clone()], public_key, required_signers)
+            .chain_neon(&mut ctx, "Unable to create MultiSig address")?;
 
     let extended_address = ExtendedAddr::from(multi_sig_address);
     let cro_address = extended_address

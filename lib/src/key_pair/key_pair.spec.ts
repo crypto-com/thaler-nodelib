@@ -84,8 +84,12 @@ describe('KeyPair', () => {
             const firstKeyPair = KeyPair.generateRandom();
             const secondKeyPair = KeyPair.generateRandom();
 
-            expect(firstKeyPair.publicKey).not.to.deep.eq(secondKeyPair.publicKey);
-            expect(firstKeyPair.privateKey).not.to.deep.eq(secondKeyPair.privateKey);
+            expect(firstKeyPair.publicKey).not.to.deep.eq(
+                secondKeyPair.publicKey,
+            );
+            expect(firstKeyPair.privateKey).not.to.deep.eq(
+                secondKeyPair.privateKey,
+            );
         });
     });
 

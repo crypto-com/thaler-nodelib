@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/crypto-com/cro-nodelib"
   },
-  "author": "Calvin Lau <calvin@crypto.com>",
+  "author": "Crypto.com <chain@crypto.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "axios": "0.19.0",
@@ -48,7 +48,11 @@
     "tsc-build": "tsc",
     "build": "npm run neon-build && npm run tsc-build",
     "clean": "rm -rf ./native/target && rm ./native/index.node",
+    "lint": "npm run eslint && npm run rustlint",
     "eslint": "eslint 'lib/**'",
+    "rustlint": "cd native && cargo fmt -- --check --color=auto && cargo clippy -- -D warnings",
+    "audit": "npm audit && npm run rustaudit",
+    "rustaudit": "cd native && cargo audit",
     "nodemon": "NODE_ENV=test nodemon",
     "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'",
     "ci:withdraw-all-stake": "ts-node ./integration-tests/withdraw-all-stake.ts",

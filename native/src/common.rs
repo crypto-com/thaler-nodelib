@@ -23,7 +23,7 @@ impl Features {
 
 pub fn does_js_object_has_prop(
     ctx: &mut FunctionContext,
-    obj: &JsObject,
+    obj: JsObject,
     target_prop: &str,
 ) -> NeonResult<bool> {
     let prop_names = obj.get_own_property_names(ctx)?.to_vec(ctx)?;
@@ -38,5 +38,5 @@ pub fn does_js_object_has_prop(
         }
     }
 
-    return Ok(false);
+    Ok(false)
 }

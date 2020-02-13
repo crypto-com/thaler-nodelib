@@ -44,13 +44,13 @@ where
     ) -> NeonResult<LinearFeeBuilderOptions> {
         let options = ctx.argument::<JsObject>(0)?;
 
-        let raw_tx_options = BuilderOptions::<LinearFee>::parse_raw_tx_options(ctx, &options)?;
+        let raw_tx_options = BuilderOptions::<LinearFee>::parse_raw_tx_options(ctx, *options)?;
 
         let fee_config = options
             .get(ctx, "feeConfig")?
             .downcast_or_throw::<JsObject, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast feeConfig")?;
-        let fee_algorithm = parse_linear_fee_config(ctx, &fee_config)?;
+        let fee_algorithm = parse_linear_fee_config(ctx, *fee_config)?;
 
         Ok(BuilderOptions {
             raw_tx_options,
@@ -61,7 +61,7 @@ where
     // fn parse_fn_ctx(&mut ctx: FunctionContext) -> NeonResult<BuilderOptions> {
     fn parse_raw_tx_options(
         ctx: &mut FunctionContext,
-        options: &JsObject,
+        options: JsObject,
     ) -> NeonResult<RawTransactionOptions> {
         let chain_id = options
             .get(ctx, "chainId")?
@@ -82,7 +82,7 @@ where
                 let input = input
                     .downcast_or_throw::<JsObject, FunctionContext>(ctx)
                     .chain_neon(ctx, "Unable to downcast input")?;
-                BuilderOptions::<F>::parse_input(ctx, &input, &network)
+                BuilderOptions::<F>::parse_input(ctx, *input, network)
             })
             .collect::<NeonResult<Vec<(TxoPointer, TxOut)>>>()?;
 
@@ -97,7 +97,7 @@ where
                 let output = output
                     .downcast_or_throw::<JsObject, FunctionContext>(ctx)
                     .chain_neon(ctx, "Unable to downcast output")?;
-                BuilderOptions::<F>::parse_output(ctx, &output, &network)
+                BuilderOptions::<F>::parse_output(ctx, *output, network)
             })
             .collect::<NeonResult<Vec<TxOut>>>()?;
 
@@ -112,7 +112,7 @@ where
                 let view_key = view_key
                     .downcast_or_throw::<JsBuffer, FunctionContext>(ctx)
                     .chain_neon(ctx, "Unable to downcast viewKey")?;
-                BuilderOptions::<F>::parse_view_key(ctx, &view_key)
+                BuilderOptions::<F>::parse_view_key(ctx, *view_key)
             })
             .collect::<NeonResult<Vec<PublicKey>>>()?;
 
@@ -136,8 +136,8 @@ where
 
     fn parse_input(
         ctx: &mut FunctionContext,
-        input: &JsObject,
-        network: &Network,
+        input: JsObject,
+        network: Network,
     ) -> NeonResult<(TxoPointer, TxOut)> {
         let prev_txid = input
             .get(ctx, "prevTxId")?
@@ -161,22 +161,22 @@ where
             .get(ctx, "prevOutput")?
             .downcast_or_throw::<JsObject, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast prevOutput in input")?;
-        let tx_out = BuilderOptions::<F>::parse_output(ctx, &tx_out, &network)?;
+        let tx_out = BuilderOptions::<F>::parse_output(ctx, *tx_out, network)?;
 
         Ok((txo_pointer, tx_out))
     }
 
     fn parse_output(
         ctx: &mut FunctionContext,
-        output: &JsObject,
-        network: &Network,
+        output: JsObject,
+        network: Network,
     ) -> NeonResult<TxOut> {
         let address = output
             .get(ctx, "address")?
             .downcast_or_throw::<JsString, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast address in output")?
             .value();
-        let address = ExtendedAddr::from_cro(&address, *network)
+        let address = ExtendedAddr::from_cro(&address, network)
             .chain_neon(ctx, "Unable to deserialize output address to CRO address")?;
 
         let value = output
@@ -187,7 +187,7 @@ where
         let value =
             Coin::from_str(&value).chain_neon(ctx, "Unable to deserialize output Coin value")?;
 
-        let valid_from = if does_js_object_has_prop(ctx, &output, "validFrom")? {
+        let valid_from = if does_js_object_has_prop(ctx, output, "validFrom")? {
             let value = output
                 .get(ctx, "validFrom")?
                 .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
@@ -205,7 +205,7 @@ where
         })
     }
 
-    fn parse_view_key(ctx: &mut FunctionContext, view_key: &JsBuffer) -> NeonResult<PublicKey> {
+    fn parse_view_key(ctx: &mut FunctionContext, view_key: JsBuffer) -> NeonResult<PublicKey> {
         let view_key = view_key.borrow(&ctx.lock()).as_slice();
 
         let view_key = hex::encode_upper(view_key);
@@ -216,7 +216,7 @@ where
 
 pub fn parse_linear_fee_config(
     ctx: &mut FunctionContext,
-    fee_config: &JsObject,
+    fee_config: JsObject,
 ) -> NeonResult<LinearFee> {
     let algorithm = fee_config
         .get(ctx, "algorithm")?
