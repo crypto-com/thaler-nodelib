@@ -1,3 +1,7 @@
+/**
+ * Network enums
+ * typedef Network
+ * */
 export enum Network {
     Mainnet = 'Mainnet',
     Testnet = 'Testnet',

@@ -1,17 +1,30 @@
 import ow from 'ow';
 import BigNumber from 'bignumber.js';
-
 import { URL } from 'url';
 import { owCoin, owTransferAddress } from '../../types';
 import { Network } from '../../network';
 import { owOptionalNetwork, owOptionalChainId } from '../../network/types';
 
+/**
+ * Transaction input
+ * @typedef Input
+ * @property {string} prevTxId previous transaction Id
+ * @property {number} prevIndex previous transaction output index
+ * @property {Output} prevOutput previous transaction output
+ */
 export interface Input {
     prevTxId: string;
     prevIndex: number;
     prevOutput: Output;
 }
 
+/**
+ * Transaction output
+ * @typedef Output
+ * @property {string} address output destination address
+ * @property {BigNumber} value output value in CRO basic unit
+ * @property {Date} validFrom output valid from
+ */
 export interface Output {
     address: string;
     value: BigNumber;
@@ -62,11 +75,19 @@ export enum FeeAlgorithm {
     LinearFee = 'LinearFee',
 }
 
+/**
+ * Transaction builder fee configuration
+ * @typedef FeeConfig
+ */
 export type FeeConfig =
     | LinearFeeConfig
     | {
           algorithm: FeeAlgorithm;
       };
+/**
+ * Linear fee configuration
+ * @typedef LinearFee
+ */
 export type LinearFeeConfig = {
     algorithm: FeeAlgorithm.LinearFee;
     constant: BigNumber;

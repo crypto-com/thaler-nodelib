@@ -58,6 +58,9 @@ const parseFeeConfigForNative = (feeConfig: FeeConfig): NativeFeeConfig => {
     throw new Error(`Unsupported fee algorithm: ${feeConfig.algorithm}`);
 };
 
+/**
+ * A builder for building transfer transaction
+ */
 export class TransferTransactionBuilder {
     private inputs: Input[] = [];
 
@@ -71,6 +74,14 @@ export class TransferTransactionBuilder {
 
     private incompleteSigningHex?: Buffer;
 
+    /**
+     * Creates an instance of TransferTransactionBuilder.
+     * @param {TransferTransactionBuilderOptions} [options] Builder options
+     * @param {Network} options.network Network the transaction belongs to
+     * @param {string} [options.chainId] ChainId when the network is Devnet
+     * @param {FeeConfig} [options.feeConfig=LinearFee] Fee configuration
+     * @memberof TransferTransactionBuilder
+     */
     public constructor(options?: TransferTransactionBuilderOptions) {
         ow(options, owTransferTransactionBuilderOptions as any);
 
@@ -103,9 +114,11 @@ export class TransferTransactionBuilder {
     }
 
     /**
-     * Update the chainId of the builder with the network
-     * Upon update, all witness signatures will be removed
-     * @param network Network that chainId belongs to
+     * Update builder chainId with the network
+     *
+     * @param {Network} network network that chainId belongs to
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
      */
     public setChainIdByNetwork(network: Network): TransferTransactionBuilder {
         ow(network, owNetwork);
@@ -124,11 +137,21 @@ export class TransferTransactionBuilder {
 
     /**
      * Returns the current network
+     *
+     * @returns {Network} current network
+     * @memberof TransferTransactionBuilder
      */
     public getNetwork(): Network {
         return getNetworkByChainId(this.chainId);
     }
 
+    /**
+     * Update builder chainId
+     *
+     * @param {string} chainId new chainId
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
+     */
     public setChainId(chainId: string): TransferTransactionBuilder {
         ow(chainId, owChainId);
 
@@ -137,16 +160,36 @@ export class TransferTransactionBuilder {
         return this;
     }
 
+    /**
+     * Returns current chainId
+     *
+     * @returns {string} current chainId
+     * @memberof TransferTransactionBuilder
+     */
     public getChainId(): string {
         return this.chainId;
     }
 
+    /**
+     * Returns current fee configuration
+     *
+     * @returns {FeeConfig} current fee configuration
+     * @memberof TransferTransactionBuilder
+     */
     public getFeeConfig(): FeeConfig {
         return {
             ...this.feeConfig,
         };
     }
 
+    /**
+     * Append a previous transaction output as a input. All previous signatures
+     * will be cleared when new input is added to builder.
+     *
+     * @param {Input} input input to be added
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
+     */
     public addInput(input: Input): TransferTransactionBuilder {
         ow(input, owInput);
 
@@ -163,6 +206,14 @@ export class TransferTransactionBuilder {
         return this;
     }
 
+    /**
+     * Append an output to the builder. All previous signatures will be cleared
+     * when new output is added to builder.
+     *
+     * @param {Output} output output to be added
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
+     */
     public addOutput(output: Output): TransferTransactionBuilder {
         ow(output, owOutput);
 
@@ -177,18 +228,21 @@ export class TransferTransactionBuilder {
         return this;
     }
 
-    public inputsLength(): number {
-        return this.inputs.length;
+    private isTransferAddressInNetwork(address: string): boolean {
+        return native.address.isTransferAddressValid(
+            address,
+            this.getNetwork(),
+        );
     }
 
-    public outputsLength(): number {
-        return this.outputs.length;
-    }
-
-    public viewKeysLength(): number {
-        return this.viewKeys.length;
-    }
-
+    /**
+     * Add a view key to the builder. All previous signatures will be cleared
+     * when new output is added to builder.
+     *
+     * @param {Buffer} viewKey view key to be added
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
+     */
     public addViewKey(viewKey: Buffer): TransferTransactionBuilder {
         ow(viewKey, owViewKey);
 
@@ -199,13 +253,46 @@ export class TransferTransactionBuilder {
         return this;
     }
 
-    private isTransferAddressInNetwork(address: string): boolean {
-        return native.address.isTransferAddressValid(
-            address,
-            this.getNetwork(),
-        );
+    private clearIncompleteSigningHex() {
+        this.incompleteSigningHex = undefined;
     }
 
+    /**
+     * Returns number of inputs
+     *
+     * @returns {number} number of inputs
+     * @memberof TransferTransactionBuilder
+     */
+    public inputsLength(): number {
+        return this.inputs.length;
+    }
+
+    /**
+     * Returns number of outputs
+     *
+     * @returns {number} number of outputs
+     * @memberof TransferTransactionBuilder
+     */
+    public outputsLength(): number {
+        return this.outputs.length;
+    }
+
+    /**
+     * Returns number of view keys
+     *
+     * @returns {number} number of view keys
+     * @memberof TransferTransactionBuilder
+     */
+    public viewKeysLength(): number {
+        return this.viewKeys.length;
+    }
+
+    /**
+     * Returns transaction Id
+     *
+     * @returns {string} transaction Id
+     * @memberof TransferTransactionBuilder
+     */
     public txId(): string {
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             const incompleteHex = this.buildIncompleteHex();
@@ -215,20 +302,16 @@ export class TransferTransactionBuilder {
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             });
         }
-        throw new Error(
-            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
-        );
+        throw new Error(`Unsupported fee algorithm ${this.feeConfig.algorithm}`);
     }
 
-    public verify() {
-        if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
-            return native.transferTransaction.verifyLinearFee();
-        }
-        throw new Error(
-            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
-        );
-    }
-
+    /**
+     * Sign a particular input with the provided KeyPair
+     *
+     * @param {number} index input index
+     * @param {KeyPair} keyPair key pair which can unlock the input
+     * @memberof TransferTransactionBuilder
+     */
     public signInput(index: number, keyPair: KeyPair) {
         ow(
             index,
@@ -262,6 +345,28 @@ export class TransferTransactionBuilder {
         this.incompleteSigningHex = updatedIncompleteSigningHex;
     }
 
+    /**
+     * Verify the transaction builder is valid
+     *
+     * @throws {Error} error when the transaction is invalid
+     * @memberof TransferTransactionBuilder
+     */
+    public verify() {
+        if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
+            return native.transferTransaction.verifyLinearFee();
+        }
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
+    }
+
+    /**
+     * Returns the incompleted raw transaction in hex. This transaction is not
+     * broadcast-able
+     *
+     * @returns {Buffer} incomplete raw transaction hex
+     * @memberof TransferTransactionBuilder
+     */
     public toIncompleteHex(): Buffer {
         if (this.isSigning()) {
             return this.incompleteSigningHex!;
@@ -270,6 +375,12 @@ export class TransferTransactionBuilder {
         return this.buildIncompleteHex();
     }
 
+    /**
+     * Determine if the transaction has signatures for all of its input
+     *
+     * @returns {boolean} returns true if all inputs have signature
+     * @memberof TransferTransactionBuilder
+     */
     public isCompleted(): boolean {
         if (!this.incompleteSigningHex) {
             return false;
@@ -287,6 +398,13 @@ export class TransferTransactionBuilder {
         );
     }
 
+    /**
+     * Output broadcast-able transaction in hex
+     *
+     * @param {string} [tendermintAddress='ws://localhost:26657/websocket']
+     * @returns {Buffer}
+     * @memberof TransferTransactionBuilder
+     */
     public toHex(
         tendermintAddress: string = 'ws://localhost:26657/websocket',
     ): Buffer {
@@ -333,10 +451,6 @@ export class TransferTransactionBuilder {
             viewKeys: this.viewKeys,
             feeConfig: parseFeeConfigForNative(this.feeConfig),
         });
-    }
-
-    private clearIncompleteSigningHex() {
-        this.incompleteSigningHex = undefined;
     }
 
     private isSigning(): boolean {
