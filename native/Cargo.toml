@@ -21,10 +21,7 @@ neon-build = "0.3.3"
 neon = "0.3.3"
 hex = "0.4.0"
 parity-scale-codec = { features = ["derive"], version = "1.1" }
-secstr = { version = "0.3.2", features = ["serde"] }
-# chain-core = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0" }
-# client-common = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0", features = ["default", "http-rpc", "websocket-rpc"] }
-# client-core = { git = "https://github.com/crypto-com/chain", tag = "v0.2.0" }
-chain-core = { git = "https://github.com/calvinlauco/chain", branch = "tmp/cro-nodelib-0.1.0" }
-client-common = { git = "https://github.com/calvinlauco/chain", branch = "tmp/cro-nodelib-0.1.0", features = ["default", "http-rpc", "websocket-rpc"] }
-client-core = { git = "https://github.com/calvinlauco/chain", branch = "tmp/cro-nodelib-0.1.0" }
+secstr = { version = "0.4.0", features = ["serde"] }
+chain-core = { git = "https://github.com/crypto-com/chain", branch = "master" }
+client-common = { git = "https://github.com/crypto-com/chain", branch = "master", features = ["default", "http-rpc", "websocket-rpc"] }
+client-core = { git = "https://github.com/crypto-com/chain", branch = "master" }
