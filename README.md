@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/crypto-com/cro-nodelib.svg?branch=master)](https://travis-ci.org/crypto-com/cro-nodelib)
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+
 # Crypto.com Chain library for Node.js
 
 This repository contains the Node.js library for interacting with Crypto.com Chain.

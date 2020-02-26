@@ -3,8 +3,8 @@
 set -e
 
 # Build and start chain Devnet
-git clone https://github.com/calvinlauco/chain || echo "`chain` folder already exists"
-cd chain; git checkout feature/cro-629-travis-integration-tests; git pull; cd ..;
+git clone https://github.com/crypto-com/chain || echo "`chain` folder already exists"
+cd chain; git checkout master; git pull; git checkout 438b62c07a3d91760d1bebabc583af8c9242ca16 -b integratin-test; cd ..;
 
 cd chain/integration-tests
 ./prepare.sh || exit 1
