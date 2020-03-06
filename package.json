@@ -51,7 +51,7 @@
     "lint": "npm run eslint && npm run rustlint",
     "eslint": "eslint 'lib/**'",
     "rustlint": "cd native && cargo fmt -- --check --color=auto && cargo clippy -- -D warnings",
-    "audit": "npm audit && npm run rustaudit",
+    "audit": "npm audit --audit-level=moderate && npm run rustaudit",
     "rustaudit": "cd native && cargo audit",
     "nodemon": "NODE_ENV=test nodemon",
     "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'",

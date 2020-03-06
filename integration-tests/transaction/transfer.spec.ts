@@ -1,11 +1,6 @@
 import 'mocha';
 import * as cro from '../../lib/src';
-import {
-    newWalletRequest,
-    newWithFeeTendermintRpc,
-    newWithFeeWalletRpc,
-    WalletRequest,
-} from '../common/utils';
+import { newTendermintRPC, newWalletRPC, WalletRequest } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
 
@@ -19,13 +14,19 @@ describe('Transfer Transaction', () => {
     let walletRpc: WalletRpc;
     let defaultWallet: WalletRequest;
 
-    before(() => {
-        tendermintRpc = newWithFeeTendermintRpc();
-        walletRpc = newWithFeeWalletRpc();
-        defaultWallet = newWalletRequest(
-            'Default',
-            process.env.WALLET_PASSPHRASE || '123456',
-        );
+    before(async () => {
+        tendermintRpc = newTendermintRPC();
+        walletRpc = newWalletRPC();
+        const walletAuthRequest = {
+            name: 'Default',
+            passphrase: process.env.WALLET_PASSPHRASE || '123456',
+        };
+        const enckey = await walletRpc.getAuthToken(walletAuthRequest);
+
+        defaultWallet = {
+            name: 'Default',
+            enckey,
+        };
     });
 
     // eslint-disable-next-line func-names

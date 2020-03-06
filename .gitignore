@@ -7,8 +7,10 @@ native/artifacts.json
 
 lib/dist
 
+# IDE
 .vscode
 
-lib/dist
-
+# CI/CD
 chain
+drone
+
