@@ -30,29 +30,16 @@ export const newTendermintRpc = (
     return new TendermintRpc(`http://${host}:${port}`);
 };
 
-export const newZeroFeeTendermintRpc = (): TendermintRpc => {
-    return newTendermintRpc(
-        'localhost',
-        Number(process.env.TENDERMINT_ZEROFEE_RPC_PORT) || 16657,
-    );
-};
-
-export const newWithFeeTendermintRpc = (): TendermintRpc => {
+export const newTendermintRPC = (): TendermintRpc => {
     return newTendermintRpc(
         'localhost',
         Number(process.env.TENDERMINT_RPC_PORT) || 26657,
     );
 };
 
-export const newZeroFeeWalletRpc = (): WalletRpc => {
-    const rpcClient = newZeroFeeRpcClient();
-    const tendermintRpc = newZeroFeeTendermintRpc();
-    return new WalletRpc(rpcClient, tendermintRpc);
-};
-
-export const newWithFeeWalletRpc = (): WalletRpc => {
+export const newWalletRPC = (): WalletRpc => {
     const rpcClient = newWithFeeRpcClient();
-    const tendermintRpc = newWithFeeTendermintRpc();
+    const tendermintRpc = newTendermintRPC();
     return new WalletRpc(rpcClient, tendermintRpc);
 };
 
@@ -62,23 +49,18 @@ export const sleep = (ms: number = 1000) => {
     });
 };
 
-export interface WalletRequest {
+export interface WalletAuthRequest {
     name: string;
     passphrase: string;
 }
 
+export interface WalletRequest {
+    name: string;
+    enckey: string;
+}
+
 export const generateWalletName = (prefix: string = 'NewWallet'): string => {
     return `${prefix}_${Date.now()}`;
-};
-
-export const newWalletRequest = (
-    name: string,
-    passphrase: string,
-): WalletRequest => {
-    return {
-        name,
-        passphrase,
-    };
 };
 
 export const asyncMiddleman = async (

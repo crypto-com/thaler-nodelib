@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { RpcClient } from './rpc-client';
-import { WalletRequest, asyncMiddleman } from './utils';
+import { WalletRequest, asyncMiddleman, WalletAuthRequest } from './utils';
 import { TendermintRpc } from './tendermint-rpc';
 
 export class WalletRpc {
@@ -11,6 +11,15 @@ export class WalletRpc {
     constructor(rpcClient: RpcClient, tendermintRpc: TendermintRpc) {
         this.rpcClient = rpcClient;
         this.tendermintRpc = tendermintRpc;
+    }
+
+    public async getAuthToken(
+        walletAuthRequest: WalletAuthRequest,
+    ): Promise<string> {
+        return asyncMiddleman(
+            this.rpcClient.request('wallet_getEncKey', [walletAuthRequest]),
+            'Error when querying auth token',
+        );
     }
 
     public async sync(walletRequest: WalletRequest) {
@@ -61,25 +70,36 @@ export class WalletRpc {
             'Error when synchronizing Default wallet',
         );
 
-        const walletBalance = await asyncMiddleman(
+        const stakingAddresses = await asyncMiddleman(
+            this.request('wallet_listStakingAddresses', [walletRequest]),
+            'Error when retrieving staking addresses',
+        );
+        const stakingAddress = stakingAddresses[1];
+
+        const walletStakingState: WalletStakingState = await asyncMiddleman(
+            this.request('staking_state', [stakingAddress]),
+            'Error when retrieving Default wallet staking state',
+        );
+        // eslint-disable-next-line no-console
+        console.info(
+            `[Info] Wallet staking state: ${JSON.stringify(
+                walletStakingState,
+            )}`,
+        );
+
+        const walletBalance: WalletBalance = await asyncMiddleman(
             this.request('wallet_balance', [walletRequest]),
             'Error when retrieving Default wallet balance',
         );
         // eslint-disable-next-line no-console
-        console.info(`[Info] Wallet balance: ${walletBalance}`);
-        if (new BigNumber(walletBalance).isGreaterThan('0')) {
+        console.info(`[Info] Wallet balance: ${JSON.stringify(walletBalance)}`);
+        if (new BigNumber(walletBalance.available).isGreaterThan('0')) {
             // eslint-disable-next-line no-console
             console.info('[Info] Bonded funds already withdrew');
             return;
         }
         // eslint-disable-next-line no-console
         console.log('Withdrawing bonded funds');
-
-        const stakingAddresses = await asyncMiddleman(
-            this.request('wallet_listStakingAddresses', [walletRequest]),
-            'Error when retrieving staking addresses',
-        );
-        const stakingAddress = stakingAddresses[0];
 
         const transferAddresses = await asyncMiddleman(
             this.request('wallet_listTransferAddresses', [walletRequest]),
@@ -120,4 +140,15 @@ export interface UTXO {
     txId: string;
     index: number;
     value: BigNumber;
+}
+
+export interface WalletStakingState {
+    bonded: BigNumber;
+    unbonded: BigNumber;
+}
+
+export interface WalletBalance {
+    available: BigNumber;
+    pending: BigNumber;
+    total: BigNumber;
 }

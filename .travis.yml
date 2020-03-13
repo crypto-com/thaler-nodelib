@@ -59,18 +59,21 @@ jobs:
           name: Build (stable)
           <<: *rust
           rust: stable
+          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
           script:
               - npm install
               - npm run build || travis_terminate 1
         - <<: *rust
           name: Build (nightly)
           rust: nightly
+          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
           script:
               - npm install
               - npm run build || travis_terminate 1
         - <<: *rust
           name: Test (stable)
           rust: stable
+          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
           script:
               - npm install
               - npm run neon-build || travis_terminate 1
@@ -78,6 +81,7 @@ jobs:
         - <<: *rust
           name: Test (nightly)
           rust: nightly
+          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
           script:
               - npm install
               - npm run neon-build || travis_terminate 1
@@ -85,18 +89,12 @@ jobs:
         - <<: *rust
           name: Lint and Audit
           rust: stable
+          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
           script:
               - npm install
               - |
-                rustfmt --version || rustup component add rustfmt
-                cargo-clippy --version || rustup component add clippy
-                cargo-audit -h || cargo install cargo-audit
+                  rustfmt --version || rustup component add rustfmt
+                  cargo-clippy --version || rustup component add clippy
+                  cargo-audit -h || cargo install cargo-audit
               - npm run lint || travis_terminate 1
               - npm run audit || travis_terminate 1
-        - stage: Integration Test
-          name: Integration Test
-          <<: *rust
-          script:
-              - npm install
-              - npm run build
-              - ./ci-scripts/run-integration-tests.sh

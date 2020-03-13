@@ -11,6 +11,7 @@ steps:
   image: cryptocom/chain-test:latest
   pull: if-not-exists
   commands:
+  - export BUILD_MODE=MOCK
   - export CARGO_HOME=$PWD/drone/cargo
   - export CARGO_TARGET_DIR=$PWD/drone/target
   - ./integration-tests/build.sh
@@ -18,19 +19,10 @@ steps:
 - name: integration-tests
   image: cryptocom/chain-test:latest
   pull: if-not-exists
-  privileged: true
-  volumes:
-  - name: sgx
-    path: /dev/sgx
-  environment:
-    SPID:
-      from_secret: SPID
-    IAS_API_KEY:
-      from_secret: IAS_API_KEY
   commands:
+  - export BUILD_MODE=MOCK
   - export CARGO_TARGET_DIR=$PWD/drone/target
   - export PYTHON_VENV_DIR=$PWD/drone/venv
-  - LD_LIBRARY_PATH=/opt/intel/libsgx-enclave-common/aesm /opt/intel/libsgx-enclave-common/aesm/aesm_service
   - ./integration-tests/run.sh
 
 - name: teardown
@@ -55,9 +47,5 @@ trigger:
   - trying
   event:
   - push
-
----
-kind: signature
-hmac: 5a22c94ed5aacf5732dc242a98a558af86934646bd7b912464aec520d0ec159f
 
 ...

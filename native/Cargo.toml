@@ -22,6 +22,6 @@ neon = "0.3.3"
 hex = "0.4.2"
 parity-scale-codec = { features = ["derive"], version = "1.2" }
 secstr = { version = "0.4.0", features = ["serde"] }
-chain-core = { git = "https://github.com/crypto-com/chain", branch = "master" }
-client-common = { git = "https://github.com/crypto-com/chain", branch = "master", features = ["default", "http-rpc", "websocket-rpc"] }
-client-core = { git = "https://github.com/crypto-com/chain", branch = "master" }
+chain-core = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3" }
+client-common = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3", features = ["default", "http-rpc", "websocket-rpc"] }
+client-core = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3" }

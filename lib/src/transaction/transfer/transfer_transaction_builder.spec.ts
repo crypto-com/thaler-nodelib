@@ -6,7 +6,7 @@ import { TransferTransactionBuilder } from './transfer_transaction_builder';
 import { KeyPair } from '../../key_pair';
 import { transfer } from '../../address';
 import { MAX_COIN_BN } from '../../init';
-import { FeeAlgorithm } from '../../fee';
+import { FeeAlgorithm, ZERO_LINEAR_FEE } from '../../fee';
 import { Mainnet, Devnet } from '../../network';
 
 describe('TransferTransactionBuilder', () => {
@@ -999,7 +999,9 @@ describe('TransferTransactionBuilder', () => {
         });
 
         it('should throw Error when the transaction output amount exceeds input amount', () => {
-            const builder = new TransferTransactionBuilder();
+            const builder = new TransferTransactionBuilder({
+                feeConfig: ZERO_LINEAR_FEE,
+            });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
@@ -1037,7 +1039,9 @@ describe('TransferTransactionBuilder', () => {
         });
 
         it('should return completed Hex', () => {
-            const builder = new TransferTransactionBuilder();
+            const builder = new TransferTransactionBuilder({
+                feeConfig: ZERO_LINEAR_FEE,
+            });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
@@ -1086,7 +1090,9 @@ describe('TransferTransactionBuilder', () => {
         });
 
         it('should return completed Hex given correct tendermint address', () => {
-            const builder = new TransferTransactionBuilder();
+            const builder = new TransferTransactionBuilder({
+                feeConfig: ZERO_LINEAR_FEE,
+            });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
             builder
