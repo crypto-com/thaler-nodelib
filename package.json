@@ -22,7 +22,7 @@
     "@types/bignumber.js": "5.0.0",
     "@types/chai": "4.2.5",
     "@types/lossless-json": "1.0.0",
-    "@types/mocha": "5.2.7",
+    "@types/mocha": "7.0.2",
     "@types/node": "12.12.8",
     "@types/sinon": "7.5.0",
     "@typescript-eslint/eslint-plugin": "2.8.0",
