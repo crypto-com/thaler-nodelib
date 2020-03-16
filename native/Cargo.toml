@@ -19,7 +19,7 @@ neon-build = "0.3.3"
 
 [dependencies]
 neon = "0.3.3"
-hex = "0.4.0"
+hex = "0.4.2"
 parity-scale-codec = { features = ["derive"], version = "1.1" }
 secstr = { version = "0.4.0", features = ["serde"] }
 chain-core = { git = "https://github.com/crypto-com/chain", branch = "master" }
