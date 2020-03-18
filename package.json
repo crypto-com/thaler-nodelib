@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/axios": "0.14.0",
     "@types/bignumber.js": "5.0.0",
-    "@types/chai": "4.2.5",
+    "@types/chai": "4.2.11",
     "@types/lossless-json": "1.0.0",
     "@types/mocha": "5.2.7",
     "@types/node": "12.12.8",
