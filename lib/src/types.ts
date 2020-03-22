@@ -173,8 +173,10 @@ export interface StakedState {
     };
 }
 
+export const owAccountNonce = ow.number.int16;
+
 export const owStakedState = ow.object.exactShape({
-    nonce: ow.number.int16,
+    nonce: owAccountNonce,
     bonded: owBigNumber,
     unbonded: owBigNumber,
     unbondedFrom: owUnixTimestamp,
@@ -217,9 +219,9 @@ export interface NativeStakedState {
 }
 /* eslint-enable camelcase */
 
-export function parseStakedStateForNative(
+export const parseStakedStateForNative = (
     stakedState: StakedState,
-): NativeStakedState {
+): NativeStakedState => {
     return {
         nonce: stakedState.nonce,
         bonded: stakedState.bonded.toString(10),
@@ -243,12 +245,12 @@ export function parseStakedStateForNative(
               }
             : undefined,
     };
-}
+};
 
 /* eslint-disable camelcase */
-export function parseStakedStateFromNative(
+export const parseStakedStateForNodelib = (
     stakedState: NativeStakedState,
-): StakedState {
+): StakedState => {
     return {
         nonce: stakedState.nonce,
         bonded: new BigNumber(stakedState.bonded),
@@ -272,5 +274,5 @@ export function parseStakedStateFromNative(
               }
             : undefined,
     };
-}
+};
 /* eslint-enable camelcase */

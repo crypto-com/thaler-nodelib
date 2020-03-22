@@ -6,7 +6,7 @@ import * as utils from './utils';
 
 export {
     parseStakedStateForNative,
-    parseStakedStateFromNative,
+    parseStakedStateForNodelib,
     NativeStakedState,
     StakedState,
     Input,

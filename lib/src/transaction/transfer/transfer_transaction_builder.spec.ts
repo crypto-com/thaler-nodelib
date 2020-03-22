@@ -39,7 +39,7 @@ describe('TransferTransactionBuilder', () => {
                     },
                 } as any);
             }).to.throw(
-                'Unsupported fee algorithm: Invalid in object `feeConfig` in object',
+                'Expected property property string `algorithm` to be one of `["LinearFee"]`, got `Invalid` in object `feeConfig` in object',
             );
         });
 

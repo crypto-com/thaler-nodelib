@@ -1,7 +1,6 @@
 use neon::prelude::*;
 
 mod deposit_transaction;
-mod tx_aux;
 mod unbond_transaction;
 mod withdraw_unbonded_transaction;
 

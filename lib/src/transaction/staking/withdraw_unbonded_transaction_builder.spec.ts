@@ -185,7 +185,7 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
                     },
                 });
             }).to.throw(
-                'Unsupported fee algorithm: unsupported-algorithm in object `feeConfig` in object `options`',
+                'Expected property property string `algorithm` to be one of `["LinearFee"]`, got `unsupported-algorithm` in object `feeConfig` in object `options`',
             );
         });
 

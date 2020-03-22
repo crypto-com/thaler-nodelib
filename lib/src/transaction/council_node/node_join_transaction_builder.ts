@@ -1,25 +1,23 @@
-import BigNumber from 'bignumber.js';
 import ow from 'ow';
 
-import {
-    UnbondTransactionBuilderOptions,
-    owUnbondTransactionBuilderOptions,
-} from './types';
 import { TransactionBuilder } from '../transaction_builder';
+import {
+    NodeMetaData,
+    NodeJoinTransactionBuilderOptions,
+    owNodeJoinTransactionBuilderOptions,
+    parseNodeMetaDataForNative,
+} from './types';
 import { KeyPair } from '../../key_pair';
 import { owKeyPair } from '../../key_pair/types';
 
 const native = require('../../../../native');
 
-/**
- * A builder for building unbond transaction
- */
-export class UnbondTransactionBuilder extends TransactionBuilder {
-    private stakingAddress!: string;
+export class NodeJoinTransactionBuilder extends TransactionBuilder {
+    private stakingAddress: string;
 
-    private nonce!: number;
+    private nonce: number;
 
-    private amount!: BigNumber;
+    private nodeMetaData: NodeMetaData;
 
     private unsignedRawTx!: string;
 
@@ -28,22 +26,23 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
     private keyPair?: KeyPair;
 
     /**
-     * Creates an instance of DepositTransactionBuilder.
+     * Creates an instance of NodeJoinTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
      * @param {string} options.stakingAddress Staking address to unbond from
      * @param {number} options.nonce Staking address nonce
-     * @param {string} options.amount Amount in basic unit to unbond
+     * @param {NodeMetaData} options.nodeMetaData Node meta data
      * @param {Network} [options.network] Network the transaction belongs to
-     * @memberof UnbondTransactionBuilder
+     * @memberof NodeJoinTransactionBuilder
      */
-    constructor(options: UnbondTransactionBuilderOptions) {
+    public constructor(options: NodeJoinTransactionBuilderOptions) {
         super();
 
-        ow(options, 'options', owUnbondTransactionBuilderOptions);
+        ow(options, 'options', owNodeJoinTransactionBuilderOptions);
 
         this.stakingAddress = options.stakingAddress;
         this.nonce = options.nonce;
-        this.amount = options.amount;
+        this.nodeMetaData = options.nodeMetaData;
+
         this.initNetwork(options.network);
 
         this.prepareRawTx();
@@ -53,10 +52,12 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
         const {
             unsignedRawTx,
             txId,
-        } = native.stakingTransaction.buildRawUnbondTransaction({
+        } = native.councilNodeTransaction.buildRawNodeJoinTransaction({
             stakingAddress: this.stakingAddress,
             nonce: this.nonce,
-            amount: this.amount.toString(10),
+            nodeMetaData: JSON.stringify(
+                parseNodeMetaDataForNative(this.nodeMetaData),
+            ),
             chainHexId: this.getNetwork().chainHexId,
         });
 
@@ -65,9 +66,9 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
     }
 
     /**
-     * Returns staking address to unbond from
+     * Returns staking address holding the stake to participate as council node
      * @returns {string} stakingAddress
-     * @memberof UnbondTransactionBuilder
+     * @memberof NodeJoinTransactionBuilder
      */
     public getStakingAddress(): Readonly<string> {
         return this.stakingAddress;
@@ -76,42 +77,26 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
     /**
      * Returns account nonce
      * @returns {number} nonce
-     * @memberof UnbondTransactionBuilder
+     * @memberof NodeJoinTransactionBuilder
      */
     public getNonce(): Readonly<number> {
         return this.nonce;
     }
 
     /**
-     * Returns amount in basic unit to unbond
-     * @returns {BigNumber} unbond amount in basic unit
-     * @memberof UnbondTransactionBuilder
+     * Returns node metadata of the builder
+     * @returns {NodeMetaData} node metadata
+     * @memberof NodeJoinTransactionBuilder
      */
-    public getAmount(): Readonly<BigNumber> {
-        return this.amount;
-    }
-
-    /**
-     * Sign the transaction with the KeyPair
-     * @param {KeyPair} keyPair KeyPair to sign the transaction
-     * @returns {UnbondTransactionBuilder}
-     * @memberof UnbondTransactionBuilder
-     */
-    public sign(keyPair: KeyPair): UnbondTransactionBuilder {
-        ow(keyPair, 'keyPair', owKeyPair);
-        // FIXME: Signature cannot be cached in builder because
-        // RecoverableSignature does not support Encode/Decode
-        // https://github.com/crypto-com/chain/blob/release/v0.3/client-common/src/key/private_key.rs#L40
-        this.keyPair = keyPair;
-
-        return this;
+    public getNodeMetaData(): Readonly<NodeMetaData> {
+        return this.nodeMetaData;
     }
 
     /**
      * Determine if the transaction is completed and can be exported
      *
      * @returns {boolean} returns true if the transaction is completed
-     * @memberof UnbondTransactionBuilder
+     * @memberof NodeJoinTransactionBuilder
      */
     public isCompleted(): boolean {
         return !!this.keyPair;
@@ -121,24 +106,34 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
      * Returns transaction Id
      *
      * @returns {string} transaction Id
-     * @memberof UnbondTransactionBuilder
+     * @memberof NodeJoinTransactionBuilder
      */
     public txId(): Readonly<string> {
         return this.innertTxId!;
     }
 
     /**
-     * Output broadcast-able transaction in hex
-     *
-     * @returns {Buffer}
-     * @memberof UnbondTransactionBuilder
+     * Sign the transaction with the KeyPair
+     * @param {KeyPair} keyPair KeyPair to sign the transaction
+     * @returns {NodeJoinTransactionBuilder}
+     * @memberof NodeJoinTransactionBuilder
      */
+    public sign(keyPair: KeyPair): NodeJoinTransactionBuilder {
+        ow(keyPair, 'keyPair', owKeyPair);
+        // FIXME: Signature cannot be cached in builder because
+        // RecoverableSignature does not support Encode/Decode
+        // https://github.com/crypto-com/chain/blob/release/v0.3/client-common/src/key/private_key.rs#L40
+        this.keyPair = keyPair;
+
+        return this;
+    }
+
     public toHex(): Buffer {
         if (!this.isCompleted()) {
             throw new Error('Transaction builder is not completed');
         }
 
-        return native.stakingTransaction.unbondTransactionToHex(
+        return native.councilNodeTransaction.nodeJoinTransactionToHex(
             this.unsignedRawTx,
             this.keyPair!.toObject(),
         );
