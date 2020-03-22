@@ -2,67 +2,38 @@ import ow from 'ow';
 import BigNumber from 'bignumber.js';
 
 import {
-    Input,
-    Output,
     owTransferTransactionBuilderOptions,
     TransferTransactionBuilderOptions,
+} from './types';
+import {
+    Input,
+    Output,
+    ViewKey,
     owInput,
     owOutput,
-    owOptionalTendermintAddress,
-} from './types';
-import { NetworkConfig } from '../../network/types';
-import { ViewKey, owViewKey } from '../../types';
+    owTendermintAddress,
+    owViewKey,
+    parseInputForNative,
+    parseOutputForNative,
+} from '../../types';
 import { KeyPair } from '../../key_pair/key_pair';
 import { owKeyPair } from '../../key_pair/types';
 import { getRustFeaturesFromEnv } from '../../native';
-import { FeeConfig, FeeAlgorithm, LinearFeeConfig } from '../../fee';
-import { Mainnet } from '../../network';
+import { FeeConfig, FeeAlgorithm } from '../../fee';
+import { parseFeeConfigForNative } from '../../fee/types';
+import { TransactionBuilder } from '../transaction_builder';
 
 const native = require('../../../../native');
-
-const parseOutputForNative = (output: Output): NativeOutput => {
-    const nativeOutput: NativeOutput = {
-        address: output.address,
-        value: output.value.toString(10),
-    };
-    if (output.validFrom) {
-        nativeOutput.validFrom = output.validFrom.valueOf();
-    }
-
-    return nativeOutput;
-};
-
-const parseInputForNative = (input: Input): NativeInput => {
-    return {
-        ...input,
-        prevOutput: parseOutputForNative(input.prevOutput),
-    };
-};
-
-const parseFeeConfigForNative = (feeConfig: FeeConfig): NativeFeeConfig => {
-    if (feeConfig.algorithm === FeeAlgorithm.LinearFee) {
-        return {
-            ...feeConfig,
-            constant: (feeConfig as LinearFeeConfig).constant.toString(10),
-            coefficient: (feeConfig as LinearFeeConfig).coefficient.toString(
-                10,
-            ),
-        };
-    }
-    throw new Error(`Unsupported fee algorithm: ${feeConfig.algorithm}`);
-};
 
 /**
  * A builder for building transfer transaction
  */
-export class TransferTransactionBuilder {
+export class TransferTransactionBuilder extends TransactionBuilder {
     private inputs: Input[] = [];
 
     private outputs: Output[] = [];
 
     private viewKeys: ViewKey[] = [];
-
-    private network!: NetworkConfig;
 
     private feeConfig!: FeeConfig;
 
@@ -76,21 +47,21 @@ export class TransferTransactionBuilder {
      * @memberof TransferTransactionBuilder
      */
     public constructor(options?: TransferTransactionBuilderOptions) {
+        super();
+
         ow(options, owTransferTransactionBuilderOptions as any);
 
         this.parseOptions(options);
     }
 
     private parseOptions(options?: TransferTransactionBuilderOptions) {
-        if (options?.network) {
-            this.network = options.network;
-        } else {
-            this.network = Mainnet;
-        }
+        this.initNetwork(options?.network);
 
         if (options?.feeConfig) {
             this.feeConfig = options.feeConfig;
         } else {
+            // FIXME: Do not provide default fee configuration
+            // https://mcoproduct.atlassian.net/browse/CEV2-159
             this.feeConfig = {
                 algorithm: FeeAlgorithm.LinearFee,
                 constant: new BigNumber('1000'),
@@ -100,25 +71,13 @@ export class TransferTransactionBuilder {
     }
 
     /**
-     * Returns the current network
-     *
-     * @returns {NetworkConfig} current network
-     * @memberof TransferTransactionBuilder
-     */
-    public getNetwork(): Readonly<NetworkConfig> {
-        return this.network;
-    }
-
-    /**
      * Returns current fee configuration
      *
      * @returns {FeeConfig} current fee configuration
      * @memberof TransferTransactionBuilder
      */
-    public getFeeConfig(): FeeConfig {
-        return {
-            ...this.feeConfig,
-        };
+    public getFeeConfig(): Readonly<FeeConfig> {
+        return this.feeConfig;
     }
 
     /**
@@ -170,7 +129,7 @@ export class TransferTransactionBuilder {
     private isTransferAddressInNetwork(address: string): boolean {
         return native.address.isTransferAddressValid(
             address,
-            this.network.name,
+            this.getNetwork().name,
         );
     }
 
@@ -230,9 +189,12 @@ export class TransferTransactionBuilder {
      * Returns transaction Id
      *
      * @returns {string} transaction Id
+     * @throws {Error} error when
      * @memberof TransferTransactionBuilder
      */
     public txId(): string {
+        this.verifyHasInput();
+
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             const incompleteHex = this.buildIncompleteHex();
 
@@ -349,10 +311,12 @@ export class TransferTransactionBuilder {
     public toHex(
         tendermintAddress: string = 'ws://localhost:26657/websocket',
     ): Buffer {
-        ow(tendermintAddress, owOptionalTendermintAddress);
+        ow(tendermintAddress, owTendermintAddress);
+
+        this.verifyHasInput();
 
         if (!this.isCompleted()) {
-            throw new Error('Transaction has unsigned input');
+            throw new Error('Transaction is not completed');
         }
 
         return native.transferTransaction.toHexLinearFee(
@@ -365,6 +329,16 @@ export class TransferTransactionBuilder {
             // https://github.com/neon-bindings/neon/issues/471
             getRustFeaturesFromEnv(process.env.NODE_ENV),
         );
+    }
+
+    private verifyHasInput() {
+        if (!this.hasInput()) {
+            throw new Error('Builder has no input');
+        }
+    }
+
+    private hasInput(): boolean {
+        return this.inputs.length !== 0;
     }
 
     private prepareIncompleteSigningHex(): Buffer {
@@ -386,7 +360,7 @@ export class TransferTransactionBuilder {
 
     private buildIncompleteHexLinearFee(): Buffer {
         return native.transferTransaction.buildIncompleteHexLinearFee({
-            chainId: this.network.chainId.toString('hex'),
+            chainHexId: this.getNetwork().chainHexId,
             inputs: this.inputs.map(parseInputForNative),
             outputs: this.outputs.map(parseOutputForNative),
             viewKeys: this.viewKeys,
@@ -398,24 +372,3 @@ export class TransferTransactionBuilder {
         return !!this.incompleteSigningHex;
     }
 }
-
-interface NativeInput {
-    prevTxId: string;
-    prevIndex: number;
-    prevOutput: NativeOutput;
-}
-interface NativeOutput {
-    address: string;
-    value: string;
-    validFrom?: number;
-}
-
-type NativeFeeConfig = NativeLinearFeeConfig | NativeBaseFeeConfig;
-type NativeLinearFeeConfig = {
-    algorithm: FeeAlgorithm;
-    constant: string;
-    coefficient: string;
-};
-type NativeBaseFeeConfig = {
-    algorithm: FeeAlgorithm;
-};

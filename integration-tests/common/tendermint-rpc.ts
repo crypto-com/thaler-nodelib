@@ -9,6 +9,12 @@ export class TendermintRpc {
         this.url = url;
     }
 
+    public latestBlockHeight(): Promise<number> {
+        return axios.get(`${this.url}/status`).then((res: any) => {
+            return res.data.result.sync_info.latest_block_height;
+        });
+    }
+
     public broadcastTx(encodedTx: string) {
         return axios.post(`${this.url}`, {
             jsonrpc: '2.0',
@@ -22,6 +28,7 @@ export class TendermintRpc {
         return axios
             .get(`${this.url}/tx_search?query="valid_txs.txid='${txId}'"`)
             .then((res: any) => {
+                // eslint-disable-next-line no-console
                 return new BigNumber(
                     res.data.result.total_count,
                 ).isGreaterThanOrEqualTo(1);

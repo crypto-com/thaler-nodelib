@@ -14,45 +14,47 @@ describe('Network', () => {
 
             expect(() => {
                 Devnet({
-                    chainId: 'INVALID' as any,
+                    chainHexId: 'INVALID' as any,
                 });
             }).to.throw(
-                'Expected property value to be two hex characters of chain Id\n- Expected `chainId` to be of type `Buffer` but received type `string` in object `options`',
+                'Expected property value to be two hex characters of chain Id\n- Expected `chainHexId` to be of type `Buffer` but received type `string` in object `options`',
             );
 
             expect(() => {
                 // Non-hex characters
                 Devnet({
-                    chainId: 'ZZ' as any,
+                    chainHexId: 'ZZ' as any,
                 });
             }).to.throw(
-                'Expected property value to be two hex characters of chain Id\n- Expected `chainId` to be of type `Buffer` but received type `string` in object `options`',
+                'Expected property value to be two hex characters of chain Id\n- Expected `chainHexId` to be of type `Buffer` but received type `string` in object `options`',
             );
         });
 
-        it('should return Devnet of the provided chainId when it is a string', () => {
-            const chainId = 'AB';
+        it('should return Devnet of the provided chainHexId when it is a string', () => {
+            const chainHexId = 'AB';
             const network = Devnet({
-                chainId,
+                chainHexId,
             });
 
-            expect(network.chainId).to.deep.eq(Buffer.from(chainId, 'hex'));
+            expect(network.chainHexId).to.deep.eq(
+                Buffer.from(chainHexId, 'hex'),
+            );
         });
 
-        it('should return Devnet of the provided chainId when it is a Buffer', () => {
-            const chainId = Buffer.from('AB', 'hex');
+        it('should return Devnet of the provided chainHexId when it is a Buffer', () => {
+            const chainHexId = Buffer.from('AB', 'hex');
             const network = Devnet({
-                chainId,
+                chainHexId,
             });
 
-            expect(network.chainId).to.deep.eq(chainId);
+            expect(network.chainHexId).to.deep.eq(chainHexId);
         });
     });
 
     describe('fromChainId', () => {
-        it('should return network based on chainId', () => {
-            expect(fromChainId(Mainnet.chainId)).to.deep.eq(Mainnet);
-            expect(fromChainId(Testnet.chainId)).to.deep.eq(Testnet);
+        it('should return network based on chainHexId', () => {
+            expect(fromChainId(Mainnet.chainHexId)).to.deep.eq(Mainnet);
+            expect(fromChainId(Testnet.chainHexId)).to.deep.eq(Testnet);
 
             const expectedDevnet = fromChainId(Buffer.from('AB', 'hex'));
             expect(expectedDevnet.name).to.eq(NetworkEnum.Devnet);

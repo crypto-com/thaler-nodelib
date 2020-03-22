@@ -40,16 +40,16 @@ describe('Transfer Transaction', () => {
         const transferAddress = cro.address.transfer({
             keyPair,
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
         });
 
-        const utxo = await walletRpc.transferToAddress(defaultWallet, {
+        const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber('10000000'),
             viewKeys: [viewKey.publicKey!],
         });
-        const utxo2 = await walletRpc.transferToAddress(defaultWallet, {
+        const utxo2 = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber('20000000'),
             viewKeys: [viewKey.publicKey!],
@@ -57,7 +57,7 @@ describe('Transfer Transaction', () => {
 
         const builder = new cro.TransferTransactionBuilder({
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
             feeConfig: {
                 algorithm: cro.fee.FeeAlgorithm.LinearFee,
@@ -112,16 +112,16 @@ describe('Transfer Transaction', () => {
         const transferAddress = cro.address.transfer({
             keyPair,
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
         });
 
-        const utxo = await walletRpc.transferToAddress(defaultWallet, {
+        const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(10000000),
             viewKeys: [viewKey.publicKey!],
         });
-        const utxo2 = await walletRpc.transferToAddress(defaultWallet, {
+        const utxo2 = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(20000000),
             viewKeys: [viewKey.publicKey!],
@@ -129,7 +129,7 @@ describe('Transfer Transaction', () => {
 
         const builder = new cro.TransferTransactionBuilder({
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
             feeConfig: {
                 algorithm: cro.fee.FeeAlgorithm.LinearFee,
@@ -186,7 +186,7 @@ describe('Transfer Transaction', () => {
         const fromTransferAddress = cro.address.transfer({
             keyPair: fromTransferAddressKeyPair,
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
         });
 
@@ -194,11 +194,11 @@ describe('Transfer Transaction', () => {
         const toTransferAddress = cro.address.transfer({
             keyPair: toTransferAddressKeyPair,
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
         });
 
-        const utxo = await walletRpc.transferToAddress(defaultWallet, {
+        const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: fromTransferAddress,
             value: cro.utils.toBigNumber('30000000'),
             viewKeys: [viewKey.publicKey!],
@@ -206,7 +206,7 @@ describe('Transfer Transaction', () => {
 
         const builder = new cro.TransferTransactionBuilder({
             network: cro.network.Devnet({
-                chainId: CHAIN_HEX_ID,
+                chainHexId: CHAIN_HEX_ID,
             }),
             feeConfig: {
                 algorithm: cro.fee.FeeAlgorithm.LinearFee,
