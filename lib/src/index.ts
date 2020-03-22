@@ -4,6 +4,8 @@ import * as network from './network';
 import * as transaction from './transaction';
 import * as utils from './utils';
 
+export { Input, Output } from './types';
+
 export { address, fee, network, transaction, utils };
 
 export { HDWallet } from './hd_wallet';

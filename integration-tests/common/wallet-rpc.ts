@@ -28,7 +28,7 @@ export class WalletRpc {
         await this.rpcClient.request('sync', [walletRequest]);
     }
 
-    public async transferToAddress(
+    public async faucet(
         walletRequest: WalletRequest,
         options: {
             toAddress: string;

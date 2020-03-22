@@ -1,5 +1,6 @@
-import ow from 'ow';
 import BigNumber from 'bignumber.js';
+import ow from 'ow';
+import { URL } from 'url';
 
 import { MAX_COIN_BN, MAX_COIN_FORMATTED } from './init';
 import { NetworkEnum } from './network/network';
@@ -48,3 +49,60 @@ export const owViewKey = ow.buffer.validate((value: Buffer) => ({
 export type PublicKey = Buffer;
 
 export type ViewKey = Buffer;
+
+const isURL = (url: string): boolean => {
+    try {
+        // eslint-disable-next-line no-new
+        new URL(url);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
+
+export const owTendermintAddress = ow.string.validate((value: string) => ({
+    validator: /^(http|ws)s?/.test(value) && isURL(value),
+    message: 'Expected value to be HTTP or WS tendermint address',
+}));
+
+/**
+ * Transaction input
+ * @typedef {object} Input
+ * @property {string} prevTxId previous transaction Id
+ * @property {number} prevIndex previous transaction output index
+ * @property {Output} prevOutput previous transaction output
+ */
+export interface Input {
+    prevTxId: string;
+    prevIndex: number;
+    prevOutput: Output;
+}
+
+/**
+ * Transaction output
+ * @typedef {object} Output
+ * @property {string} address output destination address
+ * @property {BigNumber} value output value in basic unit
+ * @property {Date} validFrom output valid from
+ */
+export interface Output {
+    address: string;
+    value: BigNumber;
+    validFrom?: Date;
+}
+
+export const owOutput = ow.object.exactShape({
+    address: owTransferAddress,
+    value: owCoin,
+    validFrom: ow.optional.date,
+});
+
+export const owTxId = ow.string.matches(/^[0-9A-Fa-f]{64}$/);
+
+export const owInput = ow.object.exactShape({
+    prevTxId: owTxId,
+    prevIndex: ow.number.integer.greaterThanOrEqual(0),
+    prevOutput: owOutput,
+});
+
+export const owUnixTimestamp = ow.number.integer;
