@@ -3,12 +3,11 @@ import { expect } from 'chai';
 import { KeyPair } from './key_pair';
 
 describe('KeyPair', () => {
-    function validPublicKey(): Buffer {
-        return Buffer.from(
+    const validPublicKey = (): Buffer =>
+        Buffer.from(
             '0317b7e1ce1f9f94c32a43739229f88c0b0333296fb46e8f72865849c6ae34b84e',
             'hex',
         );
-    }
 
     describe('fromPublicKey', () => {
         it('should throw Error when Public Key length is neither 65 nor 33', () => {

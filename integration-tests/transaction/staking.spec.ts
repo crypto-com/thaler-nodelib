@@ -8,6 +8,8 @@ import {
     newWalletRPC,
     WalletRequest,
     sleep,
+    waitForTime,
+    waitForBlockCount,
 } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
@@ -15,6 +17,7 @@ import {
     expectTransactionShouldEq,
     TransactionChangeKind,
 } from '../common/assertion';
+import { RPCStakedState, parseStakedStateFromRPC } from '../common/staking';
 
 const TENDERMINT_ADDRESS = process.env.TENDERMINT_RPC_PORT
     ? `ws://127.0.0.1:${process.env.TENDERMINT_RPC_PORT}/websocket`
@@ -77,7 +80,6 @@ describe('Staking Transaction', () => {
             })
             .signInput(0, transferKeyPair)
             .toHex(TENDERMINT_ADDRESS);
-
         await tendermintRpc.broadcastTx(depositTxHex.toString('base64'));
 
         const depositTxId = depositTxBuilder.txId();
@@ -174,7 +176,7 @@ describe('Staking Transaction', () => {
     });
 });
 
-async function setupTestEnv(walletRpc: WalletRpc) {
+const setupTestEnv = async (walletRpc: WalletRpc) => {
     const transferKeyPair = cro.KeyPair.generateRandom();
     const stakingKeyPair = cro.KeyPair.generateRandom();
     const viewKeyPair = cro.KeyPair.generateRandom();
@@ -205,14 +207,14 @@ async function setupTestEnv(walletRpc: WalletRpc) {
         stakingKeyPair,
         createdWallet,
     };
-}
+};
 
-async function createWallet(
+const createWallet = async (
     viewKeyPair: cro.KeyPair,
     stakingKeyPair: cro.KeyPair,
     transferKeyPair: cro.KeyPair,
     walletRpc: WalletRpc,
-): Promise<WalletRequest> {
+): Promise<WalletRequest> => {
     const walletName = Date.now().toString();
     const walletAuthRequest = {
         name: walletName,
@@ -238,77 +240,9 @@ async function createWallet(
     ]);
 
     return walletRequest;
-}
+};
 
-async function waitForBlockCount(count = 1, tendermintRpc: TendermintRpc) {
-    const lastBlockHeight = await tendermintRpc.latestBlockHeight();
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        // eslint-disable-next-line no-await-in-loop
-        const latestBlockHeight = await tendermintRpc.latestBlockHeight();
-
-        if (latestBlockHeight - lastBlockHeight > count) {
-            // eslint-disable-next-line no-console
-            console.log(
-                `${count} block produced since last recorded block height: ${lastBlockHeight}`,
-            );
-
-            return;
-        }
-
-        // eslint-disable-next-line no-console
-        console.log(
-            `Waiting for ${count} block since last recorded block height: ${lastBlockHeight}`,
-        );
-
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(1000);
-    }
-}
-
-/* eslint-disable camelcase */
-interface RPCStakedState {
-    nonce: BigNumber;
-    bonded: string;
-    unbonded: string;
-    unbonded_from: BigNumber;
-    address: string;
-    punishment?: {
-        kind: string;
-        jailed_until: BigNumber;
-        slash_amount: string;
-    };
-    council_node?: {
-        name: string;
-        security_contact: string;
-        consensus_pubkey: {
-            type: string;
-            value: string;
-        };
-    };
-}
-/* eslint-enable camelcase */
-
-function parseStakedStateForNodelib(
-    stakedState: RPCStakedState,
-): cro.StakedState {
-    const nativeStakedState: cro.NativeStakedState = {
-        ...stakedState,
-        nonce: stakedState.nonce.toNumber(),
-        unbonded_from: stakedState.unbonded_from.toNumber(),
-        punishment: stakedState.punishment
-            ? {
-                  ...stakedState.punishment,
-                  jailed_until: stakedState.punishment!.jailed_until.toNumber(),
-              }
-            : undefined,
-    };
-
-    return cro.parseStakedStateFromNative(nativeStakedState);
-}
-
-async function waitForStakedState(
+const waitForStakedState = async (
     stakingAddress: string,
     partialStakedState: {
         bonded?: string;
@@ -316,7 +250,7 @@ async function waitForStakedState(
     },
     walletRpc: WalletRpc,
     maxTrials = 15,
-) {
+) => {
     let trial = 1;
     let stakedState: RPCStakedState;
     // eslint-disable-next-line no-constant-condition
@@ -363,16 +297,16 @@ async function waitForStakedState(
         );
         break;
     }
-}
+};
 
-async function assertDepositShouldSucceed(
+const assertDepositShouldSucceed = async (
     walletRpc: WalletRpc,
     stakingAddress: string,
     depositAmount: string,
 ): Promise<{
     stakeStateAfterDeposit: RPCStakedState;
     actualBonded: BigNumber;
-}> {
+}> => {
     const stakeStateAfterDeposit: RPCStakedState = await walletRpc.request(
         'staking_state',
         stakingAddress,
@@ -384,14 +318,14 @@ async function assertDepositShouldSucceed(
         'Deposit transaction should be charged with fee',
     );
     return { stakeStateAfterDeposit, actualBonded };
-}
+};
 
-async function assertUnbondShouldSucceed(
+const assertUnbondShouldSucceed = async (
     actualBonded: BigNumber,
     unbondAmount: string,
     stakingAddress: string,
     walletRpc: WalletRpc,
-) {
+) => {
     const remainingBonded = actualBonded.minus(unbondAmount).toString(10);
     await waitForStakedState(
         stakingAddress,
@@ -400,7 +334,7 @@ async function assertUnbondShouldSucceed(
         },
         walletRpc,
     );
-    const stakeStateAfterUnbond = parseStakedStateForNodelib(
+    const stakeStateAfterUnbond = parseStakedStateFromRPC(
         await walletRpc.request('staking_state', stakingAddress),
     );
     const bondedFromUnbond = stakeStateAfterUnbond.bonded;
@@ -410,29 +344,9 @@ async function assertUnbondShouldSucceed(
     );
     expect(stakeStateAfterUnbond.unbonded.toString(10)).to.eq(unbondAmount);
     return { stakeStateAfterUnbond, bondedFromUnbond };
-}
+};
 
-async function waitForTime(unixTimestamp: number) {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const now = Math.trunc(Date.now() / 1000);
-
-        if (now >= unixTimestamp) {
-            // eslint-disable-next-line no-console
-            console.log(`Expected time arrived: ${unixTimestamp}`);
-            return;
-        }
-
-        // eslint-disable-next-line no-console
-        console.log(
-            `Waiting for time arrived (Expected: ${unixTimestamp} Actual: ${now})`,
-        );
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(1000);
-    }
-}
-
-async function assertWithdrawShouldSucceed(
+const assertWithdrawShouldSucceed = async (
     stakingAddress: string,
     bondedFromUnbond: BigNumber,
     walletRpc: WalletRpc,
@@ -441,7 +355,7 @@ async function assertWithdrawShouldSucceed(
     stakeStateAfterUnbond: cro.StakedState,
     withdrawAmount: string,
     withdrawUnbondedTxId: string,
-) {
+) => {
     await waitForStakedState(
         stakingAddress,
         {
@@ -488,4 +402,4 @@ async function assertWithdrawShouldSucceed(
         },
         transactions[1],
     );
-}
+};

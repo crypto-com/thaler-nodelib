@@ -2,9 +2,8 @@ use std::str::FromStr;
 
 use neon::prelude::*;
 
-use chain_core::init::coin::Coin;
 use chain_core::state::account::{
-    Nonce, StakedStateAddress, StakedStateOpAttributes, StakedStateOpWitness, UnbondTx,
+    Nonce, StakedStateAddress, StakedStateOpAttributes, StakedStateOpWitness, UnjailTx,
 };
 use chain_core::tx::TransactionId;
 use chain_core::tx::TxAux;
@@ -14,14 +13,13 @@ use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
 use crate::tx_aux::tx_aux_to_hex;
 
-pub fn build_raw_unbond_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
-    let options = BuildUnbondTransactionOptions::parse(&mut ctx)?;
+pub fn build_raw_unjail_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
+    let options = BuildNodeJoinTransactionOptions::parse(&mut ctx)?;
     let attributes = StakedStateOpAttributes::new(options.chain_hex_id);
 
-    let tx = UnbondTx::new(
-        options.staking_address,
+    let tx = UnjailTx::new(
         options.nonce,
-        options.amount,
+        options.staking_address,
         attributes,
     );
 
@@ -46,37 +44,36 @@ pub fn build_raw_unbond_transaction(mut ctx: FunctionContext) -> JsResult<JsObje
     Ok(return_object)
 }
 
-pub fn unbond_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
-    let deposit_bond_tx = unbond_tx_argument(&mut ctx, 0)?;
+pub fn unjail_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
+    let unjail_tx = unjail_tx_argument(&mut ctx, 0)?;
     let key_pair = key_pair_argument(&mut ctx, 1)?;
     let private_key = key_pair.0;
 
     let signature = private_key
-        .sign(deposit_bond_tx.id())
+        .sign(unjail_tx.id())
         .map(StakedStateOpWitness::new)
         .chain_neon(&mut ctx, "Error when signing transaction")?;
 
-    let tx_aux = TxAux::UnbondStakeTx(deposit_bond_tx, signature);
+    let tx_aux = TxAux::UnjailTx(unjail_tx, signature);
 
     tx_aux_to_hex(&mut ctx, tx_aux)
 }
 
-fn unbond_tx_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<UnbondTx> {
-    let unbond_tx = ctx.argument::<JsBuffer>(i)?;
-    let mut unbond_tx = unbond_tx.borrow(&ctx.lock()).as_slice();
+fn unjail_tx_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<UnjailTx> {
+    let node_join_request_tx = ctx.argument::<JsBuffer>(i)?;
+    let mut node_join_request_tx = node_join_request_tx.borrow(&ctx.lock()).as_slice();
 
-    UnbondTx::decode(&mut unbond_tx).chain_neon(ctx, "Unable to decode raw transaction bytes")
+    UnjailTx::decode(&mut node_join_request_tx).chain_neon(ctx, "Unable to decode raw transaction bytes")
 }
 
-struct BuildUnbondTransactionOptions {
+struct BuildNodeJoinTransactionOptions {
     staking_address: StakedStateAddress,
     nonce: Nonce,
-    amount: Coin,
     chain_hex_id: u8,
 }
 
-impl BuildUnbondTransactionOptions {
-    fn parse(ctx: &mut FunctionContext) -> NeonResult<BuildUnbondTransactionOptions> {
+impl BuildNodeJoinTransactionOptions {
+    fn parse(ctx: &mut FunctionContext) -> NeonResult<BuildNodeJoinTransactionOptions> {
         let options = ctx
             .argument::<JsObject>(0)
             .chain_neon(ctx, "Unable to deserialize options object")?;
@@ -96,13 +93,6 @@ impl BuildUnbondTransactionOptions {
             .value();
         let nonce = nonce as u64;
 
-        let amount = options
-            .get(ctx, "amount")?
-            .downcast_or_throw::<JsString, FunctionContext>(ctx)
-            .chain_neon(ctx, "Unable to downcast amount")?
-            .value();
-        let amount = Coin::from_str(&amount).chain_neon(ctx, "Unable to deserialize amount")?;
-
         let chain_hex_id = options
             .get(ctx, "chainHexId")?
             .downcast_or_throw::<JsBuffer, FunctionContext>(ctx)
@@ -110,10 +100,9 @@ impl BuildUnbondTransactionOptions {
         let chain_hex_id = chain_hex_id.borrow(&ctx.lock()).as_slice().to_vec();
         let chain_hex_id = chain_hex_id_from_vec(ctx, chain_hex_id)?;
 
-        Ok(BuildUnbondTransactionOptions {
+        Ok(BuildNodeJoinTransactionOptions {
             staking_address,
             nonce,
-            amount,
             chain_hex_id,
         })
     }
