@@ -26,13 +26,13 @@ export enum NetworkEnum {
  */
 export const Mainnet: NetworkConfig = {
     name: NetworkEnum.Mainnet,
-    chainId: Buffer.from('2A', 'hex'),
+    chainHexId: Buffer.from('2A', 'hex'),
     addressPrefix: 'cro',
     bip44Path: "m/44'/394'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
-        constant: new BigNumber(1000),
-        coefficient: new BigNumber(1001),
+        constant: new BigNumber(1100),
+        coefficient: new BigNumber(1250),
     },
 };
 
@@ -45,18 +45,18 @@ export const Mainnet: NetworkConfig = {
  */
 export const Testnet: NetworkConfig = {
     name: NetworkEnum.Testnet,
-    chainId: Buffer.from('42', 'hex'),
+    chainHexId: Buffer.from('42', 'hex'),
     addressPrefix: 'tcro',
     bip44Path: "m/44'/1'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
-        constant: new BigNumber(1000),
-        coefficient: new BigNumber(1001),
+        constant: new BigNumber(1100),
+        coefficient: new BigNumber(1250),
     },
 };
 
 /**
- * Generate Devnet constants with the provided chainId
+ * Generate Devnet constants with the provided chainHexId
  *
  * @export
  * @param {DevnetOptions} options Devnet options
@@ -65,35 +65,35 @@ export const Testnet: NetworkConfig = {
 export const Devnet = (options: DevnetOptions): NetworkConfig => {
     ow(options, 'options', owDevnetOptions);
 
-    const chainId =
-        typeof options.chainId === 'string'
-            ? Buffer.from(options.chainId, 'hex')
-            : options.chainId;
+    const chainHexId =
+        typeof options.chainHexId === 'string'
+            ? Buffer.from(options.chainHexId, 'hex')
+            : options.chainHexId;
 
     return {
         name: NetworkEnum.Devnet,
         addressPrefix: 'dcro',
         bip44Path: "m/44'/1'/{ACCOUNT}'/0/{INDEX}",
         ...options,
-        chainId,
+        chainHexId,
     };
 };
 
 /**
- * Get network constants from given chainId
+ * Get network constants from given chainHexId
  *
- * @param {Buffer} chainId two hex characters chainId
+ * @param {Buffer} chainHexId two hex characters chainHexId
  * @returns {NetworkConfig} Network constants
  */
-export const fromChainId = (chainId: Buffer): NetworkConfig => {
-    switch (chainId.toString('hex').toUpperCase()) {
+export const fromChainId = (chainHexId: Buffer): NetworkConfig => {
+    switch (chainHexId.toString('hex').toUpperCase()) {
         case '2A':
             return Mainnet;
         case '42':
             return Testnet;
         default:
             return Devnet({
-                chainId,
+                chainHexId,
             });
     }
 };
