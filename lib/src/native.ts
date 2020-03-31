@@ -9,7 +9,7 @@ export const getRustFeaturesFromEnv = (nodeEnv?: string): Features => {
         case 'test':
             return Features.MockObfuscation;
         case 'integration-test':
-            return Features.MockAbci;
+            return Features.AllDefault;
         default:
             return Features.AllDefault;
     }
