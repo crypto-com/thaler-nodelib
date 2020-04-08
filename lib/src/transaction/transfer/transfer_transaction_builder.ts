@@ -1,4 +1,4 @@
-import ow from 'ow';
+import ow, { NumberPredicate } from 'ow';
 import BigNumber from 'bignumber.js';
 
 import {
@@ -66,7 +66,7 @@ export class TransferTransactionBuilder {
 
     private feeConfig!: FeeConfig;
 
-    private incompleteSigningHex?: Buffer;
+    private incompleteHex?: Buffer;
 
     /**
      * Creates an instance of TransferTransactionBuilder.
@@ -193,7 +193,7 @@ export class TransferTransactionBuilder {
     }
 
     private clearIncompleteSigningHex() {
-        this.incompleteSigningHex = undefined;
+        this.incompleteHex = undefined;
     }
 
     /**
@@ -254,18 +254,14 @@ export class TransferTransactionBuilder {
      * @memberof TransferTransactionBuilder
      */
     public signInput(index: number, keyPair: KeyPair) {
-        ow(
-            index,
-            'index',
-            ow.number.greaterThanOrEqual(0).lessThan(this.inputsLength()),
-        );
+        ow(index, 'index', this.owIndex());
         ow(keyPair, 'KeyPair', owKeyPair);
 
         if (!keyPair.hasPrivateKey()) {
             throw new Error('KeyPair does not have private key');
         }
 
-        const incompleteSigningHex = this.prepareIncompleteSigningHex();
+        const incompleteSigningHex = this.prepareIncompletedHex();
 
         let updatedIncompleteSigningHex: Buffer;
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
@@ -283,7 +279,44 @@ export class TransferTransactionBuilder {
             );
         }
 
-        this.incompleteSigningHex = updatedIncompleteSigningHex;
+        this.incompleteHex = updatedIncompleteSigningHex;
+    }
+
+    /**
+     * Add witness to particular input
+     *
+     * @param {number} index input index
+     * @param {Buffer} witness hex encoded witness data
+     * @memberof TransferTransactionBuilder
+     */
+    public addWitness(index: number, witness: Buffer) {
+        ow(index, 'index', this.owIndex());
+        ow(witness, 'witness', ow.buffer);
+
+        const incompleteSigningHex = this.prepareIncompletedHex();
+
+        let updatedIncompleteSigningHex: Buffer;
+        if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
+            // FIXME: properly handle witness verification
+            updatedIncompleteSigningHex = native.transferTransaction.addInputWitnessLinearFee(
+                {
+                    incompleteHex: incompleteSigningHex,
+                    feeConfig: parseFeeConfigForNative(this.feeConfig),
+                },
+                index,
+                witness,
+            );
+        } else {
+            throw new Error(
+                `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+            );
+        }
+
+        this.incompleteHex = updatedIncompleteSigningHex;
+    }
+
+    private owIndex(): NumberPredicate {
+        return ow.number.greaterThanOrEqual(0).lessThan(this.inputsLength());
     }
 
     /**
@@ -310,7 +343,7 @@ export class TransferTransactionBuilder {
      */
     public toIncompleteHex(): Buffer {
         if (this.isSigning()) {
-            return this.incompleteSigningHex!;
+            return this.incompleteHex!;
         }
 
         return this.buildIncompleteHex();
@@ -323,13 +356,13 @@ export class TransferTransactionBuilder {
      * @memberof TransferTransactionBuilder
      */
     public isCompleted(): boolean {
-        if (!this.incompleteSigningHex) {
+        if (!this.incompleteHex) {
             return false;
         }
 
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
             return native.transferTransaction.isCompletedLinearFee({
-                incompleteHex: this.incompleteSigningHex,
+                incompleteHex: this.incompleteHex,
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             });
         }
@@ -357,7 +390,7 @@ export class TransferTransactionBuilder {
 
         return native.transferTransaction.toHexLinearFee(
             {
-                incompleteHex: this.incompleteSigningHex,
+                incompleteHex: this.incompleteHex,
                 feeConfig: parseFeeConfigForNative(this.feeConfig),
             },
             tendermintAddress,
@@ -367,12 +400,12 @@ export class TransferTransactionBuilder {
         );
     }
 
-    private prepareIncompleteSigningHex(): Buffer {
+    private prepareIncompletedHex(): Buffer {
         if (!this.isSigning()) {
-            this.incompleteSigningHex = this.buildIncompleteHex();
+            this.incompleteHex = this.buildIncompleteHex();
         }
 
-        return this.incompleteSigningHex!;
+        return this.incompleteHex!;
     }
 
     private buildIncompleteHex(): Buffer {
@@ -395,7 +428,7 @@ export class TransferTransactionBuilder {
     }
 
     private isSigning(): boolean {
-        return !!this.incompleteSigningHex;
+        return !!this.incompleteHex;
     }
 }
 
