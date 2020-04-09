@@ -10,6 +10,7 @@ import {
     WalletRequest,
     sleep,
     waitForTime,
+    waitForBlockCount,
 } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
@@ -47,7 +48,7 @@ describe('Council Node Transaction', () => {
 
     /* eslint-disable no-console */
     // eslint-disable-next-line func-names
-    it('can create deposit, unbond and withdraw stake', async function() {
+    it.only('can submit NodeJoin transaction, wait to be jailed, and submit UnJail transaction', async function() {
         this.timeout(60000);
 
         const {
@@ -61,12 +62,15 @@ describe('Council Node Transaction', () => {
         } = await setupTestEnv();
 
         // Deposit 100000000 basic unit to staking account
+        console.log('[Log] Requesting coin from faucet');
         const depositAmount = '100000000';
         const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(depositAmount),
             viewKeys: [viewKeyPair.publicKey!],
         });
+
+        console.log('[Log] Depositing stake to staking account');
         const depositTxBuilder = new cro.transaction.staking.DepositTransactionBuilder(
             {
                 stakingAddress,
@@ -80,7 +84,7 @@ describe('Council Node Transaction', () => {
             })
             .signInput(0, transferKeyPair)
             .toHex(TENDERMINT_ADDRESS);
-        await tendermintRpc.broadcastTx(depositTxHex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(depositTxHex.toString('base64'));
 
         const depositTxId = depositTxBuilder.txId();
         await tendermintRpc.waitTxIdConfirmation(depositTxId);
@@ -93,6 +97,7 @@ describe('Council Node Transaction', () => {
         );
 
         // Build NodeJoin transaction
+        console.log('[Log] Submitting NodeJoin transaction');
         const nodeMetaData: NodeMetaData = {
             name: 'Council Node',
             securityContact: 'security@councilnode.com',
@@ -109,10 +114,12 @@ describe('Council Node Transaction', () => {
             },
         );
         const nodeJoinTxHex = nodeJoinTxBuilder.sign(stakingKeyPair).toHex();
-        await tendermintRpc.broadcastTx(nodeJoinTxHex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(nodeJoinTxHex.toString('base64'));
 
-        const nodeJoinTxId = nodeJoinTxBuilder.txId();
-        await tendermintRpc.waitTxIdConfirmation(nodeJoinTxId);
+        // const nodeJoinTxId = nodeJoinTxBuilder.txId();
+        // await tendermintRpc.waitTxIdConfirmation(nodeJoinTxId);
+
+        await waitForBlockCount(5, tendermintRpc);
 
         // eslint-disable-next-line no-use-before-define
         const punishmentKind = PunishmentKindAssertion.None;
@@ -124,16 +131,19 @@ describe('Council Node Transaction', () => {
             walletRpc,
         );
 
+        console.log('[Log] Waiting for staking account to be Jailed');
         // eslint-disable-next-line no-use-before-define
         const stakeStateAfterJail = await waitForJail(
             stakingAddress,
             walletRpc,
         );
 
+        console.log('[Log] Waiting for staking account to be Unjailed');
         // eslint-disable-next-line no-use-before-define
         await waitForUnjail(stakeStateAfterJail);
 
         // Build Unjail transaction
+        console.log('[Log] Submitting Unjail transaction');
         const unjailTxBuilder = new cro.transaction.councilNode.UnjailTransactionBuilder(
             {
                 stakingAddress,
@@ -141,7 +151,7 @@ describe('Council Node Transaction', () => {
             },
         );
         const unjailTxHex = unjailTxBuilder.sign(stakingKeyPair).toHex();
-        await tendermintRpc.broadcastTx(unjailTxHex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(unjailTxHex.toString('base64'));
 
         const unjailTxId = unjailTxBuilder.txId();
         await tendermintRpc.waitTxIdConfirmation(unjailTxId);
@@ -249,12 +259,10 @@ const waitForStakedState = async (
         }
         // eslint-disable-next-line no-await-in-loop
         stakedState = await walletRpc.request('staking_state', stakingAddress);
-        // eslint-disable-next-line no-use-before-define
         if (
             partialStakedState.punishmentKind &&
-            (!stakedState.punishment ||
-                stakedState.punishment.kind !==
-                    partialStakedState.punishmentKind)
+            // eslint-disable-next-line no-use-before-define
+            isPunishmentKindEq(stakedState, partialStakedState.punishmentKind)
         ) {
             // eslint-disable-next-line no-console
             console.log(
@@ -298,6 +306,23 @@ const waitForStakedState = async (
         );
         break;
     }
+};
+
+const isPunishmentKindEq = (
+    stakedState: RPCStakedState,
+    expectedPunishmentKind,
+): boolean => {
+    const actualPunishmentKind = stakedState.punishment?.kind;
+
+    if (!actualPunishmentKind) {
+        return false;
+    }
+
+    if (expectedPunishmentKind === PunishmentKindAssertion.None) {
+        return actualPunishmentKind === expectedPunishmentKind;
+    }
+
+    return actualPunishmentKind === expectedPunishmentKind;
 };
 
 const JSONPrettyStringify = (value: any): string =>

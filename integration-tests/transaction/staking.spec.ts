@@ -61,12 +61,15 @@ describe('Staking Transaction', () => {
         } = await setupTestEnv(walletRpc);
 
         // Deposit 100000000 basic unit to staking account
+        console.log('[Log] Submitting deposit transaction');
         const depositAmount = '100000000';
         const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(depositAmount),
             viewKeys: [viewKeyPair.publicKey!],
         });
+
+        console.log('[Log] Depositing stake to staking account');
         const depositTxBuilder = new cro.transaction.staking.DepositTransactionBuilder(
             {
                 stakingAddress,
@@ -96,6 +99,7 @@ describe('Staking Transaction', () => {
         );
 
         // Unbond 50000000 basic unit from staking account
+        console.log('[Log] Unbonding stake from staking account');
         const unbondAmount = '50000000';
         const unbondTxBuilder = new cro.transaction.staking.UnbondTransactionBuilder(
             {
@@ -124,12 +128,14 @@ describe('Staking Transaction', () => {
         );
 
         // Withdraw 25000000 basic unit to transfer address
+        console.log('[Log] Waiting for unbonded stake to be withdraw-able');
         // eslint-disable-next-line no-use-before-define
         await waitForTime(stakeStateAfterUnbond.unbondedFrom);
 
         // eslint-disable-next-line no-use-before-define
         await waitForBlockCount(5, tendermintRpc);
 
+        console.log('[Log] Withdrawing stake from staking account');
         const withdrawAmount = '25000000';
         const feeConfig: cro.fee.FeeConfig = {
             algorithm: cro.fee.FeeAlgorithm.LinearFee,

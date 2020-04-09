@@ -24,6 +24,35 @@ export class TendermintRpc {
         });
     }
 
+    public broadcastTxCommit(encodedTx: string) {
+        const response: any = axios
+            .post(`${this.url}`, {
+                jsonrpc: '2.0',
+                id: Date.now(),
+                method: 'broadcast_tx_commit',
+                params: [encodedTx],
+            })
+            .then((res: any) => res.data);
+
+        const throwError = () => {
+            throw new Error(
+                `Error when broadcasting transaction: ${JSON.stringify(
+                    response,
+                    null,
+                    '    ',
+                )}`,
+            );
+        };
+        // eslint-disable-next-line camelcase
+        if (response.result?.check_tx?.code !== 0) {
+            throwError();
+        }
+        // eslint-disable-next-line camelcase
+        if (response.result?.deliver_tx?.code !== 0) {
+            throwError();
+        }
+    }
+
     public isTxIdConfirmed(txId: string): Promise<boolean> {
         return axios
             .get(`${this.url}/tx_search?query="valid_txs.txid='${txId}'"`)
