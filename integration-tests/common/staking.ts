@@ -21,7 +21,7 @@ export interface RPCStakedState {
 /* eslint-disable camelcase */
 interface RPCCouncilNode {
     name: string;
-    security_contact: string;
+    security_contact?: string;
     consensus_pubkey: {
         type: string;
         value: string;

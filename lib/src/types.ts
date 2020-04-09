@@ -165,7 +165,7 @@ export interface StakedState {
     };
     councilNode?: {
         name: string;
-        securityContact: string;
+        securityContact?: string;
         consensusPubkey: {
             type: string;
             value: string;
@@ -188,7 +188,7 @@ export const owStakedState = ow.object.exactShape({
     }),
     councilNode: ow.optional.object.exactShape({
         name: ow.string,
-        securityContact: ow.string,
+        securityContact: ow.optional.string,
         consensusPubkey: ow.object.exactShape({
             type: ow.string,
             value: ow.string,
@@ -210,7 +210,7 @@ export interface NativeStakedState {
     };
     council_node?: {
         name: string;
-        security_contact: string;
+        security_contact?: string;
         consensus_pubkey: {
             type: string;
             value: string;
