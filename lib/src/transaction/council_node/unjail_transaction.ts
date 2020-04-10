@@ -7,6 +7,7 @@ import {
 } from './types';
 import { KeyPair } from '../../key_pair';
 import { owKeyPair } from '../../key_pair/types';
+import { NetworkConfig } from '../../network';
 
 const native = require('../../../../native');
 
@@ -109,6 +110,13 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
         return this;
     }
 
+    /**
+     * Output broadcast-able transaction in hex
+     *
+     * @throws {Error} error when transaction is not completed
+     * @returns {Buffer}
+     * @memberof NodeJoinTransactionBuilder
+     */
     public toHex(): Buffer {
         if (!this.isCompleted()) {
             throw new Error('Transaction builder is not completed');
@@ -119,4 +127,26 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
             this.keyPair!.toObject(),
         );
     }
+}
+
+/**
+ * Verify the signed transaction hex matches with the provided options
+ *
+ * @throws {Error} error when transaction hex is incorrect or invalid
+ */
+export const verifySignedUnjailTxHex = (
+    unjailTxHex: Buffer,
+    options: VerifySignedUnjailTxHexOption,
+) => {
+    native.councilNodeTransaction.verifyUnjailTxAux(unjailTxHex, {
+        stakingAddress: options.stakingAddress,
+        nonce: options.nonce,
+        chainHexId: options.network.chainHexId,
+    });
+};
+
+interface VerifySignedUnjailTxHexOption {
+    stakingAddress: string;
+    nonce: number;
+    network: NetworkConfig;
 }

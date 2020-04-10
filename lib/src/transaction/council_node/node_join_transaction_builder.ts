@@ -128,6 +128,13 @@ export class NodeJoinTransactionBuilder extends TransactionBuilder {
         return this;
     }
 
+    /**
+     * Output broadcast-able transaction in hex
+     *
+     * @throws {Error} error when transaction is not completed
+     * @returns {Buffer}
+     * @memberof NodeJoinTransactionBuilder
+     */
     public toHex(): Buffer {
         if (!this.isCompleted()) {
             throw new Error('Transaction builder is not completed');

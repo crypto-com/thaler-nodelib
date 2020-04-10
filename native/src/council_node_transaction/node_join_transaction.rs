@@ -61,11 +61,15 @@ pub fn node_join_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuff
     tx_aux_to_hex(&mut ctx, tx_aux)
 }
 
-fn node_join_request_tx_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<NodeJoinRequestTx> {
+fn node_join_request_tx_argument(
+    ctx: &mut FunctionContext,
+    i: i32,
+) -> NeonResult<NodeJoinRequestTx> {
     let node_join_request_tx = ctx.argument::<JsBuffer>(i)?;
     let mut node_join_request_tx = node_join_request_tx.borrow(&ctx.lock()).as_slice();
 
-    NodeJoinRequestTx::decode(&mut node_join_request_tx).chain_neon(ctx, "Unable to decode raw transaction bytes")
+    NodeJoinRequestTx::decode(&mut node_join_request_tx)
+        .chain_neon(ctx, "Unable to decode raw transaction bytes")
 }
 
 struct BuildNodeJoinTransactionOptions {

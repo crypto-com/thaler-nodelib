@@ -83,7 +83,7 @@ describe('Staking Transaction', () => {
             })
             .signInput(0, transferKeyPair)
             .toHex(TENDERMINT_ADDRESS);
-        await tendermintRpc.broadcastTx(depositTxHex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(depositTxHex.toString('base64'));
 
         const depositTxId = depositTxBuilder.txId();
         await tendermintRpc.waitTxIdConfirmation(depositTxId);
@@ -110,8 +110,7 @@ describe('Staking Transaction', () => {
             },
         );
         const unbondTxHex = unbondTxBuilder.sign(stakingKeyPair).toHex();
-
-        await tendermintRpc.broadcastTx(unbondTxHex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(unbondTxHex.toString('base64'));
 
         const unbondTxId = depositTxBuilder.txId();
         await tendermintRpc.waitTxIdConfirmation(unbondTxId);
@@ -160,8 +159,7 @@ describe('Staking Transaction', () => {
             .addViewKey(viewKeyPair.publicKey!)
             .sign(stakingKeyPair)
             .toHex(TENDERMINT_ADDRESS);
-
-        await tendermintRpc.broadcastTx(
+        await tendermintRpc.broadcastTxCommit(
             withdrawUnbondedTxHex.toString('base64'),
         );
 
@@ -262,7 +260,11 @@ const waitForStakedState = async (
     // eslint-disable-next-line no-constant-condition
     while (true) {
         if (trial === maxTrials) {
-            throw new Error('Staked state mismatch after exceeding trials');
+            throw new Error(
+                `Staked state mismatch after exceeding trials: Expected: ${JSON.stringify(
+                    partialStakedState,
+                )})`,
+            );
         }
         // eslint-disable-next-line no-await-in-loop
         stakedState = await walletRpc.request('staking_state', stakingAddress);
@@ -295,12 +297,6 @@ const waitForStakedState = async (
             continue;
         }
 
-        // eslint-disable-next-line no-console
-        console.log(
-            `Expected staked state matched ${JSON.stringify(
-                partialStakedState,
-            )})`,
-        );
         break;
     }
 };

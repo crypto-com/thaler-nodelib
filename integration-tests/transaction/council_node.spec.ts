@@ -9,8 +9,7 @@ import {
     newWalletRPC,
     WalletRequest,
     sleep,
-    waitForTime,
-    waitForBlockCount,
+    JSONPrettyStringify,
 } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
@@ -48,8 +47,12 @@ describe('Council Node Transaction', () => {
 
     /* eslint-disable no-console */
     // eslint-disable-next-line func-names
-    it.only('can submit NodeJoin transaction, wait to be jailed, and submit UnJail transaction', async function() {
+    it('can submit NodeJoin transaction', async function () {
         this.timeout(60000);
+
+        const abciInfo = await tendermintRpc.abciInfo();
+        // eslint-disable-next-line no-use-before-define
+        console.log(`abci_info: ${JSONPrettyStringify(abciInfo)}`);
 
         const {
             transferAddress,
@@ -111,15 +114,14 @@ describe('Council Node Transaction', () => {
                 stakingAddress,
                 nonce: stakeStateAfterDeposit.nonce.toNumber(),
                 nodeMetaData,
+                network,
             },
         );
         const nodeJoinTxHex = nodeJoinTxBuilder.sign(stakingKeyPair).toHex();
         await tendermintRpc.broadcastTxCommit(nodeJoinTxHex.toString('base64'));
 
-        // const nodeJoinTxId = nodeJoinTxBuilder.txId();
-        // await tendermintRpc.waitTxIdConfirmation(nodeJoinTxId);
-
-        await waitForBlockCount(5, tendermintRpc);
+        const nodeJoinTxId = nodeJoinTxBuilder.txId();
+        await tendermintRpc.waitTxIdConfirmation(nodeJoinTxId);
 
         // eslint-disable-next-line no-use-before-define
         const punishmentKind = PunishmentKindAssertion.None;
@@ -130,41 +132,8 @@ describe('Council Node Transaction', () => {
             nodeMetaData,
             walletRpc,
         );
-
-        console.log('[Log] Waiting for staking account to be Jailed');
-        // eslint-disable-next-line no-use-before-define
-        const stakeStateAfterJail = await waitForJail(
-            stakingAddress,
-            walletRpc,
-        );
-
-        console.log('[Log] Waiting for staking account to be Unjailed');
-        // eslint-disable-next-line no-use-before-define
-        await waitForUnjail(stakeStateAfterJail);
-
-        // Build Unjail transaction
-        console.log('[Log] Submitting Unjail transaction');
-        const unjailTxBuilder = new cro.transaction.councilNode.UnjailTransactionBuilder(
-            {
-                stakingAddress,
-                nonce: stakeStateAfterJail.nonce,
-            },
-        );
-        const unjailTxHex = unjailTxBuilder.sign(stakingKeyPair).toHex();
-        await tendermintRpc.broadcastTxCommit(unjailTxHex.toString('base64'));
-
-        const unjailTxId = unjailTxBuilder.txId();
-        await tendermintRpc.waitTxIdConfirmation(unjailTxId);
-
-        const waitForUnjailMaxTrials = 15;
-
-        // eslint-disable-next-line no-use-before-define
-        await assertUnjailShouldSucceed(
-            stakingAddress,
-            walletRpc,
-            waitForUnjailMaxTrials,
-        );
     });
+    /* eslint-enable no-console */
 });
 
 const setupTestEnv = async () => {
@@ -192,30 +161,6 @@ const setupTestEnv = async () => {
     };
 };
 
-const waitForJail = async (stakingAddress: string, walletRpc: WalletRpc) => {
-    const waitForJailMaxTrials = 60;
-    // eslint-disable-next-line no-use-before-define
-    await waitForStakedState(
-        stakingAddress,
-        {
-            // eslint-disable-next-line no-use-before-define
-            punishmentKind: PunishmentKindAssertion.NonLive,
-        },
-        walletRpc,
-        waitForJailMaxTrials,
-    );
-    // eslint-disable-next-line no-use-before-define
-    const stakeStateAfterJail = parseStakedStateFromRPC(
-        await walletRpc.request('staking_state', stakingAddress),
-    );
-    return stakeStateAfterJail;
-};
-
-const waitForUnjail = async (stakeStateAfterJail: cro.StakedState) => {
-    // eslint-disable-next-line no-use-before-define
-    await waitForTime(stakeStateAfterJail.punishment!.jailedUntil);
-};
-
 enum PunishmentKindAssertion {
     None = 'None',
     NonLive = 'NonLive',
@@ -240,74 +185,6 @@ const parseStakedStateFromRPC = (
     return cro.parseStakedStateForNodelib(nativeStakedState);
 };
 
-const waitForStakedState = async (
-    stakingAddress: string,
-    partialStakedState: {
-        punishmentKind?: PunishmentKindAssertion;
-        councilNode?: NodeMetaData;
-    },
-    walletRpc: WalletRpc,
-    maxTrials = 15,
-    message = 'staked state mismatch',
-) => {
-    let trial = 1;
-    let stakedState: RPCStakedState;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        if (trial === maxTrials) {
-            throw new Error('Staked state mismatch after exceeding trials');
-        }
-        // eslint-disable-next-line no-await-in-loop
-        stakedState = await walletRpc.request('staking_state', stakingAddress);
-        if (
-            partialStakedState.punishmentKind &&
-            // eslint-disable-next-line no-use-before-define
-            isPunishmentKindEq(stakedState, partialStakedState.punishmentKind)
-        ) {
-            // eslint-disable-next-line no-console
-            console.log(
-                `Waiting for staked state punishment kind (Expected: ${partialStakedState.punishmentKind} Actual: ${stakedState?.punishment})`,
-            );
-            trial += 1;
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(1000);
-            // eslint-disable-next-line no-continue
-            continue;
-        }
-
-        if (
-            partialStakedState.councilNode &&
-            !deepEqual(
-                stakedState.council_node,
-                parseRPCCouncilNodeFromNodeMetaData(
-                    partialStakedState.councilNode,
-                ),
-            )
-        ) {
-            // eslint-disable-next-line no-console
-            console.log(
-                // eslint-disable-next-line no-use-before-define
-                `Waiting for staked state council node update (Expected: ${JSONPrettyStringify(
-                    partialStakedState.councilNode,
-                    // eslint-disable-next-line no-use-before-define
-                )} Actual: ${JSONPrettyStringify(stakedState.unbonded)})`,
-            );
-            trial += 1;
-            // eslint-disable-next-line no-await-in-loop
-            await sleep(1000);
-            // eslint-disable-next-line no-continue
-            continue;
-        }
-
-        // eslint-disable-next-line no-console
-        console.log(
-            // eslint-disable-next-line no-use-before-define
-            `${message}: Expected: ${JSONPrettyStringify(partialStakedState)})`,
-        );
-        break;
-    }
-};
-
 const isPunishmentKindEq = (
     stakedState: RPCStakedState,
     expectedPunishmentKind: PunishmentKindAssertion,
@@ -315,18 +192,14 @@ const isPunishmentKindEq = (
     const actualPunishmentKind = stakedState.punishment?.kind;
 
     if (!actualPunishmentKind) {
+        if (expectedPunishmentKind === PunishmentKindAssertion.None) {
+            return true;
+        }
         return false;
-    }
-
-    if (expectedPunishmentKind === PunishmentKindAssertion.None) {
-        return actualPunishmentKind === expectedPunishmentKind;
     }
 
     return actualPunishmentKind === expectedPunishmentKind;
 };
-
-const JSONPrettyStringify = (value: any): string =>
-    JSON.stringify(value, null, '    ');
 
 const assertDepositShouldSucceed = async (
     walletRpc: WalletRpc,
@@ -346,6 +219,79 @@ const assertDepositShouldSucceed = async (
     return stakeStateAfterDeposit;
 };
 
+/* eslint-disable no-console */
+const waitForStakedState = async (
+    stakingAddress: string,
+    partialStakedState: {
+        punishmentKind?: PunishmentKindAssertion;
+        councilNode?: NodeMetaData;
+    },
+    walletRpc: WalletRpc,
+    maxTrials = 15,
+    message = 'staked state mismatch',
+): Promise<RPCStakedState> => {
+    let trial = 1;
+    let stakedState: RPCStakedState | undefined;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        if (trial === maxTrials) {
+            throw new Error(
+                `${message}: Staked state mismatch after exceeding trials. Expected: ${JSONPrettyStringify(
+                    partialStakedState,
+                )} Actual: ${
+                    stakedState ? JSONPrettyStringify(stakedState) : 'N/A'
+                })`,
+            );
+        }
+        // eslint-disable-next-line no-await-in-loop
+        stakedState = (await walletRpc.request(
+            'staking_state',
+            stakingAddress,
+        )) as RPCStakedState;
+        if (
+            partialStakedState.punishmentKind &&
+            !isPunishmentKindEq(stakedState, partialStakedState.punishmentKind)
+        ) {
+            console.log(
+                `Waiting for staked state punishment kind (Expected: ${partialStakedState.punishmentKind} Actual: ${stakedState.punishment})`,
+            );
+            trial += 1;
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(1000);
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        if (
+            partialStakedState.councilNode &&
+            !deepEqual(
+                stakedState.council_node,
+                parseRPCCouncilNodeFromNodeMetaData(
+                    partialStakedState.councilNode,
+                ),
+            )
+        ) {
+            console.log(
+                `Waiting for staked state council node update (Expected: ${JSONPrettyStringify(
+                    partialStakedState.councilNode,
+                )} Actual: ${JSONPrettyStringify(stakedState.unbonded)})`,
+            );
+            trial += 1;
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(1000);
+            // eslint-disable-next-line no-continue
+            continue;
+        }
+
+        console.log(
+            `Expected staked state found: ${JSONPrettyStringify(stakedState)}`,
+        );
+
+        return stakedState;
+    }
+};
+/* eslint-enable no-console */
+
 const assertNodeJoinShouldSucceed = async (
     stakingAddress: string,
     punishmentKind: PunishmentKindAssertion,
@@ -353,7 +299,7 @@ const assertNodeJoinShouldSucceed = async (
     walletRpc: WalletRpc,
 ) => {
     const maxTrials = 15;
-    await waitForStakedState(
+    const stakeStateAfterNodeJoin = await waitForStakedState(
         stakingAddress,
         {
             punishmentKind,
@@ -363,24 +309,6 @@ const assertNodeJoinShouldSucceed = async (
         maxTrials,
         'Expected staking address to become an council node',
     );
-    const stakeStateAfterNodeJoin = parseStakedStateFromRPC(
-        await walletRpc.request('staking_state', stakingAddress),
-    );
-    return stakeStateAfterNodeJoin;
-};
 
-const assertUnjailShouldSucceed = async (
-    stakingAddress: string,
-    walletRpc: WalletRpc,
-    waitForUnjailMaxTrials: number,
-) => {
-    await waitForStakedState(
-        stakingAddress,
-        {
-            // eslint-disable-next-line no-use-before-define
-            punishmentKind: PunishmentKindAssertion.None,
-        },
-        walletRpc,
-        waitForUnjailMaxTrials,
-    );
+    return parseStakedStateFromRPC(stakeStateAfterNodeJoin);
 };

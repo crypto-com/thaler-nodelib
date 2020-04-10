@@ -96,7 +96,7 @@ export const waitForBlockCount = async (
 
         // eslint-disable-next-line no-console
         console.log(
-            `Waiting for ${count} block since last recorded block height: ${lastBlockHeight}`,
+            `Waiting for ${count} block since last recorded block height: ${lastBlockHeight}. Current block height: ${latestBlockHeight}`,
         );
 
         // eslint-disable-next-line no-await-in-loop
@@ -123,3 +123,6 @@ export const waitForTime = async (unixTimestamp: number) => {
         await sleep(1000);
     }
 };
+
+export const JSONPrettyStringify = (value: any): string =>
+    JSON.stringify(value, null, '    ');

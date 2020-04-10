@@ -1,14 +1,20 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import { UnjailTransactionBuilder } from './unjail_transaction_builder';
+import {
+    UnjailTransactionBuilder,
+    verifySignedUnjailTxHex,
+} from './unjail_transaction';
 import { Mainnet, Testnet } from '../../network';
 import { KeyPair } from '../../key_pair';
+import { staking } from '../../address';
+
+const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+const SAMPLE_STAKING_ADDRESS = staking({
+    keyPair: SAMPLE_KEY_PAIR,
+});
 
 describe('UnjailTransactionBuilder', () => {
-    const SAMPLE_STAKING_ADDRESS = '0xb5698ee21f69a6184afbe59b3626ed9d4bd755b0';
-    const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
-
     describe('constructor', () => {
         it('should throw Error when staking address is missing', () => {
             expect(() => {
@@ -105,7 +111,7 @@ describe('UnjailTransactionBuilder', () => {
             });
 
             expect(builder.txId()).to.eq(
-                '70abcf73d10aa9b330e930a9ecccb9ed40ffd0ff5c83c07bab70dd6ec4bfaf72',
+                '7947970472cded3a0d31df9c9eb75ac25f24dc041a1cda545ed2b4575dc70c4d',
             );
         });
     });
@@ -133,8 +139,101 @@ describe('UnjailTransactionBuilder', () => {
             builder.sign(SAMPLE_KEY_PAIR);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '02010000000000000000b5698ee21f69a6184afbe59b3626ed9d4bd755b02a0001327f0d7a61e57ee6fb8d11bf1b8c8b4b0e0656f525592c7186871a5403380c7544e7c8b1dea4beb6342f4acc249f88e1ff7b6a3b07284965f126faea043a1600',
+                '020100000000000000001a642f0e3c3af545e7acbd38b07251b3990914f12a0000e5dd2d36d815eaf5d057d0627f2014e2f4a2a2448c9d66cd6fa7ed5eb154be4504e4009f327dfc87293ad377327cfa4a53b132859c7cbc7d71a546dec14f3b95',
             );
         });
+    });
+});
+
+describe('verifySignedUnajilTxHex', () => {
+    const DEFAULT_STAKING_ADDRESS = SAMPLE_STAKING_ADDRESS;
+    const DEFAULT_NONCE = 1;
+    const DEFAULT_NETWORK = Mainnet;
+    const DEFAULT_KEY_PAIR = SAMPLE_KEY_PAIR;
+
+    let signedTxHex: Buffer;
+
+    beforeEach(() => {
+        const builder = new UnjailTransactionBuilder({
+            stakingAddress: DEFAULT_STAKING_ADDRESS,
+            nonce: DEFAULT_NONCE,
+            network: DEFAULT_NETWORK,
+        });
+
+        builder.sign(DEFAULT_KEY_PAIR);
+
+        signedTxHex = builder.toHex();
+    });
+
+    it('should throw an Error when staking address is different', () => {
+        const differentStakingAddress = staking({
+            keyPair: KeyPair.generateRandom(),
+        });
+        expect(() => {
+            verifySignedUnjailTxHex(signedTxHex, {
+                stakingAddress: differentStakingAddress,
+                nonce: DEFAULT_NONCE,
+                network: DEFAULT_NETWORK,
+            });
+        }).to.throw('Mismatch staking address');
+    });
+
+    it('should throw an Error when nonce is different', () => {
+        expect(() => {
+            verifySignedUnjailTxHex(signedTxHex, {
+                stakingAddress: DEFAULT_STAKING_ADDRESS,
+                nonce: 65535,
+                network: DEFAULT_NETWORK,
+            });
+        }).to.throw('Mismatch staking account nonce');
+    });
+
+    it('should throw an Error when network is different', () => {
+        expect(() => {
+            verifySignedUnjailTxHex(signedTxHex, {
+                stakingAddress: DEFAULT_STAKING_ADDRESS,
+                nonce: DEFAULT_NONCE,
+                network: Testnet,
+            });
+        }).to.throw('Mismatch chain hex id');
+    });
+
+    it('should throw an Error when signature is incorrect', () => {
+        const keyPair = KeyPair.generateRandom();
+        const stakingAddress = staking({
+            keyPair,
+        });
+        const nonce = DEFAULT_NONCE;
+        const network = DEFAULT_NETWORK;
+
+        const anotherKeyPair = KeyPair.generateRandom();
+
+        const builder = new UnjailTransactionBuilder({
+            stakingAddress,
+            nonce,
+            network,
+        });
+
+        builder.sign(anotherKeyPair);
+
+        const txHex = builder.toHex();
+
+        expect(() => {
+            verifySignedUnjailTxHex(txHex, {
+                stakingAddress,
+                nonce,
+                network,
+            });
+        }).to.throw('Incorrect signature');
+    });
+
+    it('should not throw any Error when the signed transaction hex is correct', () => {
+        expect(() => {
+            verifySignedUnjailTxHex(signedTxHex, {
+                stakingAddress: DEFAULT_STAKING_ADDRESS,
+                nonce: DEFAULT_NONCE,
+                network: DEFAULT_NETWORK,
+            });
+        }).not.to.throw();
     });
 });

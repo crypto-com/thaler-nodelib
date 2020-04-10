@@ -30,7 +30,7 @@ describe('Transfer Transaction', () => {
     });
 
     // eslint-disable-next-line func-names
-    it('can create Transfer transaction on Devnet using Tendermint WebSocket RPC', async function() {
+    it('can create Transfer transaction on Devnet using Tendermint WebSocket RPC', async function () {
         this.timeout(60000);
 
         const keyPair = cro.KeyPair.generateRandom();
@@ -93,16 +93,14 @@ describe('Transfer Transaction', () => {
         builder.signInput(1, keyPair);
 
         const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
-
-        await tendermintRpc.broadcastTx(hex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
 
         const txId = builder.txId();
-
         await tendermintRpc.waitTxIdConfirmation(txId);
     });
 
     // eslint-disable-next-line func-names
-    it('can create Transfer transaction on Devnet using Tendermint HTTP RPC', async function() {
+    it('can create Transfer transaction on Devnet using Tendermint HTTP RPC', async function () {
         this.timeout(60000);
 
         const keyPair = cro.KeyPair.generateRandom();
@@ -165,16 +163,14 @@ describe('Transfer Transaction', () => {
         builder.signInput(1, keyPair);
 
         const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
-
-        await tendermintRpc.broadcastTx(hex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
 
         const txId = builder.txId();
-
         await tendermintRpc.waitTxIdConfirmation(txId);
     });
 
     // eslint-disable-next-line func-names
-    it('can spend UTXO of transfer address derived from HD wallet', async function() {
+    it('can spend UTXO of transfer address derived from HD wallet', async function () {
         this.timeout(60000);
 
         const mnemonic = cro.HDWallet.generateMnemonic();
@@ -233,11 +229,9 @@ describe('Transfer Transaction', () => {
         builder.signInput(0, fromTransferAddressKeyPair);
 
         const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
-
-        await tendermintRpc.broadcastTx(hex.toString('base64'));
+        await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
 
         const txId = builder.txId();
-
         await tendermintRpc.waitTxIdConfirmation(txId);
     });
 });

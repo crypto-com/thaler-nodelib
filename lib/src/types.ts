@@ -259,18 +259,18 @@ export const parseStakedStateForNodelib = (
         address: stakedState.address,
         punishment: stakedState.punishment
             ? {
-                  kind: stakedState.punishment?.kind,
-                  jailedUntil: stakedState.punishment?.jailed_until,
+                  kind: stakedState.punishment!.kind,
+                  jailedUntil: stakedState.punishment!.jailed_until,
                   slashAmount: new BigNumber(
-                      stakedState.punishment?.slash_amount,
+                      stakedState.punishment!.slash_amount,
                   ),
               }
             : undefined,
         councilNode: stakedState.council_node
             ? {
-                  name: stakedState.council_node?.name,
-                  securityContact: stakedState.council_node?.security_contact,
-                  consensusPubkey: stakedState.council_node?.consensus_pubkey,
+                  name: stakedState.council_node!.name,
+                  securityContact: stakedState.council_node!.security_contact,
+                  consensusPubkey: stakedState.council_node!.consensus_pubkey,
               }
             : undefined,
     };
