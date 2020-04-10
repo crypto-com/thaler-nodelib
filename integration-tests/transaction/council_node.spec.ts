@@ -310,7 +310,7 @@ const waitForStakedState = async (
 
 const isPunishmentKindEq = (
     stakedState: RPCStakedState,
-    expectedPunishmentKind,
+    expectedPunishmentKind: PunishmentKindAssertion,
 ): boolean => {
     const actualPunishmentKind = stakedState.punishment?.kind;
 
