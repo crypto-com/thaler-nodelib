@@ -24,7 +24,7 @@
     "@types/lossless-json": "1.0.0",
     "@types/mocha": "5.2.7",
     "@types/node": "13.13.4",
-    "@types/sinon": "9.0.0",
+    "@types/sinon": "9.0.3",
     "@typescript-eslint/eslint-plugin": "2.29.0",
     "@typescript-eslint/parser": "2.29.0",
     "axios": "0.19.2",
