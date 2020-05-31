@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v1.1.1
   pull: if-not-exists
   commands:
   - export BUILD_MODE=MOCK
@@ -17,7 +17,7 @@ steps:
   - ./integration-tests/build.sh
 
 - name: integration-tests
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v1.1.1
   pull: if-not-exists
   commands:
   - export BUILD_MODE=MOCK
@@ -26,7 +26,7 @@ steps:
   - ./integration-tests/run.sh
 
 - name: teardown
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v1.1.1
   pull: if-not-exists
   commands:
   - ./integration-tests/cleanup.sh

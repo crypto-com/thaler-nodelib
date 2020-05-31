@@ -248,7 +248,7 @@ describe('TransferTransactionBuilder', () => {
                     },
                 });
             }).to.throw(
-                'Expected property property `validFrom` to be of type `date` but received type `number` in object `prevOutput` in object',
+                'Expected property property `validFrom` to be of type `object` but received type `number` in object `prevOutput` in object',
             );
         });
 
@@ -358,7 +358,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when value is invalid', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
-                    chainId: 'AB',
+                    chainHexId: 'AB',
                 }),
             });
 
@@ -376,7 +376,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when value is greater than maximum coin', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
-                    chainId: 'AB',
+                    chainHexId: 'AB',
                 }),
             });
 
@@ -394,7 +394,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when valid from is invalid', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
-                    chainId: 'AB',
+                    chainHexId: 'AB',
                 }),
             });
 
@@ -406,7 +406,7 @@ describe('TransferTransactionBuilder', () => {
                     validFrom: 0 as any,
                 });
             }).to.throw(
-                'Expected property `validFrom` to be of type `date` but received type `number` in object',
+                'Expected property `validFrom` to be of type `object` but received type `number` in object',
             );
         });
 
@@ -973,6 +973,14 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('txId', () => {
+        it('should throw Error when the build has no input', () => {
+            const builder = new TransferTransactionBuilder();
+
+            expect(() => {
+                builder.txId();
+            }).to.throw('Builder has no input');
+        });
+
         it('should return transaction Id of the builder', () => {
             const builder = new TransferTransactionBuilder();
 
@@ -1117,6 +1125,14 @@ describe('TransferTransactionBuilder', () => {
             }).to.throw('Expected value to be HTTP or WS tendermint address');
         });
 
+        it('should throw Error when the builder has no input', () => {
+            const builder = new TransferTransactionBuilder();
+
+            expect(() => {
+                builder.toHex();
+            }).to.throw('Builder has no input');
+        });
+
         it('should throw Error when the transaction has unsigned input', () => {
             const builder = new TransferTransactionBuilder();
 
@@ -1148,7 +1164,7 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.toHex();
-            }).to.throw('Transaction has unsigned input');
+            }).to.throw('Transaction is not completed');
         });
 
         it('should throw Error when the transaction output amount exceeds input amount', () => {

@@ -1,3 +1,4 @@
 import * as transfer from './transfer';
+import * as staking from './staking';
 
-export { transfer };
+export { staking, transfer };

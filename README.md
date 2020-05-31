@@ -23,17 +23,23 @@ An example is worth a thousand words, we provide code examples of different use 
 If you couldn't find an example for your use case, please [open an issue](https://github.com/crypto-com/cro-nodelib/issues/new) and tell us.
 
 #### Address
-- [Create random transfer address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Generate random transfer address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
 - [Create transfer address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
-- [Create random staking address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Generate random staking address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
 - [Create staking address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
 
 #### View Key
-- [Create random view key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/viewKey.spec.ts)
+- [Generate random view key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/viewKey.spec.ts)
 
 #### Transaction
 
 - [Create transfer transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
+
+
+#### Staking and Council Node
+- [Create deposit transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
+- [Create unbond transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
+- [Create withdraw staked transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
 
 #### HD Wallet
 
