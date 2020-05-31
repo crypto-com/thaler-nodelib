@@ -30,7 +30,7 @@ steps:
   commands:
   - export CARGO_TARGET_DIR=$PWD/drone/target
   - export PYTHON_VENV_DIR=$PWD/drone/venv
-  - LD_LIBRARY_PATH=/opt/intel/libsgx-enclave-common/aesm /opt/intel/libsgx-enclave-common/aesm/aesm_service
+  - LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm /opt/intel/sgx-aesm-service/aesm/aesm_service --no-daemon &
   - ./integration-tests/run.sh
 
 - name: teardown
@@ -58,6 +58,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 8f92cf8c9d75a253a7881884484a24d3395db61d8b4653abc2d2a326ee101bd8
+hmac: d885eb22fa78bee74642657bd2d1ea6e7f50249144764a81b0aab60b0396c6c8
 
 ...
