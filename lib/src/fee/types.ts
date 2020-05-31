@@ -33,3 +33,28 @@ const owLinearFeeConfig = ow.object.exactShape({
 
 export const owFeeConfig = ow.any(owLinearFeeConfig);
 export const owOptionalFeeConfig = ow.optional.any(owLinearFeeConfig);
+
+export const parseFeeConfigForNative = (
+    feeConfig: FeeConfig,
+): NativeFeeConfig => {
+    if (feeConfig.algorithm === FeeAlgorithm.LinearFee) {
+        return {
+            ...feeConfig,
+            constant: (feeConfig as LinearFeeConfig).constant.toString(10),
+            coefficient: (feeConfig as LinearFeeConfig).coefficient.toString(
+                10,
+            ),
+        };
+    }
+    throw new Error(`Unsupported fee algorithm: ${feeConfig.algorithm}`);
+};
+
+type NativeFeeConfig = NativeLinearFeeConfig | NativeBaseFeeConfig;
+type NativeLinearFeeConfig = {
+    algorithm: FeeAlgorithm;
+    constant: string;
+    coefficient: string;
+};
+type NativeBaseFeeConfig = {
+    algorithm: FeeAlgorithm;
+};

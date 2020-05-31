@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use chain_core::init::address::{CroAddress, RedeemAddress};
 use chain_core::state::account::StakedStateAddress;
 use chain_core::tx::data::address::ExtendedAddr;
@@ -36,10 +38,15 @@ pub fn is_transfer_address_valid(mut ctx: FunctionContext) -> JsResult<JsBoolean
     let address = ctx.argument::<JsString>(0)?.value();
     let network = network_argument(&mut ctx, 1)?;
 
-    let is_valid = match ExtendedAddr::from_cro(&address, network) {
-        Ok(_) => true,
-        _ => false,
-    };
+    let is_valid = ExtendedAddr::from_cro(&address, network).is_ok();
+
+    Ok(ctx.boolean(is_valid))
+}
+
+pub fn is_staking_address_valid(mut ctx: FunctionContext) -> JsResult<JsBoolean> {
+    let address = ctx.argument::<JsString>(0)?.value();
+
+    let is_valid = StakedStateAddress::from_str(&address).is_ok();
 
     Ok(ctx.boolean(is_valid))
 }
@@ -65,6 +72,9 @@ pub fn register_address_module(ctx: &mut ModuleContext) -> NeonResult<()> {
 
     let is_transfer_address_valid_fn = JsFunction::new(ctx, is_transfer_address_valid)?;
     js_object.set(ctx, "isTransferAddressValid", is_transfer_address_valid_fn)?;
+
+    let is_staking_address_valid_fn = JsFunction::new(ctx, is_staking_address_valid)?;
+    js_object.set(ctx, "isStakingAddressValid", is_staking_address_valid_fn)?;
 
     ctx.export_value("address", js_object)
 }

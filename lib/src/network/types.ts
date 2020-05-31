@@ -7,7 +7,7 @@ import { owFeeConfig } from '../fee/types';
  * @typedef {object} NetworkConfig
  * @property {string} name Name of the network
  * @property {string} addressPrefix Prefix of the bech32 transfer address
- * @property {Buffer} chainId Two hex characters chainId
+ * @property {Buffer} chainHexId Two hex characters chainHexId
  * @property {FeeConfig} [feeConfig] Default fee configuration
  */
 export type NetworkConfig = MainnetConfig | TestnetConfig | DevnetConfig;
@@ -22,7 +22,7 @@ export type TestnetConfig = FullNetworkConfig & {
 
 export type FullNetworkConfig = {
     name: string;
-    chainId: Buffer;
+    chainHexId: Buffer;
     addressPrefix: string;
     bip44Path: string;
     feeConfig: FeeConfig;
@@ -30,13 +30,13 @@ export type FullNetworkConfig = {
 
 export type DevnetConfig = {
     name: NetworkEnum.Devnet;
-    chainId: Buffer;
+    chainHexId: Buffer;
     addressPrefix: string;
     bip44Path: string;
 };
 
 export interface DevnetOptions {
-    chainId: Buffer | string;
+    chainHexId: Buffer | string;
 }
 
 const owNetworkEnumValidateFn = (value: any) => ({
@@ -53,7 +53,7 @@ export const owOptionalNetworkEnum = ow.optional.string.validate(
 const owMainnet = ow.object
     .exactShape({
         name: owNetworkEnum,
-        chainId: ow.buffer,
+        chainHexId: ow.buffer,
         addressPrefix: ow.string,
         bip44Path: ow.string,
         feeConfig: owFeeConfig,
@@ -65,7 +65,7 @@ const owMainnet = ow.object
 const owTestnet = ow.object
     .exactShape({
         name: owNetworkEnum,
-        chainId: ow.buffer,
+        chainHexId: ow.buffer,
         addressPrefix: ow.string,
         bip44Path: ow.string,
         feeConfig: owFeeConfig,
@@ -77,7 +77,7 @@ const owTestnet = ow.object
 const owDevnet = ow.object
     .exactShape({
         name: owNetworkEnum,
-        chainId: ow.buffer,
+        chainHexId: ow.buffer,
         addressPrefix: ow.string,
         bip44Path: ow.string,
     })
@@ -93,17 +93,20 @@ export const owOptionalNetworkConfig = ow.optional.any(
     owDevnet,
 );
 
-const owChainIdStr = ow.string.validate((value: any) => ({
+const owChainHexIdStr = ow.string.validate((value: any) => ({
     validator: /^[0-9a-fA-F]{2}$/.test(value),
     message: 'Expected value to be two hex characters of chain Id',
 }));
-const owChainIdBuffer = ow.buffer.validate((value: any) => ({
+const owChainHexIdBuffer = ow.buffer.validate((value: any) => ({
     validator: /^[0-9a-fA-F]{2}$/.test(value.toString('hex')),
     message: 'Expected value to be two hex characters of chain Id',
 }));
-export const owChainId = ow.any(owChainIdStr, owChainIdBuffer);
-export const owOptionalChainId = ow.optional.any(owChainIdStr, owChainIdBuffer);
+export const owChainHexId = ow.any(owChainHexIdStr, owChainHexIdBuffer);
+export const owOptionalChainId = ow.optional.any(
+    owChainHexIdStr,
+    owChainHexIdBuffer,
+);
 
 export const owDevnetOptions = ow.object.exactShape({
-    chainId: owChainId,
+    chainHexId: owChainHexId,
 });

@@ -1,1 +1,8 @@
-export { isBigNumber, toBigNumber, toCRO, fromCRO, UnitEnum } from './utils';
+export {
+    isBigNumber,
+    toBigNumber,
+    toCRO,
+    fromCRO,
+    BigNumber,
+    UnitEnum,
+} from './utils';

@@ -2,6 +2,10 @@
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+rustup default nightly-2019-11-25
+rustc --version
+cargo version
+
 # cleanup first
 ../chain/integration-tests/cleanup.sh
 
