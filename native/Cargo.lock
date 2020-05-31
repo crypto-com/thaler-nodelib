@@ -475,6 +475,7 @@ name = "cro-nodelib"
 version = "0.1.0"
 dependencies = [
  "chain-core",
+ "chain-tx-validation",
  "client-common",
  "client-core",
  "hex",

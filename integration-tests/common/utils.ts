@@ -73,3 +73,56 @@ export const asyncMiddleman = async (
         throw Error(`${errorMessage}: ${err.message}`);
     }
 };
+
+export const waitForBlockCount = async (
+    count = 1,
+    tendermintRpc: TendermintRpc,
+) => {
+    const lastBlockHeight = await tendermintRpc.latestBlockHeight();
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        // eslint-disable-next-line no-await-in-loop
+        const latestBlockHeight = await tendermintRpc.latestBlockHeight();
+
+        if (latestBlockHeight - lastBlockHeight > count) {
+            // eslint-disable-next-line no-console
+            console.log(
+                `${count} block produced since last recorded block height: ${lastBlockHeight}`,
+            );
+
+            return;
+        }
+
+        // eslint-disable-next-line no-console
+        console.log(
+            `Waiting for ${count} block since last recorded block height: ${lastBlockHeight}. Current block height: ${latestBlockHeight}`,
+        );
+
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(1000);
+    }
+};
+
+export const waitForTime = async (unixTimestamp: number) => {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const now = Math.trunc(Date.now() / 1000);
+
+        if (now >= unixTimestamp) {
+            // eslint-disable-next-line no-console
+            console.log(`Expected time arrived: ${unixTimestamp}`);
+            return;
+        }
+
+        // eslint-disable-next-line no-console
+        console.log(
+            `Waiting for time arrived (Expected: ${unixTimestamp} Actual: ${now})`,
+        );
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(1000);
+    }
+};
+
+export const JSONPrettyStringify = (value: any): string =>
+    JSON.stringify(value, null, '    ');

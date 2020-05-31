@@ -165,7 +165,7 @@ export interface StakedState {
     };
     councilNode?: {
         name: string;
-        securityContact: string;
+        securityContact?: string;
         consensusPubkey: {
             type: string;
             value: string;
@@ -173,8 +173,10 @@ export interface StakedState {
     };
 }
 
+export const owAccountNonce = ow.number.int16;
+
 export const owStakedState = ow.object.exactShape({
-    nonce: ow.number.int16,
+    nonce: owAccountNonce,
     bonded: owBigNumber,
     unbonded: owBigNumber,
     unbondedFrom: owUnixTimestamp,
@@ -186,7 +188,7 @@ export const owStakedState = ow.object.exactShape({
     }),
     councilNode: ow.optional.object.exactShape({
         name: ow.string,
-        securityContact: ow.string,
+        securityContact: ow.optional.string,
         consensusPubkey: ow.object.exactShape({
             type: ow.string,
             value: ow.string,
@@ -208,7 +210,7 @@ export interface NativeStakedState {
     };
     council_node?: {
         name: string;
-        security_contact: string;
+        security_contact?: string;
         consensus_pubkey: {
             type: string;
             value: string;
@@ -217,9 +219,9 @@ export interface NativeStakedState {
 }
 /* eslint-enable camelcase */
 
-export function parseStakedStateForNative(
+export const parseStakedStateForNative = (
     stakedState: StakedState,
-): NativeStakedState {
+): NativeStakedState => {
     return {
         nonce: stakedState.nonce,
         bonded: stakedState.bonded.toString(10),
@@ -243,12 +245,12 @@ export function parseStakedStateForNative(
               }
             : undefined,
     };
-}
+};
 
 /* eslint-disable camelcase */
-export function parseStakedStateFromNative(
+export const parseStakedStateForNodelib = (
     stakedState: NativeStakedState,
-): StakedState {
+): StakedState => {
     return {
         nonce: stakedState.nonce,
         bonded: new BigNumber(stakedState.bonded),
@@ -257,20 +259,20 @@ export function parseStakedStateFromNative(
         address: stakedState.address,
         punishment: stakedState.punishment
             ? {
-                  kind: stakedState.punishment?.kind,
-                  jailedUntil: stakedState.punishment?.jailed_until,
+                  kind: stakedState.punishment!.kind,
+                  jailedUntil: stakedState.punishment!.jailed_until,
                   slashAmount: new BigNumber(
-                      stakedState.punishment?.slash_amount,
+                      stakedState.punishment!.slash_amount,
                   ),
               }
             : undefined,
         councilNode: stakedState.council_node
             ? {
-                  name: stakedState.council_node?.name,
-                  securityContact: stakedState.council_node?.security_contact,
-                  consensusPubkey: stakedState.council_node?.consensus_pubkey,
+                  name: stakedState.council_node!.name,
+                  securityContact: stakedState.council_node!.security_contact,
+                  consensusPubkey: stakedState.council_node!.consensus_pubkey,
               }
             : undefined,
     };
-}
+};
 /* eslint-enable camelcase */

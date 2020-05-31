@@ -31,7 +31,7 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
      * Creates an instance of DepositTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
      * @param {string} options.stakingAddress Staking address to unbond from
-     * @param {string} options.nonce Staking address nonce
+     * @param {number} options.nonce Staking address nonce
      * @param {string} options.amount Amount in basic unit to unbond
      * @param {Network} [options.network] Network the transaction belongs to
      * @memberof UnbondTransactionBuilder

@@ -16,10 +16,7 @@ export type LinearFeeConfig = {
     coefficient: BigNumber;
 };
 
-export const owFeeAlgorithm = ow.string.validate((value: string) => ({
-    validator: Object.keys(FeeAlgorithm).includes(value),
-    message: `Unsupported fee algorithm: ${value}`,
-}));
+export const owFeeAlgorithm = ow.string.oneOf(Object.values(FeeAlgorithm));
 
 const owLinearFeeMilli = ow.object.validate((value: object) => ({
     validator: BigNumber.isBigNumber(value) && value.isGreaterThanOrEqualTo(0),

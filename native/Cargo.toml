@@ -27,3 +27,4 @@ serde_json = "1.0.50"
 chain-core = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3" }
 client-common = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3", features = ["default", "http-rpc", "websocket-rpc"] }
 client-core = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3" }
+chain-tx-validation = { git = "https://github.com/crypto-com/chain", branch = "release/v0.3" }

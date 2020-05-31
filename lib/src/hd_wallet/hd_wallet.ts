@@ -22,7 +22,7 @@ export class HDWallet {
     }
 
     public derivef(formatPath: string, ...args: number[]): KeyPair {
-        ow(formatPath, 'formattedPath', ow.string);
+        ow(formatPath, 'formatPath', ow.string);
         ow(args, 'args', ow.array.ofType(ow.number.uint32));
 
         const path = formatPath.replace(/{\w*}/g, () => {

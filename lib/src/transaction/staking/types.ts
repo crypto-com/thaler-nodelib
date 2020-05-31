@@ -10,6 +10,7 @@ import {
     Output,
     StakedState,
     Timespec,
+    owAccountNonce,
     owTransferAddress,
     owStakingAddress,
 } from '../../types';
@@ -64,7 +65,7 @@ export interface UnbondTransactionBuilderOptions {
 
 export const owUnbondTransactionBuilderOptions = ow.object.exactShape({
     stakingAddress: owStakingAddress,
-    nonce: ow.number.int16,
+    nonce: owAccountNonce,
     amount: owCoin,
     network: owOptionalNetworkConfig,
 });

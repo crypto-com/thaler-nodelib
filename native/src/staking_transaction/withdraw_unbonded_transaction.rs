@@ -11,10 +11,10 @@ use client_common::PublicKey;
 use client_common::SignedTransaction;
 use parity_scale_codec::{Decode, Encode};
 
-use super::tx_aux::{signed_transaction_to_tx_aux, tx_aux_to_hex};
 use crate::common::Features;
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::tx_aux::{signed_transaction_to_tx_aux, tx_aux_to_hex};
 
 pub fn build_raw_withdraw_unbonded_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
     let options = BuildWithdrawUnbondedTransactionOptions::parse(&mut ctx)?;
