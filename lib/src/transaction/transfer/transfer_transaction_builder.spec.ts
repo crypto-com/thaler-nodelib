@@ -9,6 +9,8 @@ import { MAX_COIN_BN } from '../../init';
 import { FeeAlgorithm, ZERO_LINEAR_FEE } from '../../fee';
 import { Mainnet, Devnet } from '../../network';
 
+const native = require('../../../../native/index.node');
+
 describe('TransferTransactionBuilder', () => {
     describe('constructor', () => {
         it('should set network to Mainnet when network is not provided', () => {
@@ -700,6 +702,157 @@ describe('TransferTransactionBuilder', () => {
             expect(builder.isCompleted()).to.eq(false);
 
             builder.signInput(0, keyPair);
+
+            expect(builder.isCompleted()).to.eq(true);
+        });
+    });
+
+    describe('addWitness', () => {
+        it('should throw Error when the input index is negative', () => {
+            const builder = new TransferTransactionBuilder();
+
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+            const witness = Buffer.from(
+                '001e649e6ec3165c63b0fa47ffce7d18675f49bf887354a21d0f8ecc4d2be6cb784aad962752d1550913cefdfd7211f97bb80af5713a4692f41ab20bd88c0bc940ebaac52a25455a63e812b57a42439c68c016d05f7d99e84561a2728aebe872a30002fe0a593b63d48ee042035f39432d062c5df78876d16b9c328044bd6e120b7392',
+                'hex',
+            );
+
+            expect(() => {
+                builder.addWitness(-1, witness);
+            }).to.throw(
+                'Expected number `index` to be greater than or equal to 0, got -1',
+            );
+        });
+
+        it('should throw Error when the input index is out of bound', () => {
+            const builder = new TransferTransactionBuilder();
+
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+            const witness = Buffer.from(
+                '001e649e6ec3165c63b0fa47ffce7d18675f49bf887354a21d0f8ecc4d2be6cb784aad962752d1550913cefdfd7211f97bb80af5713a4692f41ab20bd88c0bc940ebaac52a25455a63e812b57a42439c68c016d05f7d99e84561a2728aebe872a30002fe0a593b63d48ee042035f39432d062c5df78876d16b9c328044bd6e120b7392',
+                'hex',
+            );
+
+            expect(() => {
+                builder.addWitness(2, witness);
+            }).to.throw('Expected number `index` to be less than 1, got 2');
+        });
+
+        it('should throw Error when witness does not correspond to the input', () => {
+            const builder = new TransferTransactionBuilder();
+            const keyPair = KeyPair.generateRandom();
+            const transferAddress = transfer({ keyPair, network: Mainnet });
+
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transferAddress,
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+            const anotherKeyPair = KeyPair.generateRandom();
+            const witness = native.transferTransaction.schnorrSignMessage(
+                Buffer.from(builder.txId(), 'hex'),
+                anotherKeyPair.toObject(),
+            );
+
+            expect(() => {
+                builder.addWitness(0, witness);
+            }).to.throw(
+                'Unable to add witness to input: Invalid input: Incorrect signature: secp: malformed public key',
+            );
+        });
+
+        it('should add the witness to the input', () => {
+            const builder = new TransferTransactionBuilder();
+            const keyPair = KeyPair.generateRandom();
+            const transferAddress = transfer({ keyPair, network: Mainnet });
+
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transferAddress,
+                        value: new BigNumber('1000'),
+                    },
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+            const witness = native.transferTransaction.schnorrSignMessage(
+                Buffer.from(builder.txId(), 'hex'),
+                keyPair.toObject(),
+            );
+
+            expect(builder.isCompleted()).to.eq(false);
+
+            builder.addWitness(0, witness);
 
             expect(builder.isCompleted()).to.eq(true);
         });

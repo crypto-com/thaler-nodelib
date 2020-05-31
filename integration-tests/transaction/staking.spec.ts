@@ -46,7 +46,7 @@ describe('Staking Transaction', () => {
 
     /* eslint-disable no-console */
     // eslint-disable-next-line func-names
-    it('can create deposit, unbond and withdraw stake', async function() {
+    it('can create deposit, unbond and withdraw stake', async function () {
         this.timeout(60000);
 
         const {

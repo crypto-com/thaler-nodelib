@@ -45,7 +45,6 @@ export class UnbondTransactionBuilder extends TransactionBuilder {
         this.nonce = options.nonce;
         this.amount = options.amount;
         this.initNetwork(options.network);
-
         this.prepareRawTx();
     }
 
