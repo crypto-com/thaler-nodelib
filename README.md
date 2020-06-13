@@ -23,31 +23,31 @@ An example is worth a thousand words, we provide code examples of different use 
 If you couldn't find an example for your use case, please [open an issue](https://github.com/crypto-com/cro-nodelib/issues/new) and tell us.
 
 #### Address
-- [Generate random transfer address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
-- [Create transfer address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
-- [Generate random staking address](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
-- [Create staking address from private/public key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/address.spec.ts)
+- [Generate random transfer address](integration-tests/address.spec.ts#L6)
+- [Create transfer address from private/public key](integration-tests/address.spec.ts#L17)
+- [Generate random staking address](integration-tests/address.spec.ts#L55)
+- [Create staking address from private/public key](integration-tests/address.spec.ts#L65)
 
 #### View Key
-- [Generate random view key](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/viewKey.spec.ts)
+- [Generate random view key](integration-tests/viewKey.spec.ts#L8)
 
 #### Transaction
 
-- [Create transfer transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
+- [Create transfer transaction](integration-tests/transaction/transfer.spec.ts#L33)
 
 
 #### Staking and Council Node
-- [Create deposit transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
-- [Create unbond transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
-- [Create withdraw staked transaction](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/staking.spec.ts)
+- [Create deposit transaction](integration-tests/transaction/staking.spec.ts#L63)
+- [Create unbond transaction](integration-tests/transaction/staking.spec.ts#L101)
+- [Create withdraw staked transaction](integration-tests/transaction/staking.spec.ts#L129)
 
 #### HD Wallet
 
-- [Generate mnemonic words](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
-- [Restore from mnemonic words and create addresses and view key at  bip39 path](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
-- [Create addresses and view key at Crypto.com chain default bip44 path](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
-- [create at particular path with format argument](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/hd_wallet.spec.ts)
-- [Spend UTXO of transfer address generated with HD wallet](https://github.com/crypto-com/cro-nodelib/tree/master/integration-tests/transaction/transfer.spec.ts)
+- [Generate mnemonic words](integration-tests/hdwallet.spec.ts#L8)
+- [Restore from mnemonic words and create addresses and view key at bip39 path](integration-tests/hdwallet.spec.ts#L14)
+- [Create addresses and view key at Crypto.com chain default bip44 path](integration-tests/hdwallet.spec.ts#L59)
+- [create at particular path with format argument](integration-tests/hdwallet.spec.ts#L119)
+- [Spend UTXO of transfer address generated with HD wallet](integration-tests/transaction/transfer.spec.ts#L173)
 
 ## Browser support
 
