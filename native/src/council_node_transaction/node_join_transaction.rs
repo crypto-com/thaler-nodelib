@@ -6,12 +6,12 @@ use chain_core::state::account::{
     CouncilNode, Nonce, StakedStateAddress, StakedStateOpAttributes, StakedStateOpWitness,
 };
 use chain_core::state::validator::NodeJoinRequestTx;
-use chain_core::tx::TransactionId;
-use chain_core::tx::TxAux;
+use chain_core::tx::{TransactionId, TxAux, TxPublicAux};
 use parity_scale_codec::{Decode, Encode};
 
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::signer::KeyPairSigner;
 use crate::tx_aux::tx_aux_to_hex;
 
 pub fn build_raw_node_join_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
@@ -49,14 +49,15 @@ pub fn build_raw_node_join_transaction(mut ctx: FunctionContext) -> JsResult<JsO
 pub fn node_join_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     let node_join_request_tx = node_join_request_tx_argument(&mut ctx, 0)?;
     let key_pair = key_pair_argument(&mut ctx, 1)?;
-    let private_key = key_pair.0;
+    let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
+        .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
 
-    let signature = private_key
-        .sign(node_join_request_tx.id())
+    let signature = signer
+        .sign(&node_join_request_tx.id())
         .map(StakedStateOpWitness::new)
         .chain_neon(&mut ctx, "Error when signing transaction")?;
 
-    let tx_aux = TxAux::NodeJoinTx(node_join_request_tx, signature);
+    let tx_aux = TxAux::PublicTx(TxPublicAux::NodeJoinTx(node_join_request_tx, signature));
 
     tx_aux_to_hex(&mut ctx, tx_aux)
 }

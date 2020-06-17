@@ -5,13 +5,13 @@ use neon::prelude::*;
 use chain_core::state::account::{
     Nonce, StakedStateAddress, StakedStateOpAttributes, StakedStateOpWitness, UnjailTx,
 };
-use chain_core::tx::TransactionId;
-use chain_core::tx::TxAux;
+use chain_core::tx::{TransactionId, TxAux, TxPublicAux};
 use chain_tx_validation::witness::verify_tx_recover_address;
 use parity_scale_codec::{Decode, Encode};
 
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::signer::KeyPairSigner;
 use crate::tx_aux::tx_aux_to_hex;
 
 pub fn build_raw_unjail_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
@@ -44,14 +44,15 @@ pub fn build_raw_unjail_transaction(mut ctx: FunctionContext) -> JsResult<JsObje
 pub fn unjail_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     let unjail_tx = unjail_tx_argument(&mut ctx, 0)?;
     let key_pair = key_pair_argument(&mut ctx, 1)?;
-    let private_key = key_pair.0;
+    let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
+        .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
 
-    let signature = private_key
-        .sign(unjail_tx.id())
+    let signature = signer
+        .sign(&unjail_tx.id())
         .map(StakedStateOpWitness::new)
         .chain_neon(&mut ctx, "Error when signing transaction")?;
 
-    let tx_aux = TxAux::UnjailTx(unjail_tx, signature);
+    let tx_aux = TxAux::PublicTx(TxPublicAux::UnjailTx(unjail_tx, signature));
 
     tx_aux_to_hex(&mut ctx, tx_aux)
 }
@@ -96,7 +97,7 @@ fn unjail_tx_aux_argument(
     let tx_aux =
         TxAux::decode(&mut unjail_tx_aux).chain_neon(ctx, "Unable to decode transaction bytes")?;
     match tx_aux {
-        TxAux::UnjailTx(unjail_tx, staked_state_op_witness) => {
+        TxAux::PublicTx(TxPublicAux::UnjailTx(unjail_tx, staked_state_op_witness)) => {
             Ok((unjail_tx, staked_state_op_witness))
         }
         _ => ctx.throw_error("Transaction is not an Unjail transaction"),

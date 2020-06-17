@@ -1,11 +1,18 @@
 import { expect } from 'chai';
 import BigNumber from 'bignumber.js';
+import { JSONPrettyStringify } from './utils';
 
 export const expectTransactionShouldEq = (
     expected: TransactionAssertion,
     actual: RPCTransactionChange,
 ) => {
-    expect(actual.kind).to.eq(expected.kind, 'transaction kind mismatch');
+    const errMessage = (msg: string): string =>
+        `${msg}: ${JSONPrettyStringify(actual)}`;
+
+    expect(actual.kind).to.eq(
+        expected.kind,
+        errMessage('transaction kind mismatch'),
+    );
     if (expected.outputs) {
         expect(actual.outputs.length).to.eq(
             expected.outputs.length,
@@ -17,30 +24,30 @@ export const expectTransactionShouldEq = (
 
             expect(actualOutput.address).to.eq(
                 expectedOutput.address,
-                `output ${i} address mismatch`,
+                errMessage(`output ${i} address mismatch`),
             );
             if (expectedOutput.validFrom) {
                 expect(actualOutput.valid_from.toNumber()).to.eq(
                     expectedOutput.validFrom,
-                    `output ${i} valid from mismatch`,
+                    errMessage(`output ${i} valid from mismatch`),
                 );
             }
             expect(actualOutput.value).to.eq(
                 expectedOutput.value,
-                `output ${i} value mismatch`,
+                errMessage(`output ${i} value mismatch`),
             );
         }
     }
     if (expected.txId) {
         expect(actual.transaction_id).to.eq(
             expected.txId,
-            'transaction id mismatch',
+            errMessage('transaction id mismatch'),
         );
     }
     if (expected.value) {
         expect(actual.value).to.eq(
             expected.value,
-            'transaction value mismatch',
+            errMessage('transaction value mismatch'),
         );
     }
 };

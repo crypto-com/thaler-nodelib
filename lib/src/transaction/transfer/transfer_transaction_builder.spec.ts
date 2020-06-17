@@ -4,10 +4,11 @@ import BigNumber from 'bignumber.js';
 
 import { TransferTransactionBuilder } from './transfer_transaction_builder';
 import { KeyPair } from '../../key_pair';
-import { transfer } from '../../address';
+import { transfer, SINGLE_SIGN_ADDRESS } from '../../address';
 import { MAX_COIN_BN } from '../../init';
 import { FeeAlgorithm, ZERO_LINEAR_FEE } from '../../fee';
 import { Mainnet, Devnet } from '../../network';
+import { Timespec } from '../../types/timespec';
 
 const native = require('../../../../native/index.node');
 
@@ -109,6 +110,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property string `prevTxId` to match `/^[0-9A-Fa-f]{64}$/`, got `INVALID` in object',
@@ -122,6 +124,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property string `prevTxId` to match `/^[0-9A-Fa-f]{64}$/`, got `000000` in object',
@@ -141,6 +144,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property number `prevIndex` to be greater than or equal to 0, got -1 in object',
@@ -155,6 +159,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property `prevIndex` to be of type `number` but received type `string` in object',
@@ -173,6 +178,7 @@ describe('TransferTransactionBuilder', () => {
                         address: 'invalid0address',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property property value to be a valid transfer address in object `prevOutput` in object',
@@ -186,6 +192,7 @@ describe('TransferTransactionBuilder', () => {
                         address: 'cro0invalid0address',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property property value to be a valid transfer address in object `prevOutput` in object',
@@ -207,6 +214,7 @@ describe('TransferTransactionBuilder', () => {
                             'dcro1pe7qg5gshrdl99m9q3ecpzvfr8zuk4h5qqgjyv6y24n80zye42as88x8tg',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Previous output address does not belongs to the builder network',
@@ -226,6 +234,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: '1000' as any,
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property property `value` to be of type `object` but received type `string` in object `prevOutput` in object',
@@ -246,9 +255,71 @@ describe('TransferTransactionBuilder', () => {
                         value: new BigNumber('1000'),
                         validFrom: 0 as any,
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 });
             }).to.throw(
                 'Expected property property `validFrom` to be of type `object` but received type `number` in object `prevOutput` in object',
+            );
+        });
+
+        it('should throw Error when addressParams is missing', () => {
+            const builder = new TransferTransactionBuilder();
+
+            expect(() => {
+                builder.addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        value: new BigNumber('1000'),
+                    },
+                } as any);
+            }).to.throw(
+                'Expected property `addressParams` to be of type `object` but received type `undefined` in object `input`',
+            );
+        });
+
+        it('should throw Error when addressParams is invalid', () => {
+            const builder = new TransferTransactionBuilder();
+
+            expect(() => {
+                builder.addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        value: new BigNumber('1000'),
+                    },
+                    addressParams: {
+                        requiredSigners: -1,
+                        totalSigners: -1,
+                    },
+                });
+            }).to.throw(
+                'Expected property property number `requiredSigners` to be greater than 0, got -1 in object `addressParams` in object `input`',
+            );
+
+            expect(() => {
+                builder.addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address:
+                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        value: new BigNumber('1000'),
+                    },
+                    addressParams: {
+                        requiredSigners: 5,
+                        totalSigners: 1,
+                    },
+                });
+            }).to.throw(
+                '(object `addressParams`) Total signers should be greater than or equal to required signers in object `input`',
             );
         });
 
@@ -264,6 +335,7 @@ describe('TransferTransactionBuilder', () => {
                         'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                     value: new BigNumber('1000'),
                 },
+                addressParams: SINGLE_SIGN_ADDRESS,
             });
 
             expect(builder.inputsLength()).to.eq(1);
@@ -285,6 +357,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1500'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -313,6 +386,7 @@ describe('TransferTransactionBuilder', () => {
                     }),
                     value: new BigNumber('1000'),
                 },
+                addressParams: SINGLE_SIGN_ADDRESS,
             });
 
             expect(builder.isCompleted()).to.eq(false);
@@ -438,6 +512,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1500'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -503,6 +578,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1500'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -531,6 +607,107 @@ describe('TransferTransactionBuilder', () => {
         });
     });
 
+    describe('estimateFee', () => {
+        it('should throw Error when there is no inputs', () => {
+            const builder = new TransferTransactionBuilder();
+
+            expect(() => builder.estimateFee()).to.throw(
+                'Builder has no input',
+            );
+        });
+
+        it('should throw Error when there is no outputs', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder.addInput({
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000000',
+                prevIndex: 0,
+                prevOutput: {
+                    address: transfer({
+                        keyPair,
+                        network: Mainnet,
+                    }),
+                    value: new BigNumber('1500'),
+                },
+                addressParams: SINGLE_SIGN_ADDRESS,
+            });
+
+            expect(() => builder.estimateFee()).to.throw(
+                'Builder has no output',
+            );
+        });
+
+        it('should return estimated fee in string', () => {
+            const builder = new TransferTransactionBuilder({
+                feeConfig: {
+                    algorithm: FeeAlgorithm.LinearFee,
+                    constant: new BigNumber('1.1'),
+                    coefficient: new BigNumber('1.25'),
+                },
+            });
+            const keyPair = KeyPair.generateRandom();
+            const transferAddress = transfer({ keyPair, network: Mainnet });
+
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transferAddress,
+                        value: new BigNumber('2000'),
+                    },
+                    addressParams: SINGLE_SIGN_ADDRESS,
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1000'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+            expect(builder.estimateFee()).to.equal('417');
+
+            builder.addOutput({
+                address:
+                    'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                value: new BigNumber('1000'),
+            });
+            expect(builder.estimateFee()).to.equal('469');
+
+            builder.addInput({
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                prevIndex: 0,
+                prevOutput: {
+                    address: transferAddress,
+                    value: new BigNumber('1000'),
+                },
+                addressParams: SINGLE_SIGN_ADDRESS,
+            });
+            expect(builder.estimateFee()).to.equal('677');
+
+            builder.addInput({
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000001',
+                prevIndex: 0,
+                prevOutput: {
+                    address: transferAddress,
+                    value: new BigNumber('1000'),
+                    validFrom: Timespec.fromSeconds(1000),
+                },
+                addressParams: SINGLE_SIGN_ADDRESS,
+            });
+            expect(builder.estimateFee()).to.equal('884');
+        });
+    });
+
     describe('signInput', () => {
         it('should throw Error when the input index is negative', () => {
             const builder = new TransferTransactionBuilder();
@@ -545,6 +722,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -579,6 +757,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -611,6 +790,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -637,6 +817,8 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when KeyPair is unable to sign the input', () => {
             const builder = new TransferTransactionBuilder();
+            const mismatchedTransferAddress =
+                'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3';
 
             builder
                 .addInput({
@@ -644,10 +826,10 @@ describe('TransferTransactionBuilder', () => {
                         '0000000000000000000000000000000000000000000000000000000000000000',
                     prevIndex: 0,
                     prevOutput: {
-                        address:
-                            'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        address: mismatchedTransferAddress,
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -665,9 +847,7 @@ describe('TransferTransactionBuilder', () => {
 
             expect(() => {
                 builder.signInput(0, keyPair);
-            }).to.throw(
-                'Unable to sign transaction: Multi-sig error: Signing address does not belong to the key pair',
-            );
+            }).to.throw('Input address is not signable by the key pair');
         });
 
         it('should sign the input', () => {
@@ -686,6 +866,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -721,6 +902,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -758,6 +940,7 @@ describe('TransferTransactionBuilder', () => {
                             'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -794,6 +977,7 @@ describe('TransferTransactionBuilder', () => {
                         address: transferAddress,
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -807,7 +991,7 @@ describe('TransferTransactionBuilder', () => {
                     ),
                 );
             const anotherKeyPair = KeyPair.generateRandom();
-            const witness = native.transferTransaction.schnorrSignMessage(
+            const witness = native.signer.schnorrSignTxId(
                 Buffer.from(builder.txId(), 'hex'),
                 anotherKeyPair.toObject(),
             );
@@ -833,6 +1017,7 @@ describe('TransferTransactionBuilder', () => {
                         address: transferAddress,
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -845,7 +1030,7 @@ describe('TransferTransactionBuilder', () => {
                         'hex',
                     ),
                 );
-            const witness = native.transferTransaction.schnorrSignMessage(
+            const witness = native.signer.schnorrSignTxId(
                 Buffer.from(builder.txId(), 'hex'),
                 keyPair.toObject(),
             );
@@ -894,6 +1079,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -906,6 +1092,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('2000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -940,6 +1127,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -952,6 +1140,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('2000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -997,6 +1186,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1500'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1011,7 +1201,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.txId()).to.eq(
-                'bc559df5eab96930849e5d12a5b04b7b577420094481831c1d393add3deffe14',
+                'b10ae56b53fa9f8560b5d6bf211f4d48c948dfb8dbab86eb6a4bf7c4af08da83',
             );
         });
 
@@ -1031,6 +1221,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1500'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1053,7 +1244,7 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('toHex', () => {
-        it('should throw Error when the tendermint address is not http nor ws', () => {
+        it('should throw Error when the tendermint address is not ws', () => {
             const builder = new TransferTransactionBuilder();
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
@@ -1069,6 +1260,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('2000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1089,6 +1281,43 @@ describe('TransferTransactionBuilder', () => {
             }).to.throw('Expected value to be HTTP or WS tendermint address');
         });
 
+        it('should throw Error when the tendermint address is http', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Mainnet,
+                        }),
+                        value: new BigNumber('2000'),
+                    },
+                    addressParams: SINGLE_SIGN_ADDRESS,
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+
+            expect(() => {
+                builder.toHex('http://127.0.0.1');
+            }).to.throw('Expected value to be HTTP or WS tendermint address');
+        });
+
         it('should throw Error when the tendermint address is invalid URL', () => {
             const builder = new TransferTransactionBuilder();
 
@@ -1105,6 +1334,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('2000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1149,6 +1379,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1165,6 +1396,29 @@ describe('TransferTransactionBuilder', () => {
             expect(() => {
                 builder.toHex();
             }).to.throw('Transaction is not completed');
+        });
+
+        it('should throw Error when the builder has no output', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder.addInput({
+                prevTxId:
+                    '0000000000000000000000000000000000000000000000000000000000000000',
+                prevIndex: 0,
+                prevOutput: {
+                    address: transfer({
+                        keyPair,
+                        network: Mainnet,
+                    }),
+                    value: new BigNumber('1000'),
+                },
+                addressParams: SINGLE_SIGN_ADDRESS,
+            });
+
+            expect(() => {
+                builder.toHex();
+            }).to.throw('Builder has no output');
         });
 
         it('should throw Error when the transaction output amount exceeds input amount', () => {
@@ -1185,6 +1439,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1203,7 +1458,7 @@ describe('TransferTransactionBuilder', () => {
             expect(() => {
                 builder.toHex();
             }).to.throw(
-                'Unable to finish transaction: Verify error: Output amount exceed input amount',
+                'Error when trying to verify raw transfer transaction: Verify error: Insufficient balance',
             );
         });
 
@@ -1225,6 +1480,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -1237,6 +1493,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1254,7 +1511,7 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(1, keyPair);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010001000000000000000000000000000000000000000000710600080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00080075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078fc9e4f91671e134a720f3391b904692f7b2a53a8deb478b8be11b9f4a4fe4e11f',
+                '0000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100010000000000000000000000000000000000000000008d0500080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c0001000000000000000800f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f00f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f942d22a5019ee2af5d6790fe30b02493d63098ed32beb6522cef81bb0f86e327',
             );
         });
 
@@ -1276,6 +1533,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('2000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1294,34 +1552,24 @@ describe('TransferTransactionBuilder', () => {
             expect(
                 builder.toHex('ws://127.0.0.1/websocket').toString('hex'),
             ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
             );
             expect(
                 builder.toHex('ws://localhost/websocket').toString('hex'),
             ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
             );
             expect(
                 builder
                     .toHex('ws://tendermint-zerofee:26657/websocket')
                     .toString('hex'),
             ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
             );
             expect(
                 builder.toHex('wss://localhost/websocket').toString('hex'),
             ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
-            );
-            expect(
-                builder.toHex('http://localhost:26657').toString('hex'),
-            ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
-            );
-            expect(
-                builder.toHex('https://chain.crypto.com').toString('hex'),
-            ).to.eq(
-                '0000040000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000dd03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000400287fc61b5b219ce0378027d311c7ce7d81070dfa95ad8878469e9fbbbb6bae5c640a3c2e1a94a9a6aa4cab6850eaae2cea797481312c9f2288bdc2b7674526c7e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f2e22dd8d74d1311164ad039ab69e3b57d057140320716c8bc5ddded429639913',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
             );
         });
     });
@@ -1344,7 +1592,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '00040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '00040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000100000000000000',
             );
         });
 
@@ -1364,6 +1612,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -1376,6 +1625,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addViewKey(
                     Buffer.from(
@@ -1385,7 +1635,7 @@ describe('TransferTransactionBuilder', () => {
                 );
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '080000000000000000000000000000000000000000000000000000000000000000000000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e803000000000000000001000000000000000000000000000000000000000000000000000000000000000000010000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e8030000000000000000010000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000100000000000000',
             );
         });
 
@@ -1405,6 +1655,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -1417,6 +1668,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1425,7 +1677,7 @@ describe('TransferTransactionBuilder', () => {
                 });
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000000000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de8030000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a00',
+                '080000000000000000000000000000000000000000000000000000000000000000000000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e803000000000000000001000000000000000000000000000000000000000000000000000000000000000000010000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e80300000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a000100000000000000',
             );
         });
 
@@ -1445,6 +1697,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addInput({
                     prevTxId:
@@ -1457,6 +1710,7 @@ describe('TransferTransactionBuilder', () => {
                         }),
                         value: new BigNumber('1000'),
                     },
+                    addressParams: SINGLE_SIGN_ADDRESS,
                 })
                 .addOutput({
                     address:
@@ -1474,8 +1728,70 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(1, keyPair);
 
             expect(builder.toIncompleteHex().toString('hex')).to.eq(
-                '080000000000000000000000000000000000000000000000000000000000000000000000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000010075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0000000000000000000000000000000000000000000000000000000000000000010000e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4de80300000000000000010075954ea488e3fdea964e53703af4e48adb2d12cd4de93065880e4d8dcbbec0eed9df10e07d667b3b7c7e047637e900ac9a92974cc6855b437b63b6fdbd1479d9e298d504f41023eb9a4195d1227788b1270945f33f21e681a111ba6f5b382a4d00031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc05000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00',
+                '080000000000000000000000000000000000000000000000000000000000000000000000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e803000000000000000100f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f01000000000000000000000000000000000000000000000000000000000000000000010000ca4792470298f0fb8afa9fef6bec440e6d0a31a6c1bdc8f01d12665477f9ed87e803000000000000000100f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f0100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c000100000000000000',
             );
+        });
+    });
+
+    describe('clone', () => {
+        it('should return a deep clone copy of the builder', () => {
+            const builder = new TransferTransactionBuilder();
+
+            const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
+            builder
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 0,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                    addressParams: SINGLE_SIGN_ADDRESS,
+                })
+                .addInput({
+                    prevTxId:
+                        '0000000000000000000000000000000000000000000000000000000000000000',
+                    prevIndex: 1,
+                    prevOutput: {
+                        address: transfer({
+                            keyPair,
+                            network: Mainnet,
+                        }),
+                        value: new BigNumber('1000'),
+                    },
+                    addressParams: SINGLE_SIGN_ADDRESS,
+                })
+                .addOutput({
+                    address:
+                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                    value: new BigNumber('1500'),
+                })
+                .addViewKey(
+                    Buffer.from(
+                        '0248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c',
+                        'hex',
+                    ),
+                );
+
+            builder.signInput(0, keyPair);
+            builder.signInput(1, keyPair);
+
+            const clonedBuilder = builder.clone();
+            clonedBuilder.addOutput({
+                address:
+                    'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                value: new BigNumber('500'),
+            });
+
+            expect(builder.outputsLength()).to.eq(1);
+            expect(clonedBuilder.outputsLength()).to.eq(2);
+
+            expect(builder.isCompleted()).to.eq(true);
+            expect(clonedBuilder.isCompleted()).to.eq(false);
         });
     });
 
