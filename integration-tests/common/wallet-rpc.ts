@@ -25,7 +25,12 @@ export class WalletRpc {
     public async sync(walletRequest: WalletRequest) {
         // eslint-disable-next-line no-console
         console.log(`[Log] Synchronizing wallet "${walletRequest.name}"`);
-        await this.rpcClient.request('sync', [walletRequest]);
+        const syncRequest = {
+            blocking: true,
+            reset: false,
+            do_loop: false,
+        };
+        await this.rpcClient.request('sync', [walletRequest, syncRequest]);
     }
 
     public async faucet(
@@ -77,7 +82,7 @@ export class WalletRpc {
         const stakingAddress = stakingAddresses[1];
 
         const walletStakingState: WalletStakingState = await asyncMiddleman(
-            this.request('staking_state', [stakingAddress]),
+            this.request('staking_state', [walletRequest.name, stakingAddress]),
             'Error when retrieving Default wallet staking state',
         );
         // eslint-disable-next-line no-console

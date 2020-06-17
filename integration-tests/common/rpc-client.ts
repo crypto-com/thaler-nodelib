@@ -22,6 +22,7 @@ export class RpcClient {
     public async request(method: string, params: string | any[]): Promise<any> {
         this.requestId += 1;
         const id = this.requestId;
+        // eslint-disable-next-line
         const { data } = await axios.post(
             this.url,
             {

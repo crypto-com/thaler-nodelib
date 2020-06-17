@@ -111,7 +111,7 @@ describe('UnjailTransactionBuilder', () => {
             });
 
             expect(builder.txId()).to.eq(
-                '7947970472cded3a0d31df9c9eb75ac25f24dc041a1cda545ed2b4575dc70c4d',
+                '6df011a26c00e43dc60e99f576a3f13cb386660fe640df06ca54c6e8f1b58e0a',
             );
         });
     });
@@ -139,7 +139,7 @@ describe('UnjailTransactionBuilder', () => {
             builder.sign(SAMPLE_KEY_PAIR);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '020100000000000000001a642f0e3c3af545e7acbd38b07251b3990914f12a0000e5dd2d36d815eaf5d057d0627f2014e2f4a2a2448c9d66cd6fa7ed5eb154be4504e4009f327dfc87293ad377327cfa4a53b132859c7cbc7d71a546dec14f3b95',
+                '01010100000000000000001a642f0e3c3af545e7acbd38b07251b3990914f1002a01000000000000000001e4849e8ca3aca83c05d54fddeca8faae47f842e36dbfd75c5daa5598da9e54c43e0f1aafbf85a2833e4cf3f3b898c63730d4eec460d5b295bdcfeac27168c3d3',
             );
         });
     });

@@ -1,4 +1,5 @@
 import ow from 'ow';
+import cloneDeep from 'lodash/cloneDeep';
 import BigNumber from 'bignumber.js';
 
 import { TransactionBuilder } from '../transaction_builder';
@@ -49,7 +50,7 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
      * Creates an instance of WithdrawUnbondedTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
      * @param {StakedState} options.stakedState Current account staked state
-     * @param {Network} options.feeConfig Network the transaction belongs to
+     * @param {FeeConfig} options.feeConfig Network the transaction belongs to
      * @param {Network} [options.network=Mainnet] Network of the transaction
      * @memberof UnbondTransactionBuilder
      */
@@ -192,6 +193,27 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
     }
 
     /**
+     * Returns estimated fee. It can be called before signing the transaction.
+     *
+     * @returns {string} Estiamted fee in basic unit
+     * @memberof WithdrawUnbondedTransactionBuilder
+     */
+    public estimateFee(): string {
+        if (!this.isRawTxPrepared()) {
+            if (!this.hasOutput()) {
+                throw new Error('Builder has no output');
+            }
+
+            this.prepareRawTx();
+        }
+
+        return native.stakingTransaction.estimateWithdrawUnbondedTransactionFee(
+            this.unsignedRawTx,
+            parseFeeConfigForNative(this.feeConfig),
+        );
+    }
+
+    /**
      * Returns transaction Id. Transaction id will change whenever transaction
      * builder has changes.
      *
@@ -310,5 +332,15 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
      */
     public isSigned(): boolean {
         return !!this.keyPair;
+    }
+
+    /**
+     * Deep clone the builder
+     *
+     * @returns {WithdrawUnbondedTransactionBuilder}
+     * @memberof WithdrawUnbondedTransactionBuilder
+     */
+    public clone(): WithdrawUnbondedTransactionBuilder {
+        return cloneDeep(this);
     }
 }

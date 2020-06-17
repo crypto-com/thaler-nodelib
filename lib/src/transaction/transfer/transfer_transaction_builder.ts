@@ -1,4 +1,5 @@
 import ow, { NumberPredicate } from 'ow';
+import cloneDeep from 'lodash/cloneDeep';
 import BigNumber from 'bignumber.js';
 
 import {
@@ -22,6 +23,7 @@ import { getRustFeaturesFromEnv } from '../../native';
 import { FeeConfig, FeeAlgorithm } from '../../fee';
 import { parseFeeConfigForNative } from '../../fee/types';
 import { TransactionBuilder } from '../transaction_builder';
+import { transfer } from '../../address/transfer';
 
 const native = require('../../../../native');
 
@@ -89,7 +91,7 @@ export class TransferTransactionBuilder extends TransactionBuilder {
      * @memberof TransferTransactionBuilder
      */
     public addInput(input: Input): TransferTransactionBuilder {
-        ow(input, owInput);
+        ow(input, 'input', owInput);
 
         if (!this.isTransferAddressInNetwork(input.prevOutput.address)) {
             throw new Error(
@@ -153,6 +155,28 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private clearIncompleteSigningHex() {
         this.incompleteHex = undefined;
+    }
+
+    /**
+     * Estimate fee of the builder. It can be called before the inputs are signed.
+     *
+     * @returns {string} Estimated fee in basic unit
+     */
+    public estimateFee(): string {
+        if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
+            this.verifyHasInput();
+            this.verifyHasOutput();
+
+            const incompleteHex = this.buildIncompleteHex();
+
+            return native.transferTransaction.estimateFeeLinearFee({
+                incompleteHex,
+                feeConfig: parseFeeConfigForNative(this.feeConfig),
+            });
+        }
+        throw new Error(
+            `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
+        );
     }
 
     /**
@@ -223,6 +247,14 @@ export class TransferTransactionBuilder extends TransactionBuilder {
             throw new Error('KeyPair does not have private key');
         }
 
+        const signingAddress = transfer({
+            keyPair,
+            network: this.getNetwork(),
+        });
+        if (this.inputs[index].prevOutput.address !== signingAddress) {
+            throw new Error('Input address is not signable by the key pair');
+        }
+
         const incompleteSigningHex = this.prepareIncompleteSigningHex();
 
         let updatedIncompleteSigningHex: Buffer;
@@ -288,8 +320,14 @@ export class TransferTransactionBuilder extends TransactionBuilder {
      * @memberof TransferTransactionBuilder
      */
     public verify() {
+        this.verifyHasInput();
+        this.verifyHasOutput();
+
         if (this.feeConfig.algorithm === FeeAlgorithm.LinearFee) {
-            return native.transferTransaction.verifyLinearFee();
+            return native.transferTransaction.verifyLinearFee({
+                incompleteHex: this.incompleteHex,
+                feeConfig: parseFeeConfigForNative(this.feeConfig),
+            });
         }
         throw new Error(
             `Unsupported fee algorithm ${this.feeConfig.algorithm}`,
@@ -347,10 +385,14 @@ export class TransferTransactionBuilder extends TransactionBuilder {
         ow(tendermintAddress, owTendermintAddress);
 
         this.verifyHasInput();
+        this.verifyHasOutput();
 
         if (!this.isCompleted()) {
             throw new Error('Transaction is not completed');
         }
+
+        // FIXME: divide this.verify() suite to more specific error checks
+        this.verify();
 
         return native.transferTransaction.toHexLinearFee(
             {
@@ -372,6 +414,16 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private hasInput(): boolean {
         return this.inputs.length !== 0;
+    }
+
+    private verifyHasOutput() {
+        if (!this.hasOutput()) {
+            throw new Error('Builder has no output');
+        }
+    }
+
+    private hasOutput(): boolean {
+        return this.outputs.length !== 0;
     }
 
     private prepareIncompleteSigningHex(): Buffer {
@@ -403,5 +455,15 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private isSigning(): boolean {
         return !!this.incompleteHex;
+    }
+
+    /**
+     * Deep clone the builder
+     *
+     * @returns {TransferTransactionBuilder}
+     * @memberof TransferTransactionBuilder
+     */
+    public clone(): TransferTransactionBuilder {
+        return cloneDeep(this);
     }
 }

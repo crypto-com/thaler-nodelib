@@ -220,7 +220,7 @@ describe('UnbondTransactionBuilder', () => {
             });
 
             expect(builder.txId()).to.eq(
-                '50948cd11f8d4867c7c0eab665b22d036ea11cd5bdfe6b97c4302de63b0604f0',
+                '860423b18e754feaf4ef4f64eb40f5f2f20d5380cf8d1197e34a30fcb26c2dad',
             );
         });
     });
@@ -252,7 +252,7 @@ describe('UnbondTransactionBuilder', () => {
             builder.sign(keyPair);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '0100b5698ee21f69a6184afbe59b3626ed9d4bd755b00100000000000000e8030000000000002a000108f6c158fbb75158aca2259c918b0d6c7f6711611997f04cf113efe21ca5b9a50ee44df788acff3460dbb1b229b5c54f280516e59c128260f1c8769ed9b6e817',
+                '010000b5698ee21f69a6184afbe59b3626ed9d4bd755b00100000000000000e803000000000000002a010000000000000000013279fcc50e83da0ce82d1c75a91d754bce84dd0d715b4561c64846c6bd38f9a96667f7fb4da8d47bdd94760c9984c8cf44c5156e705c8a39e7d29d20146053cf',
             );
         });
     });

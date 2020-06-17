@@ -127,7 +127,7 @@ export class DepositTransactionBuilder extends TransactionBuilder {
         }
         this.verifyInputIndex(index);
 
-        const witness = native.signer.schnorrSignMessage(
+        const witness = native.signer.schnorrSignTxId(
             Buffer.from(this.innertTxId!, 'hex'),
             keyPair.toObject(),
         );

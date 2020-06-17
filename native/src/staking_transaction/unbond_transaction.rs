@@ -6,12 +6,12 @@ use chain_core::init::coin::Coin;
 use chain_core::state::account::{
     Nonce, StakedStateAddress, StakedStateOpAttributes, StakedStateOpWitness, UnbondTx,
 };
-use chain_core::tx::TransactionId;
-use chain_core::tx::TxAux;
+use chain_core::tx::{TransactionId, TxAux, TxPublicAux};
 use parity_scale_codec::{Decode, Encode};
 
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::signer::KeyPairSigner;
 use crate::tx_aux::tx_aux_to_hex;
 
 pub fn build_raw_unbond_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
@@ -47,16 +47,17 @@ pub fn build_raw_unbond_transaction(mut ctx: FunctionContext) -> JsResult<JsObje
 }
 
 pub fn unbond_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
-    let deposit_bond_tx = unbond_tx_argument(&mut ctx, 0)?;
+    let unbond_tx = unbond_tx_argument(&mut ctx, 0)?;
     let key_pair = key_pair_argument(&mut ctx, 1)?;
-    let private_key = key_pair.0;
+    let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
+        .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
 
-    let signature = private_key
-        .sign(deposit_bond_tx.id())
+    let signature = signer
+        .sign(&unbond_tx.id())
         .map(StakedStateOpWitness::new)
         .chain_neon(&mut ctx, "Error when signing transaction")?;
 
-    let tx_aux = TxAux::UnbondStakeTx(deposit_bond_tx, signature);
+    let tx_aux = TxAux::PublicTx(TxPublicAux::UnbondStakeTx(unbond_tx, signature));
 
     tx_aux_to_hex(&mut ctx, tx_aux)
 }

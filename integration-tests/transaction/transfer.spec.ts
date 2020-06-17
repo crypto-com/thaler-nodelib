@@ -3,11 +3,11 @@ import * as cro from '../../lib/src';
 import { newTendermintRPC, newWalletRPC, WalletRequest } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
-
-const TX_TENDERMINT_ADDRESS = process.env.TENDERMINT_RPC_PORT
-    ? `ws://127.0.0.1:${process.env.TENDERMINT_RPC_PORT}/websocket`
-    : 'ws://127.0.0.1:26657/websocket';
-const CHAIN_HEX_ID = process.env.CHAIN_HEX_ID || 'AB';
+import {
+    DEVNET_CHAIN_HEX_ID,
+    DEVNET_FEE_CONFIG,
+    DEVNET_TX_TENDERMINT_ADDRESS,
+} from '../common/constant';
 
 describe('Transfer Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -40,7 +40,7 @@ describe('Transfer Transaction', () => {
         const transferAddress = cro.address.transfer({
             keyPair,
             network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
+                chainHexId: DEVNET_CHAIN_HEX_ID,
             }),
         });
 
@@ -57,13 +57,9 @@ describe('Transfer Transaction', () => {
 
         const builder = new cro.TransferTransactionBuilder({
             network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
+                chainHexId: DEVNET_CHAIN_HEX_ID,
             }),
-            feeConfig: {
-                algorithm: cro.fee.FeeAlgorithm.LinearFee,
-                constant: cro.utils.toBigNumber(1000),
-                coefficient: cro.utils.toBigNumber(1001),
-            },
+            feeConfig: DEVNET_FEE_CONFIG,
         });
 
         builder
@@ -74,6 +70,7 @@ describe('Transfer Transaction', () => {
                     address: transferAddress,
                     value: utxo.value,
                 },
+                addressParams: cro.address.SINGLE_SIGN_ADDRESS,
             })
             .addInput({
                 prevTxId: utxo2.txId,
@@ -82,87 +79,38 @@ describe('Transfer Transaction', () => {
                     address: transferAddress,
                     value: utxo2.value,
                 },
+                addressParams: cro.address.SINGLE_SIGN_ADDRESS,
             })
             .addOutput({
                 address: transferAddress,
-                value: cro.utils.toBigNumber(25000000),
+                value: cro.utils.toBigNumber('25000000'),
             })
             .addViewKey(viewKey.publicKey!);
+
+        // Starting from Crypto.com Chain v0.5.0, transaction fee has to be
+        // exact.
+        // This is an over-simplified strategy to estimate the fee and include
+        // the change. In production system you will need to cover more cases.
+        const noFeeChange = '5000000';
+        const feeEstimationBuilder = builder.clone();
+        feeEstimationBuilder.addOutput({
+            address: transferAddress,
+            value: cro.utils.toBigNumber(noFeeChange),
+        });
+        const estimatedFee = feeEstimationBuilder.estimateFee();
+
+        const changeAmount = cro.utils
+            .toBigNumber(noFeeChange)
+            .minus(estimatedFee);
+        builder.addOutput({
+            address: transferAddress,
+            value: changeAmount,
+        });
 
         builder.signInput(0, keyPair);
         builder.signInput(1, keyPair);
 
-        const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
-        await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
-
-        const txId = builder.txId();
-        await tendermintRpc.waitTxIdConfirmation(txId);
-    });
-
-    // eslint-disable-next-line func-names
-    it('can create Transfer transaction on Devnet using Tendermint HTTP RPC', async function () {
-        this.timeout(60000);
-
-        const keyPair = cro.KeyPair.generateRandom();
-
-        const viewKey = cro.KeyPair.generateRandom();
-
-        const transferAddress = cro.address.transfer({
-            keyPair,
-            network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
-            }),
-        });
-
-        const utxo = await walletRpc.faucet(defaultWallet, {
-            toAddress: transferAddress,
-            value: cro.utils.toBigNumber(10000000),
-            viewKeys: [viewKey.publicKey!],
-        });
-        const utxo2 = await walletRpc.faucet(defaultWallet, {
-            toAddress: transferAddress,
-            value: cro.utils.toBigNumber(20000000),
-            viewKeys: [viewKey.publicKey!],
-        });
-
-        const builder = new cro.TransferTransactionBuilder({
-            network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
-            }),
-            feeConfig: {
-                algorithm: cro.fee.FeeAlgorithm.LinearFee,
-                constant: cro.utils.toBigNumber(1000),
-                coefficient: cro.utils.toBigNumber(1001),
-            },
-        });
-
-        builder
-            .addInput({
-                prevTxId: utxo.txId,
-                prevIndex: utxo.index,
-                prevOutput: {
-                    address: transferAddress,
-                    value: utxo.value,
-                },
-            })
-            .addInput({
-                prevTxId: utxo2.txId,
-                prevIndex: utxo2.index,
-                prevOutput: {
-                    address: transferAddress,
-                    value: utxo2.value,
-                },
-            })
-            .addOutput({
-                address: transferAddress,
-                value: cro.utils.toBigNumber(25000000),
-            })
-            .addViewKey(viewKey.publicKey!);
-
-        builder.signInput(0, keyPair);
-        builder.signInput(1, keyPair);
-
-        const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
+        const hex = builder.toHex(DEVNET_TX_TENDERMINT_ADDRESS);
         await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
 
         const txId = builder.txId();
@@ -182,7 +130,7 @@ describe('Transfer Transaction', () => {
         const fromTransferAddress = cro.address.transfer({
             keyPair: fromTransferAddressKeyPair,
             network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
+                chainHexId: DEVNET_CHAIN_HEX_ID,
             }),
         });
 
@@ -190,7 +138,7 @@ describe('Transfer Transaction', () => {
         const toTransferAddress = cro.address.transfer({
             keyPair: toTransferAddressKeyPair,
             network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
+                chainHexId: DEVNET_CHAIN_HEX_ID,
             }),
         });
 
@@ -202,13 +150,9 @@ describe('Transfer Transaction', () => {
 
         const builder = new cro.TransferTransactionBuilder({
             network: cro.network.Devnet({
-                chainHexId: CHAIN_HEX_ID,
+                chainHexId: DEVNET_CHAIN_HEX_ID,
             }),
-            feeConfig: {
-                algorithm: cro.fee.FeeAlgorithm.LinearFee,
-                constant: cro.utils.toBigNumber(1000),
-                coefficient: cro.utils.toBigNumber(1001),
-            },
+            feeConfig: DEVNET_FEE_CONFIG,
         });
 
         builder
@@ -219,16 +163,32 @@ describe('Transfer Transaction', () => {
                     address: fromTransferAddress,
                     value: utxo.value,
                 },
+                addressParams: cro.address.SINGLE_SIGN_ADDRESS,
             })
             .addOutput({
                 address: toTransferAddress,
                 value: cro.utils.toBigNumber('25000000'),
             })
             .addViewKey(viewKey.publicKey!);
+        const noFeeChange = '5000000';
+        const feeEstimationBuilder = builder.clone();
+        feeEstimationBuilder.addOutput({
+            address: toTransferAddress,
+            value: cro.utils.toBigNumber(noFeeChange),
+        });
+        const estimatedFee = feeEstimationBuilder.estimateFee();
+
+        const changeAmount = cro.utils
+            .toBigNumber(noFeeChange)
+            .minus(estimatedFee);
+        builder.addOutput({
+            address: toTransferAddress,
+            value: changeAmount,
+        });
 
         builder.signInput(0, fromTransferAddressKeyPair);
 
-        const hex = builder.toHex(TX_TENDERMINT_ADDRESS);
+        const hex = builder.toHex(DEVNET_TX_TENDERMINT_ADDRESS);
         await tendermintRpc.broadcastTxCommit(hex.toString('base64'));
 
         const txId = builder.txId();

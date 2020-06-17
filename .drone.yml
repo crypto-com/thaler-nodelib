@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: cryptocom/chain-test:v1.1.1
+  image: cryptocom/chain-test:latest
   pull: if-not-exists
   commands:
   - export CARGO_HOME=$PWD/drone/cargo
@@ -16,7 +16,7 @@ steps:
   - ./integration-tests/build.sh
 
 - name: integration-tests
-  image: cryptocom/chain-test:v1.1.1
+  image: cryptocom/chain-test:latest
   pull: if-not-exists
   privileged: true
   volumes:
@@ -30,11 +30,11 @@ steps:
   commands:
   - export CARGO_TARGET_DIR=$PWD/drone/target
   - export PYTHON_VENV_DIR=$PWD/drone/venv
-  - LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm /opt/intel/sgx-aesm-service/aesm/aesm_service --no-daemon &
+  - LD_LIBRARY_PATH=/opt/intel/sgx-aesm-service/aesm /opt/intel/sgx-aesm-service/aesm/aesm_service
   - ./integration-tests/run.sh
 
 - name: teardown
-  image: cryptocom/chain-test:v1.1.1
+  image: cryptocom/chain-test:latest
   pull: if-not-exists
   commands:
   - ./integration-tests/cleanup.sh
@@ -58,6 +58,6 @@ trigger:
 
 ---
 kind: signature
-hmac: d885eb22fa78bee74642657bd2d1ea6e7f50249144764a81b0aab60b0396c6c8
+hmac: 34039d6944cd1c2cb1b1083914031fa07aa547b6773e4ea804af548618e184c3
 
 ...

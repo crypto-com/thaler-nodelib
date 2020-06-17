@@ -53,17 +53,26 @@ export interface NativeNodeMetaData {
     security_contact?: string;
     // eslint-disable-next-line camelcase
     consensus_pubkey: NodePublicKey;
+    // eslint-disable-next-line camelcase
+    confidential_init: {
+        cert: string;
+    };
 }
 
 export const parseNodeMetaDataForNative = (
     nodeMetaData: NodeMetaData,
 ): NativeNodeMetaData => {
+    // TODO: confidential init
+    const cert = Buffer.from('FIXME');
     return {
         name: nodeMetaData.name,
         security_contact: nodeMetaData.securityContact
             ? nodeMetaData.securityContact
             : undefined,
         consensus_pubkey: nodeMetaData.consensusPublicKey,
+        confidential_init: {
+            cert: cert.toString('base64'),
+        },
     };
 };
 
