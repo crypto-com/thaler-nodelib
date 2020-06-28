@@ -7,13 +7,14 @@ use chain_core::tx::data::attribute::TxAttributes;
 use chain_core::tx::data::output::TxOut;
 use chain_core::tx::fee::FeeAlgorithm;
 use chain_core::tx::TransactionId;
-use client_common::PublicKey;
-use client_common::SignedTransaction;
+use client_common::{PublicKey, SignedTransaction};
+use client_core::signer::DummySigner;
 use parity_scale_codec::{Decode, Encode};
 
 use crate::common::Features;
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::signer::KeyPairSigner;
 use crate::tx_aux::{signed_transaction_to_tx_aux, tx_aux_to_hex};
 
 pub fn build_raw_withdraw_unbonded_transaction(mut ctx: FunctionContext) -> JsResult<JsObject> {
@@ -50,6 +51,24 @@ pub fn build_raw_withdraw_unbonded_transaction(mut ctx: FunctionContext) -> JsRe
     Ok(return_object)
 }
 
+pub fn estimate_withdraw_unbonded_transaction_fee(mut ctx: FunctionContext) -> JsResult<JsString> {
+    let withdraw_unbonded_tx = withdraw_unbonded_tx_argument(&mut ctx, 0)?;
+
+    let fee_config = ctx.argument::<JsObject>(1)?;
+    let fee_config = parse_linear_fee_config(&mut ctx, fee_config)?;
+
+    let dummy_signer = DummySigner();
+    let tx_aux = dummy_signer.mock_txaux_for_withdraw(withdraw_unbonded_tx);
+
+    let estimated_fee = fee_config
+        .calculate_for_txaux(&tx_aux)
+        .chain_neon(&mut ctx, "Unable to estimate transaction fee")?;
+    let estimated_fee = serde_json::to_string(&estimated_fee)
+        .chain_neon(&mut ctx, "Unable to serialize estimated fee to string")?;
+
+    Ok(ctx.string(estimated_fee.trim_matches('"')))
+}
+
 pub fn withdraw_unbonded_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     let withdraw_unbonded_tx = withdraw_unbonded_tx_argument(&mut ctx, 0)?;
     let staked_state = ctx.argument::<JsString>(1)?.value();
@@ -57,7 +76,8 @@ pub fn withdraw_unbonded_transaction_to_hex(mut ctx: FunctionContext) -> JsResul
         .chain_neon(&mut ctx, "Unable to deserialize stakedState")?;
 
     let key_pair = key_pair_argument(&mut ctx, 2)?;
-    let private_key = key_pair.0;
+    let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
+        .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
 
     let fee_config = ctx.argument::<JsObject>(3)?;
     let fee_config = parse_linear_fee_config(&mut ctx, fee_config)?;
@@ -75,15 +95,12 @@ pub fn withdraw_unbonded_transaction_to_hex(mut ctx: FunctionContext) -> JsResul
 
     let unbonded = staked_state.unbonded;
 
-    let signature = private_key
-        .sign(withdraw_unbonded_tx.id())
+    let signature = signer
+        .sign(&withdraw_unbonded_tx.id())
         .map(StakedStateOpWitness::new)
         .chain_neon(&mut ctx, "Error when signing transaction")?;
-    let signed_transaction = SignedTransaction::WithdrawUnbondedStakeTransaction(
-        withdraw_unbonded_tx,
-        Box::new(staked_state),
-        signature,
-    );
+    let signed_transaction =
+        SignedTransaction::WithdrawUnbondedStakeTransaction(withdraw_unbonded_tx, signature);
     let tx_aux =
         signed_transaction_to_tx_aux(&mut ctx, signed_transaction, &tendermint_address, features)
             .chain_neon(&mut ctx, "Unable to obfuscate transaction")?;

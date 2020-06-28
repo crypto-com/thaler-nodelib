@@ -31,8 +31,8 @@ export const Mainnet: NetworkConfig = {
     bip44Path: "m/44'/394'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
-        constant: new BigNumber(1100),
-        coefficient: new BigNumber(1250),
+        constant: new BigNumber(1.1),
+        coefficient: new BigNumber(1.25),
     },
 };
 
@@ -50,8 +50,8 @@ export const Testnet: NetworkConfig = {
     bip44Path: "m/44'/1'/{ACCOUNT}'/0/{INDEX}",
     feeConfig: {
         algorithm: FeeAlgorithm.LinearFee,
-        constant: new BigNumber(1100),
-        coefficient: new BigNumber(1250),
+        constant: new BigNumber(1.1),
+        coefficient: new BigNumber(1.25),
     },
 };
 

@@ -18,12 +18,12 @@ import { NodeMetaData } from '../../lib/src/transaction/council_node/types';
 import {
     RPCStakedState,
     parseRPCCouncilNodeFromNodeMetaData,
+    parseStakedStateFromRPC,
 } from '../common/staking';
-
-const TENDERMINT_ADDRESS = process.env.TENDERMINT_RPC_PORT
-    ? `ws://127.0.0.1:${process.env.TENDERMINT_RPC_PORT}/websocket`
-    : 'ws://127.0.0.1:26657/websocket';
-const CHAIN_HEX_ID = process.env.CHAIN_HEX_ID || 'AB';
+import {
+    DEVNET_TX_TENDERMINT_ADDRESS,
+    DEVNET_CHAIN_HEX_ID,
+} from '../common/constant';
 
 describe('Council Node Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -61,12 +61,13 @@ describe('Council Node Transaction', () => {
             network,
             transferKeyPair,
             stakingKeyPair,
+            createdWallet,
             // eslint-disable-next-line no-use-before-define
-        } = await setupTestEnv();
+        } = await setupTestEnv(walletRpc);
 
         // Deposit 100000000 basic unit to staking account
         console.log('[Log] Requesting coin from faucet');
-        const depositAmount = '100000000';
+        const depositAmount = '1000000000';
         const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(depositAmount),
@@ -86,7 +87,7 @@ describe('Council Node Transaction', () => {
                 prevIndex: utxo.index,
             })
             .signInput(0, transferKeyPair)
-            .toHex(TENDERMINT_ADDRESS);
+            .toHex(DEVNET_TX_TENDERMINT_ADDRESS);
         await tendermintRpc.broadcastTxCommit(depositTxHex.toString('base64'));
 
         const depositTxId = depositTxBuilder.txId();
@@ -95,6 +96,7 @@ describe('Council Node Transaction', () => {
         // eslint-disable-next-line no-use-before-define
         const stakeStateAfterDeposit = await assertDepositShouldSucceed(
             walletRpc,
+            createdWallet,
             stakingAddress,
             depositAmount,
         );
@@ -127,6 +129,7 @@ describe('Council Node Transaction', () => {
         const punishmentKind = PunishmentKindAssertion.None;
         // eslint-disable-next-line no-use-before-define
         await assertNodeJoinShouldSucceed(
+            createdWallet,
             stakingAddress,
             punishmentKind,
             nodeMetaData,
@@ -136,12 +139,12 @@ describe('Council Node Transaction', () => {
     /* eslint-enable no-console */
 });
 
-const setupTestEnv = async () => {
+const setupTestEnv = async (walletRpc: WalletRpc) => {
     const transferKeyPair = cro.KeyPair.generateRandom();
     const stakingKeyPair = cro.KeyPair.generateRandom();
     const viewKeyPair = cro.KeyPair.generateRandom();
     const network = cro.network.Devnet({
-        chainHexId: CHAIN_HEX_ID,
+        chainHexId: DEVNET_CHAIN_HEX_ID,
     });
     const transferAddress = cro.address.transfer({
         keyPair: transferKeyPair,
@@ -150,6 +153,13 @@ const setupTestEnv = async () => {
     const stakingAddress = cro.address.staking({
         keyPair: stakingKeyPair,
     });
+    // eslint-disable-next-line no-use-before-define
+    const createdWallet = await createWallet(
+        viewKeyPair,
+        stakingKeyPair,
+        transferKeyPair,
+        walletRpc,
+    );
 
     return {
         transferAddress,
@@ -158,7 +168,41 @@ const setupTestEnv = async () => {
         network,
         transferKeyPair,
         stakingKeyPair,
+        createdWallet,
     };
+};
+
+const createWallet = async (
+    viewKeyPair: cro.KeyPair,
+    stakingKeyPair: cro.KeyPair,
+    transferKeyPair: cro.KeyPair,
+    walletRpc: WalletRpc,
+): Promise<WalletRequest> => {
+    const walletName = Date.now().toString();
+    const walletAuthRequest = {
+        name: walletName,
+        passphrase: '123456',
+    };
+    await walletRpc.request('wallet_restoreBasic', [
+        walletAuthRequest,
+        viewKeyPair.privateKey!.toString('hex'),
+    ]);
+    const walletEnckey = await walletRpc.getAuthToken(walletAuthRequest);
+
+    const walletRequest = {
+        name: walletName,
+        enckey: walletEnckey,
+    };
+    await walletRpc.request('wallet_createWatchStakingAddress', [
+        walletRequest,
+        stakingKeyPair.publicKey!.toString('hex'),
+    ]);
+    await walletRpc.request('wallet_createWatchTransferAddress', [
+        walletRequest,
+        transferKeyPair.publicKey!.toString('hex'),
+    ]);
+
+    return walletRequest;
 };
 
 enum PunishmentKindAssertion {
@@ -166,24 +210,6 @@ enum PunishmentKindAssertion {
     NonLive = 'NonLive',
     ByzantineFault = 'ByzantineFault',
 }
-
-const parseStakedStateFromRPC = (
-    stakedState: RPCStakedState,
-): cro.StakedState => {
-    const nativeStakedState: cro.NativeStakedState = {
-        ...stakedState,
-        nonce: stakedState.nonce.toNumber(),
-        unbonded_from: stakedState.unbonded_from.toNumber(),
-        punishment: stakedState.punishment
-            ? {
-                  ...stakedState.punishment,
-                  jailed_until: stakedState.punishment!.jailed_until.toNumber(),
-              }
-            : undefined,
-    };
-
-    return cro.parseStakedStateForNodelib(nativeStakedState);
-};
 
 const isPunishmentKindEq = (
     stakedState: RPCStakedState,
@@ -203,12 +229,15 @@ const isPunishmentKindEq = (
 
 const assertDepositShouldSucceed = async (
     walletRpc: WalletRpc,
+    walletRequest: WalletRequest,
     stakingAddress: string,
     depositAmount: string,
 ): Promise<RPCStakedState> => {
+    await walletRpc.sync(walletRequest);
+
     const stakeStateAfterDeposit: RPCStakedState = await walletRpc.request(
         'staking_state',
-        stakingAddress,
+        [walletRequest.name, stakingAddress],
     );
     const actualBonded = new BigNumber(stakeStateAfterDeposit.bonded);
     expect(actualBonded.isGreaterThan('0')).to.eq(true);
@@ -221,6 +250,7 @@ const assertDepositShouldSucceed = async (
 
 /* eslint-disable no-console */
 const waitForStakedState = async (
+    walletRequest: WalletRequest,
     stakingAddress: string,
     partialStakedState: {
         punishmentKind?: PunishmentKindAssertion;
@@ -243,11 +273,15 @@ const waitForStakedState = async (
                 })`,
             );
         }
+
         // eslint-disable-next-line no-await-in-loop
-        stakedState = (await walletRpc.request(
-            'staking_state',
+        await walletRpc.sync(walletRequest);
+
+        // eslint-disable-next-line no-await-in-loop
+        stakedState = (await walletRpc.request('staking_state', [
+            walletRequest.name,
             stakingAddress,
-        )) as RPCStakedState;
+        ])) as RPCStakedState;
         if (
             partialStakedState.punishmentKind &&
             !isPunishmentKindEq(stakedState, partialStakedState.punishmentKind)
@@ -265,7 +299,8 @@ const waitForStakedState = async (
         if (
             partialStakedState.councilNode &&
             !deepEqual(
-                stakedState.council_node,
+                // eslint-disable-next-line camelcase
+                stakedState.validator?.council_node,
                 parseRPCCouncilNodeFromNodeMetaData(
                     partialStakedState.councilNode,
                 ),
@@ -293,6 +328,7 @@ const waitForStakedState = async (
 /* eslint-enable no-console */
 
 const assertNodeJoinShouldSucceed = async (
+    walletRequest: WalletRequest,
     stakingAddress: string,
     punishmentKind: PunishmentKindAssertion,
     councilNode: NodeMetaData,
@@ -300,6 +336,7 @@ const assertNodeJoinShouldSucceed = async (
 ) => {
     const maxTrials = 15;
     const stakeStateAfterNodeJoin = await waitForStakedState(
+        walletRequest,
         stakingAddress,
         {
             punishmentKind,

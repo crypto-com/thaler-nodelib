@@ -73,7 +73,7 @@ const isURL = (url: string): boolean => {
 };
 
 export const owTendermintAddress = ow.string.validate((value: string) => ({
-    validator: /^(http|ws)s?/.test(value) && isURL(value),
+    validator: /^(ws)s?/.test(value) && isURL(value),
     message: 'Expected value to be HTTP or WS tendermint address',
 }));
 
@@ -125,12 +125,19 @@ export interface Input {
     prevTxId: string;
     prevIndex: number;
     prevOutput: Output;
+    addressParams: InputAddressParams;
 }
 
 interface NativeInput {
     prevTxId: string;
     prevIndex: number;
     prevOutput: NativeOutput;
+    addressParams: InputAddressParams;
+}
+
+export interface InputAddressParams {
+    requiredSigners: number;
+    totalSigners: number;
 }
 
 export const parseInputForNative = (input: Input): NativeInput => {
@@ -142,35 +149,37 @@ export const parseInputForNative = (input: Input): NativeInput => {
 
 export const owTxId = ow.string.matches(/^[0-9A-Fa-f]{64}$/);
 
+export const owInputAddressParams = ow.object
+    .exactShape({
+        requiredSigners: ow.number.integer.greaterThan(0),
+        totalSigners: ow.number.integer.greaterThan(0),
+    })
+    .validate((value: object) => ({
+        validator:
+            (value as InputAddressParams).totalSigners >=
+            (value as InputAddressParams).requiredSigners,
+        message:
+            'Total signers should be greater than or equal to required signers',
+    }));
+
 export const owInput = ow.object.exactShape({
     prevTxId: owTxId,
     prevIndex: ow.number.integer.greaterThanOrEqual(0),
     prevOutput: owOutput,
+    addressParams: owInputAddressParams,
 });
 
 export const owUnixTimestamp = ow.number.integer;
 
-// TODO: StakedState is only used in withdraw unbonded transaction builder.
-// Enforce strict type checks when needed.
+// Simplified staked state
+// TODO: To be removed after WithdrawUnbondedTransactionBuilder is changed to
+// accept only required fields
 export interface StakedState {
     nonce: number;
     bonded: BigNumber;
     unbonded: BigNumber;
     unbondedFrom: number;
     address: string;
-    punishment?: {
-        kind: string;
-        jailedUntil: number;
-        slashAmount: BigNumber;
-    };
-    councilNode?: {
-        name: string;
-        securityContact?: string;
-        consensusPubkey: {
-            type: string;
-            value: string;
-        };
-    };
 }
 
 export const owAccountNonce = ow.number.int16;
@@ -203,19 +212,6 @@ export interface NativeStakedState {
     unbonded: string;
     unbonded_from: number;
     address: string;
-    punishment?: {
-        kind: string;
-        jailed_until: number;
-        slash_amount: string;
-    };
-    council_node?: {
-        name: string;
-        security_contact?: string;
-        consensus_pubkey: {
-            type: string;
-            value: string;
-        };
-    };
 }
 /* eslint-enable camelcase */
 
@@ -228,22 +224,6 @@ export const parseStakedStateForNative = (
         unbonded: stakedState.unbonded.toString(10),
         unbonded_from: stakedState.unbondedFrom,
         address: stakedState.address,
-        punishment: stakedState.punishment
-            ? {
-                  kind: stakedState.punishment.kind,
-                  jailed_until: stakedState.punishment!.jailedUntil,
-                  slash_amount: stakedState.punishment!.slashAmount.toString(
-                      10,
-                  ),
-              }
-            : undefined,
-        council_node: stakedState.councilNode
-            ? {
-                  name: stakedState.councilNode!.name,
-                  security_contact: stakedState.councilNode!.securityContact,
-                  consensus_pubkey: stakedState.councilNode!.consensusPubkey,
-              }
-            : undefined,
     };
 };
 
@@ -257,22 +237,6 @@ export const parseStakedStateForNodelib = (
         unbonded: new BigNumber(stakedState.unbonded),
         unbondedFrom: stakedState.unbonded_from,
         address: stakedState.address,
-        punishment: stakedState.punishment
-            ? {
-                  kind: stakedState.punishment!.kind,
-                  jailedUntil: stakedState.punishment!.jailed_until,
-                  slashAmount: new BigNumber(
-                      stakedState.punishment!.slash_amount,
-                  ),
-              }
-            : undefined,
-        councilNode: stakedState.council_node
-            ? {
-                  name: stakedState.council_node!.name,
-                  securityContact: stakedState.council_node!.security_contact,
-                  consensusPubkey: stakedState.council_node!.consensus_pubkey,
-              }
-            : undefined,
     };
 };
 /* eslint-enable camelcase */

@@ -1,35 +1,28 @@
 mod builder_options;
 
+use chain_core::state::tendermint::BlockHeight;
 use chain_core::tx::data::access::{TxAccess, TxAccessPolicy};
-use chain_core::tx::data::address::ExtendedAddr;
 use chain_core::tx::data::attribute::TxAttributes;
-// #[cfg(feature = "mock")]
-use chain_core::tx::data::input::TxoIndex;
-// #[cfg(feature = "mock")]
+use chain_core::tx::data::input::TxoSize;
 use chain_core::tx::data::TxId;
 use chain_core::tx::fee::LinearFee;
-// #[cfg(feature = "mock")]
 use chain_core::tx::witness::TxInWitness;
-use chain_core::tx::TxAux;
-use chain_core::tx::{TransactionId, TxObfuscated};
-// #[cfg(feature = "mock")]
-use chain_core::tx::TxEnclaveAux;
-// #[cfg(not(feature = "mock"))]
-use client_common::tendermint::{RpcClient, WebsocketRpcClient};
-use client_core::cipher::{DefaultTransactionObfuscation, TransactionObfuscation};
-// #[cfg(feature = "mock-abci")]
-use client_core::cipher::MockAbciTransactionObfuscation;
-// #[cfg(feature = "mock")]
-use client_common::MultiSigAddress;
+use chain_core::tx::{TransactionId, TxAux, TxEnclaveAux, TxObfuscated};
+use client_common::tendermint::WebsocketRpcClient;
 use client_common::{PrivateKey, Result, SignedTransaction, Transaction};
-use client_core::signer::{KeyPairSigner, Signer};
+use client_core::cipher::{
+    mock::MockAbciTransactionObfuscation, DefaultTransactionObfuscation, TransactionObfuscation,
+};
+// use client_core::signer::{KeyPairSigner, Signer};
 use client_core::transaction_builder::RawTransferTransactionBuilder;
+use gcd::Gcd;
 use neon::prelude::*;
 use parity_scale_codec::{Decode, Encode};
 
 use crate::common::Features;
 use crate::error::ClientErrorNeonExt;
 use crate::function_types::*;
+use crate::signer::KeyPairSigner;
 
 use builder_options::{BuilderOptions, LinearFeeBuilderOptions};
 
@@ -54,7 +47,14 @@ pub fn build_incomplete_hex_linear_fee(mut ctx: FunctionContext) -> JsResult<JsB
     let mut builder = RawTransferTransactionBuilder::new(attributes, options.fee_algorithm);
 
     for input in options.raw_tx_options.inputs.iter() {
-        builder.add_input(input.to_owned());
+        let address_params = &input.address_params;
+        builder.add_input(
+            input.prev_output.clone(),
+            transfer_address_leaves(
+                address_params.total_signers,
+                address_params.required_signers,
+            ),
+        );
     }
     for output in options.raw_tx_options.outputs.iter() {
         builder.add_output(output.to_owned());
@@ -67,6 +67,21 @@ pub fn build_incomplete_hex_linear_fee(mut ctx: FunctionContext) -> JsResult<JsB
         slice.copy_from_slice(&value);
     });
     Ok(buffer)
+}
+
+fn transfer_address_leaves(total_signers: u64, required_signers: u64) -> u16 {
+    let mut n = total_signers;
+    let mut d = 1;
+    let mut result = 1;
+    while d <= required_signers {
+        let gcd = result.gcd(d);
+        result /= gcd;
+        let t = n / (d / gcd);
+        result *= t;
+        d += 1;
+        n -= 1;
+    }
+    result as u16
 }
 
 /// Add witness to a particular input
@@ -101,21 +116,14 @@ pub fn sign_input_linear_fee(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
     let input_index = ctx.argument::<JsNumber>(1)?.to_string(&mut ctx)?.value();
     let (private_key, public_key) = key_pair_argument(&mut ctx, 2)?;
 
-    let tx_id = builder.tx_id();
-
     let input_index = input_index
         .parse::<usize>()
         .chain_neon(&mut ctx, "Unable to deserialize input index")?;
-    let input = builder.input_at_index(input_index).chain_neon(
-        &mut ctx,
-        format!("Unable to get input at index {}", input_index),
-    )?;
-    let signing_addr = &input.prev_tx_out.address;
 
     let signer = KeyPairSigner::new(private_key, public_key)
         .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
     let witness = signer
-        .schnorr_sign(tx_id, signing_addr)
+        .schnorr_sign_txid(&builder.tx_id())
         .chain_neon(&mut ctx, "Unable to sign transaction")?;
 
     builder
@@ -146,6 +154,19 @@ pub fn tx_id_linear_fee(mut ctx: FunctionContext) -> JsResult<JsString> {
     let tx_id = hex::encode(tx_id);
 
     Ok(ctx.string(tx_id))
+}
+
+/// Returns the estimated fee of builder
+pub fn estimate_fee_linear_fee(mut ctx: FunctionContext) -> JsResult<JsString> {
+    let builder = incomplete_builder_linear_fee_argument(&mut ctx, 0)?;
+
+    let estimated_fee = builder
+        .estimate_fee()
+        .chain_neon(&mut ctx, "Unable to estimate transaction fee")?;
+    let estimated_fee = serde_json::to_string(&estimated_fee)
+        .chain_neon(&mut ctx, "Unable to serialize estimated fee to string")?;
+
+    Ok(ctx.string(estimated_fee.trim_matches('"')))
 }
 
 /// Finish the transaction and export to broadcast-able hex
@@ -180,8 +201,6 @@ fn to_tx_aux_linear_fee(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_tx_aux_websocket_linear_fee(ctx, builder, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_tx_aux_http_linear_fee(ctx, builder, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -206,24 +225,6 @@ fn to_tx_aux_websocket_linear_fee(
         .chain_neon(ctx, "Unable to finish transaction")
 }
 
-fn to_tx_aux_http_linear_fee(
-    ctx: &mut FunctionContext,
-    builder: &LinearFeeRawTransferTransactionBuilder,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
-
-    let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
-        .chain_neon(
-            ctx,
-            "Unable to create transaction obfuscation from tx query address",
-        )?;
-
-    builder
-        .to_tx_aux(tx_obfuscation)
-        .chain_neon(ctx, "Unable to finish transaction")
-}
-
 fn to_mock_abci_tx_aux_linear_fee(
     ctx: &mut FunctionContext,
     builder: &LinearFeeRawTransferTransactionBuilder,
@@ -231,8 +232,6 @@ fn to_mock_abci_tx_aux_linear_fee(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_mock_abci_tx_aux_websocket_linear_fee(ctx, builder, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_mock_abci_tx_aux_http_linear_fee(ctx, builder, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -245,20 +244,6 @@ fn to_mock_abci_tx_aux_websocket_linear_fee(
 ) -> NeonResult<TxAux> {
     let tendermint_client = WebsocketRpcClient::new(&tendermint_address)
         .chain_neon(ctx, "Unable to create Tendermint client from address")?;
-
-    let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
-
-    builder
-        .to_tx_aux(tx_obfuscation)
-        .chain_neon(ctx, "Unable to finish transaction")
-}
-
-fn to_mock_abci_tx_aux_http_linear_fee(
-    ctx: &mut FunctionContext,
-    builder: &LinearFeeRawTransferTransactionBuilder,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
 
     let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
 
@@ -282,16 +267,7 @@ fn to_mock_tx_aux_linear_fee(
 /// Verify the provided incomplete RawTransferTransaction hex is a valid
 /// transaction to be broadcasted
 pub fn verify_linear_fee(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
-    let incomplete_hex = u8_buffer_argument(&mut ctx, 0)?;
-    let fee_config = ctx.argument::<JsObject>(1)?;
-
-    let linear_fee = parse_linear_fee_config(&mut ctx, fee_config)?;
-
-    let builder = RawTransferTransactionBuilder::from_incomplete(incomplete_hex, linear_fee)
-        .chain_neon(
-            &mut ctx,
-            "Unable to deserialize raw transfer transaction hex",
-        )?;
+    let builder = incomplete_builder_linear_fee_argument(&mut ctx, 0)?;
 
     builder.verify().chain_neon(
         &mut ctx,
@@ -345,10 +321,10 @@ impl TransactionObfuscation for MockTransactionCipher {
             SignedTransaction::TransferTransaction(tx, _) => {
                 Ok(TxAux::EnclaveTx(TxEnclaveAux::TransferTx {
                     inputs: tx.inputs.clone(),
-                    no_of_outputs: tx.outputs.len() as TxoIndex,
+                    no_of_outputs: tx.outputs.len() as TxoSize,
                     payload: TxObfuscated {
                         txid: tx.id(),
-                        key_from: 0,
+                        key_from: BlockHeight::new(0),
                         init_vector: [0u8; 12],
                         txpayload,
                     },
@@ -357,42 +333,6 @@ impl TransactionObfuscation for MockTransactionCipher {
             _ => unreachable!(),
         }
     }
-}
-
-// FIXME: Migrate to signer.rs after https://github.com/crypto-com/cro-nodelib/pull/118
-fn schnorr_sign_message(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
-    let message = ctx.argument::<JsBuffer>(0)?;
-    let message = ctx.borrow(&message, |data| data.as_slice::<u8>());
-    let key_pair = key_pair_argument(&mut ctx, 1)?;
-
-    let private_key = key_pair.0;
-    let public_key = key_pair.1;
-    let required_signers = 1;
-    let signing_address = MultiSigAddress::new(
-        vec![public_key.clone()],
-        public_key.clone(),
-        required_signers,
-    )
-    .chain_neon(
-        &mut ctx,
-        "Unable to create MultiSig address from public key",
-    )?;
-    let signing_address = ExtendedAddr::from(signing_address);
-
-    let signer = KeyPairSigner::new(private_key, public_key)
-        .chain_neon(&mut ctx, "Unable to create signer from KeyPair")?;
-
-    let tx_in_witness = signer
-        .schnorr_sign(message, &signing_address)
-        .chain_neon(&mut ctx, "Unable to sign message")?;
-    let tx_in_witness = tx_in_witness.encode();
-
-    let mut buffer = ctx.buffer(tx_in_witness.len() as u32)?;
-    ctx.borrow_mut(&mut buffer, |data| {
-        let slice = data.as_mut_slice();
-        slice.copy_from_slice(&tx_in_witness);
-    });
-    Ok(buffer)
 }
 
 pub fn register_transfer_transaction_module(ctx: &mut ModuleContext) -> NeonResult<()> {
@@ -427,8 +367,8 @@ pub fn register_transfer_transaction_module(ctx: &mut ModuleContext) -> NeonResu
     let to_hex_linear_fee_fn = JsFunction::new(ctx, to_hex_linear_fee)?;
     js_object.set(ctx, "toHexLinearFee", to_hex_linear_fee_fn)?;
 
-    let schnorr_sign_message_fn = JsFunction::new(ctx, schnorr_sign_message)?;
-    js_object.set(ctx, "schnorrSignMessage", schnorr_sign_message_fn)?;
+    let estimate_fee_linear_fee_fn = JsFunction::new(ctx, estimate_fee_linear_fee)?;
+    js_object.set(ctx, "estimateFeeLinearFee", estimate_fee_linear_fee_fn)?;
 
     ctx.export_value("transferTransaction", js_object)
 }

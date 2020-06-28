@@ -1,19 +1,14 @@
 use neon::prelude::*;
 
-// #[cfg(feature = "mock")]
+use chain_core::state::tendermint::BlockHeight;
 use chain_core::tx::data::TxId;
-// #[cfg(feature = "mock")]
 use chain_core::tx::TxAux;
-use chain_core::tx::{TransactionId, TxObfuscated};
-// #[cfg(feature = "mock")]
 use chain_core::tx::TxEnclaveAux;
-// #[cfg(not(feature = "mock"))]
-use client_common::tendermint::{RpcClient, WebsocketRpcClient};
-use client_core::cipher::{DefaultTransactionObfuscation, TransactionObfuscation};
-// #[cfg(feature = "mock-abci")]
-use client_core::cipher::MockAbciTransactionObfuscation;
-// #[cfg(feature = "mock")]
+use chain_core::tx::{TransactionId, TxObfuscated};
+use client_common::tendermint::WebsocketRpcClient;
 use client_common::{PrivateKey, Result, SignedTransaction, Transaction};
+use client_core::cipher::mock::MockAbciTransactionObfuscation;
+use client_core::cipher::{DefaultTransactionObfuscation, TransactionObfuscation};
 
 use parity_scale_codec::Encode;
 
@@ -63,8 +58,6 @@ fn to_tx_aux(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_tx_aux_websocket(ctx, signed_transaction, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_tx_aux_http(ctx, signed_transaction, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -89,24 +82,6 @@ fn to_tx_aux_websocket(
         .chain_neon(ctx, "Unable to encrypt transaction")
 }
 
-fn to_tx_aux_http(
-    ctx: &mut FunctionContext,
-    signed_transaction: SignedTransaction,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
-
-    let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
-        .chain_neon(
-            ctx,
-            "Unable to create transaction obfuscation from tx query address",
-        )?;
-
-    tx_obfuscation
-        .encrypt(signed_transaction)
-        .chain_neon(ctx, "Unable to encrypt transaction")
-}
-
 fn to_mock_abci_tx_aux(
     ctx: &mut FunctionContext,
     signed_transaction: SignedTransaction,
@@ -114,8 +89,6 @@ fn to_mock_abci_tx_aux(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_mock_abci_tx_aux_websocket(ctx, signed_transaction, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_mock_abci_tx_aux_http(ctx, signed_transaction, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -128,20 +101,6 @@ fn to_mock_abci_tx_aux_websocket(
 ) -> NeonResult<TxAux> {
     let tendermint_client = WebsocketRpcClient::new(&tendermint_address)
         .chain_neon(ctx, "Unable to create Tendermint client from address")?;
-
-    let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
-
-    tx_obfuscation
-        .encrypt(signed_transaction)
-        .chain_neon(ctx, "Unable to encrypt transaction")
-}
-
-fn to_mock_abci_tx_aux_http(
-    ctx: &mut FunctionContext,
-    signed_transaction: SignedTransaction,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
 
     let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
 
@@ -185,19 +144,19 @@ impl TransactionObfuscation for MockTransactionCipher {
                     tx: tx.clone(),
                     payload: TxObfuscated {
                         txid: tx.id(),
-                        key_from: 0,
+                        key_from: BlockHeight::new(0),
                         init_vector: [0u8; 12],
                         txpayload,
                     },
                 }))
             }
-            SignedTransaction::WithdrawUnbondedStakeTransaction(tx, _, witness) => {
+            SignedTransaction::WithdrawUnbondedStakeTransaction(tx, witness) => {
                 Ok(TxAux::EnclaveTx(TxEnclaveAux::WithdrawUnbondedStakeTx {
                     no_of_outputs: tx.outputs.len() as u16,
                     witness,
                     payload: TxObfuscated {
                         txid: tx.id(),
-                        key_from: 0,
+                        key_from: BlockHeight::new(0),
                         init_vector: [0u8; 12],
                         txpayload,
                     },

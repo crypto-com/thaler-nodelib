@@ -24,7 +24,7 @@ describe('HDWallet', () => {
                 network: cro.network.Mainnet,
             });
             expect(transferAddress).to.eq(
-                'cro1l6mqkzzemx6amezmalx4q7g0y87lrn7ec27y64afkrzj7gqpu7zsecxksg',
+                'cro1x3sgcsv8gpqywq9xyz9ztd48syqeql920s8c302rfl5743ery8vsya56vv',
             );
         });
 
@@ -74,7 +74,7 @@ describe('HDWallet', () => {
                 network: cro.network.Mainnet,
             });
             expect(transferAddress).to.eq(
-                'cro1l6mqkzzemx6amezmalx4q7g0y87lrn7ec27y64afkrzj7gqpu7zsecxksg',
+                'cro1x3sgcsv8gpqywq9xyz9ztd48syqeql920s8c302rfl5743ery8vsya56vv',
             );
         });
 

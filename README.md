@@ -20,7 +20,7 @@ Right now the library has not been published to npm yet. It will be available on
 
 An example is worth a thousand words, we provide code examples of different use cases below.
 
-If you couldn't find an example for your use case, please [open an issue](https://github.com/crypto-com/cro-nodelib/issues/new) and tell us.
+If you couldn't find an example for your use case, please [open an issue](https://github.com/crypto-com/chain-nodelib/issues/new) and tell us.
 
 #### Address
 - [Generate random transfer address](integration-tests/address.spec.ts#L6)

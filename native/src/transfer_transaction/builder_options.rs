@@ -1,5 +1,5 @@
 use chain_core::init::network::Network;
-use chain_core::tx::data::input::{TxoIndex, TxoPointer};
+use chain_core::tx::data::input::{TxoPointer, TxoSize};
 use chain_core::tx::data::output::TxOut;
 use chain_core::tx::fee::{FeeAlgorithm, LinearFee};
 use client_common::PublicKey;
@@ -21,10 +21,22 @@ where
 
 #[derive(Debug)]
 pub struct RawTransactionOptions {
-    pub inputs: Vec<(TxoPointer, TxOut)>,
+    pub inputs: Vec<RawTransactionOptionsInput>,
     pub outputs: Vec<TxOut>,
     pub view_keys: Vec<PublicKey>,
     pub chain_hex_id: u8,
+}
+
+#[derive(Debug)]
+pub struct RawTransactionOptionsInput {
+    pub prev_output: (TxoPointer, TxOut),
+    pub address_params: RawTransactionOptionsInputAddressParams,
+}
+
+#[derive(Debug)]
+pub struct RawTransactionOptionsInputAddressParams {
+    pub required_signers: u64,
+    pub total_signers: u64,
 }
 
 impl<F> BuilderOptions<F>
@@ -77,7 +89,7 @@ where
                     .chain_neon(ctx, "Unable to downcast input")?;
                 BuilderOptions::<F>::parse_input(ctx, *input, network)
             })
-            .collect::<NeonResult<Vec<(TxoPointer, TxOut)>>>()?;
+            .collect::<NeonResult<Vec<RawTransactionOptionsInput>>>()?;
 
         let outputs = options
             .get(ctx, "outputs")?
@@ -121,7 +133,7 @@ where
         ctx: &mut FunctionContext,
         input: JsObject,
         network: Network,
-    ) -> NeonResult<(TxoPointer, TxOut)> {
+    ) -> NeonResult<RawTransactionOptionsInput> {
         let prev_txid = input
             .get(ctx, "prevTxId")?
             .downcast_or_throw::<JsString, FunctionContext>(ctx)
@@ -137,7 +149,7 @@ where
 
         let txo_pointer = TxoPointer {
             id: prev_txid,
-            index: prev_index as TxoIndex,
+            index: prev_index as TxoSize,
         };
 
         let tx_out = input
@@ -146,6 +158,40 @@ where
             .chain_neon(ctx, "Unable to downcast prevOutput in input")?;
         let tx_out = parse_output(ctx, tx_out, network)?;
 
-        Ok((txo_pointer, tx_out))
+        let address_params = input
+            .get(ctx, "addressParams")?
+            .downcast_or_throw::<JsObject, FunctionContext>(ctx)
+            .chain_neon(ctx, "Unable to downcast addressParams in input")?;
+        let address_params =
+            BuilderOptions::<LinearFee>::parse_address_params(ctx, *address_params)?;
+
+        Ok(RawTransactionOptionsInput {
+            prev_output: (txo_pointer, tx_out),
+            address_params,
+        })
+    }
+
+    fn parse_address_params(
+        ctx: &mut FunctionContext,
+        address_params: JsObject,
+    ) -> NeonResult<RawTransactionOptionsInputAddressParams> {
+        let required_signers = address_params
+            .get(ctx, "requiredSigners")?
+            .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
+            .chain_neon(ctx, "Unable to downcast requiredSigners in addressParams")?
+            .value();
+        let required_signers = required_signers as u64;
+
+        let total_signers = address_params
+            .get(ctx, "requiredSigners")?
+            .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
+            .chain_neon(ctx, "Unable to downcast totalSigners in addressParams")?
+            .value();
+        let total_signers = total_signers as u64;
+
+        Ok(RawTransactionOptionsInputAddressParams {
+            required_signers,
+            total_signers,
+        })
     }
 }

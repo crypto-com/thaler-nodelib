@@ -8,13 +8,13 @@ All contributors are expected to follow our [Code of Conduct](./CODE_OF_CONDUCT.
 
 ## Feature Requests
 
-Feature requests are welcomed. You should post your request as [Github issues](https://github.com/crypto-com/cro-nodelib/issues/new) first. In an issue, please describe what your request is, the expected behaviour and how it will benefit you and/or other users.
+Feature requests are welcomed. You should post your request as [Github issues](https://github.com/crypto-com/chain-nodelib/issues/new) first. In an issue, please describe what your request is, the expected behaviour and how it will benefit you and/or other users.
 
 Crypto.com Chain and its surrounding products are under active development. We may not be able to respond to your feature request issue promptly. However, you are free to submit a pull request by following the guidelines and we are happy to review it. Please check the [Working of issues](#working-on-issues) section for more details.
 
 ## Bug Reports
 
-Bug reports should be posted as [Github issues](https://github.com/crypto-com/cro-nodelib/issues/new). In an issue, please describe what you did, what you expected, and what happened instead.
+Bug reports should be posted as [Github issues](https://github.com/crypto-com/chain-nodelib/issues/new). In an issue, please describe what you did, what you expected, and what happened instead.
 
 If you think that you have identified an issue that might compromise its users' security, please do not open a public issue on GitHub. Instead, we ask you to refer to [security policy](./SECURITY.md).
 

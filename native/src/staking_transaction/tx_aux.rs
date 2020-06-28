@@ -63,8 +63,6 @@ fn to_tx_aux(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_tx_aux_websocket(ctx, signed_transaction, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_tx_aux_http(ctx, signed_transaction, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -89,24 +87,6 @@ fn to_tx_aux_websocket(
         .chain_neon(ctx, "Unable to encrypt transaction")
 }
 
-fn to_tx_aux_http(
-    ctx: &mut FunctionContext,
-    signed_transaction: SignedTransaction,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
-
-    let tx_obfuscation = DefaultTransactionObfuscation::from_tx_query(&tendermint_client)
-        .chain_neon(
-            ctx,
-            "Unable to create transaction obfuscation from tx query address",
-        )?;
-
-    tx_obfuscation
-        .encrypt(signed_transaction)
-        .chain_neon(ctx, "Unable to encrypt transaction")
-}
-
 fn to_mock_abci_tx_aux(
     ctx: &mut FunctionContext,
     signed_transaction: SignedTransaction,
@@ -114,8 +94,6 @@ fn to_mock_abci_tx_aux(
 ) -> NeonResult<TxAux> {
     if tendermint_address.starts_with("ws") {
         to_mock_abci_tx_aux_websocket(ctx, signed_transaction, tendermint_address)
-    } else if tendermint_address.starts_with("http") {
-        to_mock_abci_tx_aux_http(ctx, signed_transaction, tendermint_address)
     } else {
         ctx.throw_error("Unsupported Tendermint client protocol")
     }
@@ -128,20 +106,6 @@ fn to_mock_abci_tx_aux_websocket(
 ) -> NeonResult<TxAux> {
     let tendermint_client = WebsocketRpcClient::new(&tendermint_address)
         .chain_neon(ctx, "Unable to create Tendermint client from address")?;
-
-    let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
-
-    tx_obfuscation
-        .encrypt(signed_transaction)
-        .chain_neon(ctx, "Unable to encrypt transaction")
-}
-
-fn to_mock_abci_tx_aux_http(
-    ctx: &mut FunctionContext,
-    signed_transaction: SignedTransaction,
-    tendermint_address: &str,
-) -> NeonResult<TxAux> {
-    let tendermint_client = RpcClient::new(&tendermint_address);
 
     let tx_obfuscation = MockAbciTransactionObfuscation::new(tendermint_client);
 

@@ -10,6 +10,7 @@ import {
     sleep,
     waitForTime,
     waitForBlockCount,
+    JSONPrettyStringify,
 } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
@@ -18,11 +19,11 @@ import {
     TransactionChangeKind,
 } from '../common/assertion';
 import { RPCStakedState, parseStakedStateFromRPC } from '../common/staking';
-
-const TENDERMINT_ADDRESS = process.env.TENDERMINT_RPC_PORT
-    ? `ws://127.0.0.1:${process.env.TENDERMINT_RPC_PORT}/websocket`
-    : 'ws://127.0.0.1:26657/websocket';
-const CHAIN_HEX_ID = process.env.CHAIN_HEX_ID || 'AB';
+import {
+    DEVNET_TX_TENDERMINT_ADDRESS,
+    DEVNET_FEE_CONFIG,
+    DEVNET_CHAIN_HEX_ID,
+} from '../common/constant';
 
 describe('Staking Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -82,7 +83,7 @@ describe('Staking Transaction', () => {
                 prevIndex: utxo.index,
             })
             .signInput(0, transferKeyPair)
-            .toHex(TENDERMINT_ADDRESS);
+            .toHex(DEVNET_TX_TENDERMINT_ADDRESS);
         await tendermintRpc.broadcastTxCommit(depositTxHex.toString('base64'));
 
         const depositTxId = depositTxBuilder.txId();
@@ -93,8 +94,10 @@ describe('Staking Transaction', () => {
             actualBonded,
             // eslint-disable-next-line no-use-before-define
         } = await assertDepositShouldSucceed(
+            createdWallet,
             walletRpc,
             stakingAddress,
+            depositTxId,
             depositAmount,
         );
 
@@ -120,6 +123,7 @@ describe('Staking Transaction', () => {
             bondedFromUnbond,
             // eslint-disable-next-line no-use-before-define
         } = await assertUnbondShouldSucceed(
+            createdWallet,
             actualBonded,
             unbondAmount,
             stakingAddress,
@@ -135,12 +139,8 @@ describe('Staking Transaction', () => {
         await waitForBlockCount(5, tendermintRpc);
 
         console.log('[Log] Withdrawing stake from staking account');
-        const withdrawAmount = '25000000';
-        const feeConfig: cro.fee.FeeConfig = {
-            algorithm: cro.fee.FeeAlgorithm.LinearFee,
-            constant: cro.utils.toBigNumber('1100'),
-            coefficient: cro.utils.toBigNumber('1250'),
-        };
+        const withdrawAllAmount = stakeStateAfterUnbond.unbonded.toString(10);
+        const feeConfig = DEVNET_FEE_CONFIG;
         const withdrawUnbondedTxBuilder = new cro.transaction.staking.WithdrawUnbondedTransactionBuilder(
             {
                 stakedState: stakeStateAfterUnbond,
@@ -148,17 +148,37 @@ describe('Staking Transaction', () => {
                 network,
             },
         );
-        const withdrawUnbondedTxHex = withdrawUnbondedTxBuilder
+
+        withdrawUnbondedTxBuilder.addViewKey(viewKeyPair.publicKey!);
+
+        // Starting from Crypto.com Chain v0.5.0, transaction fee has to be
+        // exact.
+        // This is an over-simplified strategy to estimate the fee and include
+        // the change. In production system you will need to cover more cases.
+        const feeEstimationBuilder = withdrawUnbondedTxBuilder.clone();
+        const estimatedFee = feeEstimationBuilder
             .addOutput({
                 address: transferAddress,
-                value: cro.utils.toBigNumber(withdrawAmount),
+                value: cro.utils.toBigNumber(withdrawAllAmount),
                 validFrom: cro.Timespec.fromSeconds(
                     stakeStateAfterUnbond.unbondedFrom,
                 ),
             })
-            .addViewKey(viewKeyPair.publicKey!)
+            .estimateFee();
+
+        const withdrawAmount = cro.utils
+            .toBigNumber(withdrawAllAmount)
+            .minus(estimatedFee);
+        const withdrawUnbondedTxHex = withdrawUnbondedTxBuilder
+            .addOutput({
+                address: transferAddress,
+                value: withdrawAmount,
+                validFrom: cro.Timespec.fromSeconds(
+                    stakeStateAfterUnbond.unbondedFrom,
+                ),
+            })
             .sign(stakingKeyPair)
-            .toHex(TENDERMINT_ADDRESS);
+            .toHex(DEVNET_TX_TENDERMINT_ADDRESS);
         await tendermintRpc.broadcastTxCommit(
             withdrawUnbondedTxHex.toString('base64'),
         );
@@ -174,7 +194,7 @@ describe('Staking Transaction', () => {
             createdWallet,
             transferAddress,
             stakeStateAfterUnbond,
-            withdrawAmount,
+            withdrawAmount.toString(10),
             withdrawUnbondedTxId,
         );
     });
@@ -185,7 +205,7 @@ const setupTestEnv = async (walletRpc: WalletRpc) => {
     const stakingKeyPair = cro.KeyPair.generateRandom();
     const viewKeyPair = cro.KeyPair.generateRandom();
     const network = cro.network.Devnet({
-        chainHexId: CHAIN_HEX_ID,
+        chainHexId: DEVNET_CHAIN_HEX_ID,
     });
     const transferAddress = cro.address.transfer({
         keyPair: transferKeyPair,
@@ -247,6 +267,7 @@ const createWallet = async (
 };
 
 const waitForStakedState = async (
+    walletRequest: WalletRequest,
     stakingAddress: string,
     partialStakedState: {
         bonded?: string;
@@ -267,7 +288,13 @@ const waitForStakedState = async (
             );
         }
         // eslint-disable-next-line no-await-in-loop
-        stakedState = await walletRpc.request('staking_state', stakingAddress);
+        await walletRpc.sync(walletRequest);
+
+        // eslint-disable-next-line no-await-in-loop
+        stakedState = await walletRpc.request('staking_state', [
+            walletRequest.name,
+            stakingAddress,
+        ]);
         if (
             partialStakedState.bonded &&
             stakedState.bonded !== partialStakedState.bonded
@@ -302,27 +329,62 @@ const waitForStakedState = async (
 };
 
 const assertDepositShouldSucceed = async (
+    walletRequest: WalletRequest,
     walletRpc: WalletRpc,
     stakingAddress: string,
+    depositTxId: string,
     depositAmount: string,
 ): Promise<{
     stakeStateAfterDeposit: RPCStakedState;
     actualBonded: BigNumber;
 }> => {
+    await walletRpc.sync(walletRequest);
+
     const stakeStateAfterDeposit: RPCStakedState = await walletRpc.request(
         'staking_state',
-        stakingAddress,
+        [walletRequest.name, stakingAddress],
     );
     const actualBonded = new BigNumber(stakeStateAfterDeposit.bonded);
     expect(actualBonded.isGreaterThan('0')).to.eq(true);
     expect(actualBonded.isLessThan(depositAmount)).to.eq(
         true,
-        'Deposit transaction should be charged with fee',
+        `Deposit amount should be deducted by some fee: Expected: ${depositAmount} - fee, ${JSONPrettyStringify(
+            stakeStateAfterDeposit,
+        )}`,
     );
+
+    const offset = 0;
+    const limit = 100;
+    const reversed = false;
+    const transactions = await walletRpc.request('wallet_transactions', [
+        walletRequest,
+        offset,
+        limit,
+        reversed,
+    ]);
+    expect(transactions.length).to.eq(
+        2,
+        `wallet should have one faucet transaction and one deposit transaction: ${JSONPrettyStringify(
+            transactions,
+        )}`,
+    );
+    // Deposit transaction amount is 0
+    const depositTransactionAmount = '0';
+    expectTransactionShouldEq(
+        {
+            kind: TransactionChangeKind.Outgoing,
+            outputs: [],
+            txId: depositTxId,
+            value: depositTransactionAmount,
+        },
+        transactions[1],
+    );
+
     return { stakeStateAfterDeposit, actualBonded };
 };
 
 const assertUnbondShouldSucceed = async (
+    walletRequest: WalletRequest,
     actualBonded: BigNumber,
     unbondAmount: string,
     stakingAddress: string,
@@ -330,6 +392,7 @@ const assertUnbondShouldSucceed = async (
 ) => {
     const remainingBonded = actualBonded.minus(unbondAmount).toString(10);
     await waitForStakedState(
+        walletRequest,
         stakingAddress,
         {
             unbonded: unbondAmount,
@@ -337,7 +400,10 @@ const assertUnbondShouldSucceed = async (
         walletRpc,
     );
     const stakeStateAfterUnbond = parseStakedStateFromRPC(
-        await walletRpc.request('staking_state', stakingAddress),
+        await walletRpc.request('staking_state', [
+            walletRequest.name,
+            stakingAddress,
+        ]),
     );
     const bondedFromUnbond = stakeStateAfterUnbond.bonded;
     expect(bondedFromUnbond.isLessThan(remainingBonded)).to.eq(
@@ -359,6 +425,7 @@ const assertWithdrawShouldSucceed = async (
     withdrawUnbondedTxId: string,
 ) => {
     await waitForStakedState(
+        createdWallet,
         stakingAddress,
         {
             bonded: bondedFromUnbond.toString(10),
@@ -368,7 +435,7 @@ const assertWithdrawShouldSucceed = async (
     );
     const stakeStateAfterWithdrew: RPCStakedState = await walletRpc.request(
         'staking_state',
-        stakingAddress,
+        [createdWallet.name, stakingAddress],
     );
     expect(stakeStateAfterWithdrew.bonded).to.eq(bondedFromUnbond.toString(10));
     expect(stakeStateAfterWithdrew.unbonded).to.eq('0');
@@ -386,8 +453,10 @@ const assertWithdrawShouldSucceed = async (
         reversed,
     ]);
     expect(transactions.length).to.eq(
-        2,
-        'wallet should have one faucet transaction and one withdraw transaction',
+        3,
+        `wallet should have one faucet transaction, one deposit transaction and one withdraw transaction: ${JSONPrettyStringify(
+            transactions,
+        )}`,
     );
     expectTransactionShouldEq(
         {
@@ -402,6 +471,6 @@ const assertWithdrawShouldSucceed = async (
             txId: withdrawUnbondedTxId,
             value: withdrawAmount,
         },
-        transactions[1],
+        transactions[2],
     );
 };
