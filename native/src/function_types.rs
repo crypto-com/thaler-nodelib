@@ -7,13 +7,14 @@ use chain_core::common::{Timespec, HASH_SIZE_256};
 use chain_core::init::address::CroAddress;
 use chain_core::init::coin::Coin;
 use chain_core::init::network::Network;
-use chain_core::state::account::StakedStateAddress;
+use chain_core::state::account::{Nonce, StakedStateAddress, StakedStateOpWitness};
 use chain_core::tx::data::address::ExtendedAddr;
 use chain_core::tx::data::input::TxoPointer;
 use chain_core::tx::data::output::TxOut;
 use chain_core::tx::data::TxId;
 use chain_core::tx::fee::{LinearFee, Milli};
 use client_common::{PrivateKey, PublicKey};
+use parity_scale_codec::Decode;
 
 use crate::common::does_js_object_has_prop;
 use crate::error::ClientErrorNeonExt;
@@ -305,4 +306,21 @@ pub fn parse_linear_fee_config(
         Milli::from_str(&coefficient).chain_neon(ctx, "Invalid coefficient config in LinearFee")?;
 
     Ok(LinearFee::new(constant, coefficient))
+}
+
+#[inline]
+pub fn parse_account_nonce(ctx: &mut FunctionContext, nonce: String) -> NeonResult<Nonce> {
+    nonce.parse().chain_neon(ctx, "Invalid nonce")
+}
+
+#[inline]
+pub fn parse_staked_state_op_witness(
+    ctx: &mut FunctionContext,
+    witness: Handle<JsBuffer>,
+) -> NeonResult<StakedStateOpWitness> {
+    let mut witness = witness.borrow(&ctx.lock()).as_slice::<u8>();
+    let witness = StakedStateOpWitness::decode(&mut witness)
+        .chain_neon(ctx, "Unable to decode staked state op witness")?;
+
+    Ok(witness)
 }

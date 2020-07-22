@@ -23,6 +23,14 @@ export interface RPCStakedState {
 }
 /* eslint-enable camelcase */
 
+export interface FlattenStakedStake {
+    nonce: BigNumber;
+    bonded: BigNumber;
+    unbonded: BigNumber;
+    unbondedFrom: number;
+    address: string;
+}
+
 /* eslint-disable camelcase */
 interface RPCCouncilNode {
     name: string;
@@ -50,14 +58,12 @@ export const parseRPCCouncilNodeFromNodeMetaData = (
 
 export const parseStakedStateFromRPC = (
     stakedState: RPCStakedState,
-): cro.StakedState => {
-    const nativeStakedState: cro.NativeStakedState = {
-        nonce: stakedState.nonce.toNumber(),
-        bonded: stakedState.bonded,
-        unbonded: stakedState.unbonded,
-        unbonded_from: stakedState.unbonded_from.toNumber(),
+): FlattenStakedStake => {
+    return {
+        nonce: stakedState.nonce,
+        bonded: new BigNumber(stakedState.bonded),
+        unbonded: new BigNumber(stakedState.unbonded),
+        unbondedFrom: stakedState.unbonded_from.toNumber(),
         address: stakedState.address,
     };
-
-    return cro.parseStakedStateForNodelib(nativeStakedState);
 };

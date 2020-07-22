@@ -5,6 +5,7 @@ import { NodeJoinTransactionBuilder } from './node_join_transaction_builder';
 import { NodePublicKeyType, NodePublicKey } from './types';
 import { Mainnet, Testnet } from '../../network';
 import { KeyPair } from '../../key_pair';
+import { BigNumber } from '../../utils';
 
 describe('NodeJoinTransactionBuilder', () => {
     const SAMPLE_PUBLIC_KEY: NodePublicKey = {
@@ -17,6 +18,7 @@ describe('NodeJoinTransactionBuilder', () => {
         consensusPublicKey: SAMPLE_PUBLIC_KEY,
     };
     const SAMPLE_STAKING_ADDRESS = '0xb5698ee21f69a6184afbe59b3626ed9d4bd755b0';
+    const SAMPLE_NONCE = new BigNumber(1);
     const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
     describe('constructor', () => {
@@ -24,7 +26,7 @@ describe('NodeJoinTransactionBuilder', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new NodeJoinTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     nodeMetaData: SAMPLE_NODE_META_DATA,
                     network: Mainnet,
                 } as any);
@@ -37,7 +39,7 @@ describe('NodeJoinTransactionBuilder', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new NodeJoinTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     stakingAddress: '0xInvalid',
                     nodeMetaData: SAMPLE_NODE_META_DATA,
                     network: Mainnet,
@@ -56,7 +58,7 @@ describe('NodeJoinTransactionBuilder', () => {
                     network: Mainnet,
                 } as any);
             }).to.throw(
-                'Expected property `nonce` to be of type `number` but received type `undefined` in object `options`',
+                'Expected property `nonce` to be of type `object` but received type `undefined` in object `options`',
             );
         });
 
@@ -65,7 +67,7 @@ describe('NodeJoinTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new NodeJoinTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     network: Mainnet,
                 } as any);
             }).to.throw(
@@ -78,7 +80,7 @@ describe('NodeJoinTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new NodeJoinTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     nodeMetaData: {
                         securityContact: 'security@councilnode.com',
                         consensusPublicKey: SAMPLE_PUBLIC_KEY,
@@ -92,7 +94,7 @@ describe('NodeJoinTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new NodeJoinTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     nodeMetaData: {
                         name: 'Council Node',
                         securityContact:
@@ -108,7 +110,7 @@ describe('NodeJoinTransactionBuilder', () => {
         it('should use Mainnet when network is missing', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
             });
 
@@ -117,7 +119,7 @@ describe('NodeJoinTransactionBuilder', () => {
 
         it('should create an instance of builder with the provided options', () => {
             const stakingAddress = SAMPLE_STAKING_ADDRESS;
-            const nonce = 1;
+            const nonce = SAMPLE_NONCE;
             const nodeMetaData = SAMPLE_NODE_META_DATA;
             const network = Testnet;
             const builder = new NodeJoinTransactionBuilder({
@@ -138,7 +140,7 @@ describe('NodeJoinTransactionBuilder', () => {
         it('should return false when the transaction is not signed', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
                 network: Mainnet,
             });
@@ -149,7 +151,7 @@ describe('NodeJoinTransactionBuilder', () => {
         it('should return true when the transaction is signed', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
                 network: Mainnet,
             });
@@ -164,7 +166,7 @@ describe('NodeJoinTransactionBuilder', () => {
         it('should return the transaction Id', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
                 network: Mainnet,
             });
@@ -175,11 +177,26 @@ describe('NodeJoinTransactionBuilder', () => {
         });
     });
 
+    describe('toUnsignedHex', () => {
+        it('should return raw transaction hex', () => {
+            const builder = new NodeJoinTransactionBuilder({
+                stakingAddress: SAMPLE_STAKING_ADDRESS,
+                nonce: SAMPLE_NONCE,
+                nodeMetaData: SAMPLE_NODE_META_DATA,
+                network: Mainnet,
+            });
+
+            expect(builder.toUnsignedHex().toString('hex')).to.eq(
+                '0102010000000000000000b5698ee21f69a6184afbe59b3626ed9d4bd755b0002a01000000000000000030436f756e63696c204e6f64650160736563757269747940636f756e63696c6e6f64652e636f6d00145e49c6146b09434b8fa519998763bff0168125947a2a2678e31e246ef5a301144649584d45',
+            );
+        });
+    });
+
     describe('toHex', () => {
         it('should throw Error when the builder is unsigned', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
                 network: Mainnet,
             });
@@ -192,7 +209,7 @@ describe('NodeJoinTransactionBuilder', () => {
         it('should return completed Hex', () => {
             const builder = new NodeJoinTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 nodeMetaData: SAMPLE_NODE_META_DATA,
                 network: Mainnet,
             });

@@ -99,4 +99,4 @@ jobs:
               - cargo-clippy --version
               - cargo-audit -h
               - npm run lint || travis_terminate 1
-              - npm run audit || travis_terminate 1
+            #   - npm run audit || travis_terminate 1

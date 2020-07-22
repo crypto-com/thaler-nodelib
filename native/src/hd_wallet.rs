@@ -41,11 +41,18 @@ fn derive_key_pair_from_seed(mut ctx: FunctionContext) -> JsResult<JsObject> {
         .derive_key_pair(network, account, index)
         .chain_neon(&mut ctx, "Unable to derive key pair")?;
 
-    let public_key = public_key.serialize();
-    let mut public_key_buffer = ctx.buffer(public_key.len() as u32)?;
+    let serialized_public_key = public_key.serialize();
+    let mut public_key_buffer = ctx.buffer(serialized_public_key.len() as u32)?;
     ctx.borrow_mut(&mut public_key_buffer, |data| {
         let slice = data.as_mut_slice();
-        slice.copy_from_slice(&public_key);
+        slice.copy_from_slice(&serialized_public_key);
+    });
+
+    let compressed_public_key = public_key.serialize_compressed();
+    let mut compressed_public_key_buffer = ctx.buffer(compressed_public_key.len() as u32)?;
+    ctx.borrow_mut(&mut compressed_public_key_buffer, |data| {
+        let slice = data.as_mut_slice();
+        slice.copy_from_slice(&compressed_public_key);
     });
 
     let private_key = private_key.serialize();
@@ -57,6 +64,11 @@ fn derive_key_pair_from_seed(mut ctx: FunctionContext) -> JsResult<JsObject> {
 
     let js_object = JsObject::new(&mut ctx);
     js_object.set(&mut ctx, "publicKey", public_key_buffer)?;
+    js_object.set(
+        &mut ctx,
+        "compressedPublicKey",
+        compressed_public_key_buffer,
+    )?;
     js_object.set(&mut ctx, "privateKey", private_key_buffer)?;
 
     Ok(js_object)

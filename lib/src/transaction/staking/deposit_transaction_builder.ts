@@ -199,7 +199,23 @@ export class DepositTransactionBuilder extends TransactionBuilder {
     }
 
     /**
-     * Output broadcast-able transaction in hex
+     * Returns unsigned raw unobfuscated transaction in hex
+     *
+     * @throws {Error} error when transaction is not completed
+     * @returns {Buffer}
+     * @memberof DepositTransactionBuilder
+     */
+    public toUnsignedHex(): Buffer {
+        this.verifyHasInput();
+        if (!this.isRawTxPrepared()) {
+            this.prepareRawTx();
+        }
+
+        return this.unsignedRawTx!;
+    }
+
+    /**
+     * Returns broadcast-able transaction in hex
      *
      * @param {string} [tendermintAddress='ws://localhost:26657/websocket']
      * @throws {Error} error when transaction is not completed

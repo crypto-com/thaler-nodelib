@@ -6,18 +6,23 @@ import { UnbondTransactionBuilder } from './unbond_transaction_builder';
 import { Mainnet, Devnet } from '../../network';
 import { MAX_COIN_BN } from '../../init';
 import { KeyPair } from '../../key_pair';
-// import { KeyPair } from '../../key_pair';
+import { FeeAlgorithm, FeeConfig } from '../../fee';
 
 describe('UnbondTransactionBuilder', () => {
+    const SAMPLE_FEE_CONFIG: FeeConfig = {
+        algorithm: FeeAlgorithm.LinearFee,
+        constant: new BigNumber(1.1),
+        coefficient: new BigNumber(1.25),
+    };
+    const SAMPLE_NONCE = new BigNumber(1);
     const SAMPLE_STAKING_ADDRESS = '0xb5698ee21f69a6184afbe59b3626ed9d4bd755b0';
-    // const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
     describe('constructor', () => {
         it('should throw Error when staking address is missing', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     amount: new BigNumber(1000),
                     network: Mainnet,
                 } as any);
@@ -30,7 +35,7 @@ describe('UnbondTransactionBuilder', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     stakingAddress: '0xInvalid',
                     amount: new BigNumber(1000),
                     network: Mainnet,
@@ -49,7 +54,7 @@ describe('UnbondTransactionBuilder', () => {
                     network: Mainnet,
                 } as any);
             }).to.throw(
-                'Expected property `nonce` to be of type `number` but received type `undefined` in object `options`',
+                'Expected property `nonce` to be of type `object` but received type `undefined` in object `options`',
             );
         });
 
@@ -58,7 +63,7 @@ describe('UnbondTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     network: Mainnet,
                 } as any);
             }).to.throw(
@@ -71,7 +76,7 @@ describe('UnbondTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     amount: 1000,
                     network: Mainnet,
                 } as any);
@@ -85,7 +90,7 @@ describe('UnbondTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     amount: new BigNumber('-12'),
                     network: Mainnet,
                 });
@@ -99,7 +104,7 @@ describe('UnbondTransactionBuilder', () => {
                 // eslint-disable-next-line no-new
                 new UnbondTransactionBuilder({
                     stakingAddress: SAMPLE_STAKING_ADDRESS,
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     amount: MAX_COIN_BN.plus(1),
                     network: Mainnet,
                 });
@@ -111,7 +116,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should set the network to Mainet when not provided', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber(1000),
             });
 
@@ -120,9 +125,10 @@ describe('UnbondTransactionBuilder', () => {
 
         it('should create a builder with the provided options', () => {
             const stakingAddress = SAMPLE_STAKING_ADDRESS;
-            const nonce = 1;
+            const nonce = SAMPLE_NONCE;
             const amount = new BigNumber('1000');
             const network = Devnet({
+                feeConfig: SAMPLE_FEE_CONFIG,
                 chainHexId: 'AB',
             });
             const builder = new UnbondTransactionBuilder({
@@ -143,7 +149,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should throw Error when KeyPair is missing', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -158,7 +164,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should return UnbondTransactionBuilder', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -171,7 +177,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should sign the transaction', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -186,7 +192,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should return false when the transaction is not signed', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -197,7 +203,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should return true when the transaction is signed', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -212,9 +218,10 @@ describe('UnbondTransactionBuilder', () => {
         it('should return the transaction Id', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Devnet({
+                    feeConfig: SAMPLE_FEE_CONFIG,
                     chainHexId: 'AB',
                 }),
             });
@@ -225,11 +232,26 @@ describe('UnbondTransactionBuilder', () => {
         });
     });
 
+    describe('toUnsignedHex', () => {
+        it('should return the raw transaction Hex', () => {
+            const builder = new UnbondTransactionBuilder({
+                stakingAddress: SAMPLE_STAKING_ADDRESS,
+                nonce: SAMPLE_NONCE,
+                amount: new BigNumber('1000'),
+                network: Mainnet,
+            });
+
+            expect(builder.toUnsignedHex().toString('hex')).to.eq(
+                '010000b5698ee21f69a6184afbe59b3626ed9d4bd755b00100000000000000e803000000000000002a0100000000000000',
+            );
+        });
+    });
+
     describe('toHex', () => {
         it('should throw Error when the builder is unsigned', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
@@ -242,7 +264,7 @@ describe('UnbondTransactionBuilder', () => {
         it('should return completed Hex', () => {
             const builder = new UnbondTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 amount: new BigNumber('1000'),
                 network: Mainnet,
             });
