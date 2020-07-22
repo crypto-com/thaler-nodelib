@@ -4,8 +4,16 @@ import { expect } from 'chai';
 import { KeyPair } from '../key_pair';
 import { transfer } from './transfer';
 import { Mainnet, Devnet } from '../network';
+import { FeeConfig, FeeAlgorithm } from '../fee';
+import { BigNumber } from '../utils';
 
 describe('transfer', () => {
+    const ANY_FEE_CONFIG: FeeConfig = {
+        algorithm: FeeAlgorithm.LinearFee,
+        constant: new BigNumber(1.1),
+        coefficient: new BigNumber(1.25),
+    };
+
     it('should throw TypeError when neither KeyPair and PublicKey is provided', () => {
         const network = Mainnet;
 
@@ -35,7 +43,10 @@ describe('transfer', () => {
             '041ff5820f619d51663efbb233eb03bd5d434f63c352a5633717d8b570daa43c190bddc906ed9b8601c10c2b58e347f6e1cc4035b391b98be1d9afa9c5ead9423b',
             'hex',
         );
-        const network = Devnet({ chainHexId: 'AB' });
+        const network = Devnet({
+            feeConfig: ANY_FEE_CONFIG,
+            chainHexId: 'AB',
+        });
 
         expect(
             transfer({
@@ -54,7 +65,10 @@ describe('transfer', () => {
                 'hex',
             ),
         );
-        const network = Devnet({ chainHexId: 'AB' });
+        const network = Devnet({
+            feeConfig: ANY_FEE_CONFIG,
+            chainHexId: 'AB',
+        });
 
         expect(
             transfer({

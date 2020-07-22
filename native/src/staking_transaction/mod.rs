@@ -8,7 +8,8 @@ use deposit_transaction::{build_raw_deposit_transaction, deposit_transaction_to_
 use unbond_transaction::{build_raw_unbond_transaction, unbond_transaction_to_hex};
 use withdraw_unbonded_transaction::{
     build_raw_withdraw_unbonded_transaction, estimate_withdraw_unbonded_transaction_fee,
-    withdraw_unbonded_transaction_to_hex,
+    withdraw_unbonded_transaction_to_obfuscated_hex,
+    withdraw_unbonded_transaction_to_signed_plain_hex,
 };
 
 pub fn register_staking_transaction_module(ctx: &mut ModuleContext) -> NeonResult<()> {
@@ -54,12 +55,20 @@ pub fn register_staking_transaction_module(ctx: &mut ModuleContext) -> NeonResul
         estimate_withdraw_unbonded_transaction_fee_fn,
     )?;
 
-    let withdraw_unbonded_transaction_to_hex_fn =
-        JsFunction::new(ctx, withdraw_unbonded_transaction_to_hex)?;
+    let withdraw_unbonded_transaction_to_signed_plain_hex_fn =
+        JsFunction::new(ctx, withdraw_unbonded_transaction_to_signed_plain_hex)?;
     js_object.set(
         ctx,
-        "withdrawUnbondedTransactionToHex",
-        withdraw_unbonded_transaction_to_hex_fn,
+        "withdrawUnbondedTransactionToSignedPlainHex",
+        withdraw_unbonded_transaction_to_signed_plain_hex_fn,
+    )?;
+
+    let withdraw_unbonded_transaction_to_obfuscated_hex_fn =
+        JsFunction::new(ctx, withdraw_unbonded_transaction_to_obfuscated_hex)?;
+    js_object.set(
+        ctx,
+        "withdrawUnbondedTransactionToObfuscatedHex",
+        withdraw_unbonded_transaction_to_obfuscated_hex_fn,
     )?;
 
     ctx.export_value("stakingTransaction", js_object)

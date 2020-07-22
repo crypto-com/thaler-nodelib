@@ -2,10 +2,11 @@ import ow from 'ow';
 import { NetworkConfig } from '../../network';
 import { owAccountNonce, owStakingAddress } from '../../types';
 import { owOptionalNetworkConfig } from '../../network/types';
+import { BigNumber } from '../../utils';
 
 export interface NodeJoinTransactionBuilderOptions {
     stakingAddress: string;
-    nonce: number;
+    nonce: BigNumber;
     nodeMetaData: NodeMetaData;
     network?: NetworkConfig;
 }
@@ -78,7 +79,7 @@ export const parseNodeMetaDataForNative = (
 
 export interface UnjailTransactionBuilderOptions {
     stakingAddress: string;
-    nonce: number;
+    nonce: BigNumber;
     network?: NetworkConfig;
 }
 

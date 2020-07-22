@@ -153,10 +153,10 @@ impl UnjailTxProps {
 
         let nonce = prop_object
             .get(ctx, "nonce")?
-            .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
+            .downcast_or_throw::<JsString, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast nonce")?
             .value();
-        let nonce = nonce as u64;
+        let nonce = parse_account_nonce(ctx, nonce)?;
 
         let chain_hex_id = prop_object
             .get(ctx, "chainHexId")?

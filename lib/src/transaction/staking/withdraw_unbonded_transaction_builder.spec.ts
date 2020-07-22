@@ -5,26 +5,13 @@ import BigNumber from 'bignumber.js';
 
 import { WithdrawUnbondedTransactionBuilder } from './withdraw_unbonded_transaction_builder';
 import { WithdrawUnbondedOutput } from './types';
-import { Mainnet, Devnet } from '../../network';
+import { Mainnet, Testnet } from '../../network';
 import { KeyPair } from '../../key_pair';
-import { FeeConfig, FeeAlgorithm } from '../../fee';
-import { StakedState, Timespec } from '../../types';
+import { Timespec } from '../../types';
 
 describe('WithdrawUnbondedTransactionBuilder', () => {
-    const SAMPLE_STAKING_ADDRESS = '0xb5698ee21f69a6184afbe59b3626ed9d4bd755b0';
+    const SAMPLE_NONCE = new BigNumber(1);
     const SAMPLE_UNBONDED_FROM = 1574240208;
-    const SAMPLE_STAKED_STATE: StakedState = {
-        nonce: 1,
-        bonded: new BigNumber('1000'),
-        unbonded: new BigNumber('100000000'),
-        unbondedFrom: SAMPLE_UNBONDED_FROM,
-        address: SAMPLE_STAKING_ADDRESS,
-    };
-    const SAMPLE_FEE_CONFIG: FeeConfig = {
-        algorithm: FeeAlgorithm.LinearFee,
-        constant: new BigNumber('1000'),
-        coefficient: new BigNumber('1001'),
-    };
     const SAMPLE_MAINNET_TRANSFER_ADDRESS =
         'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3';
     const SAMPLE_VIEW_KEY = Buffer.from(
@@ -39,180 +26,56 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 
     describe('constructor', () => {
-        it('should throw Error when staked state is missing', () => {
+        it('should throw Error when noncee is missing', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new WithdrawUnbondedTransactionBuilder({
                     network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
                 } as any);
             }).to.throw(
-                'Expected property `stakedState` to be of type `object` but received type `undefined` in object `options`',
+                'Expected property `nonce` to be of type `object` but received type `undefined` in object `options`',
             );
         });
 
-        it('should throw Error when staking address is invalid', () => {
+        it('should throw Error when nonce is invalid', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {
-                        ...SAMPLE_STAKED_STATE,
-                        address: '0xInvalid',
-                    },
+                    nonce: 1 as any,
                     network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
-                } as any);
-            }).to.throw(
-                'Expected property property value to be a valid staking address in object `stakedState` in object `options`',
-            );
-        });
-
-        it('should throw Error when staked state is invalid', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {} as any,
-                    network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
                 });
             }).to.throw(
-                'Expected property property `nonce` to be of type `number` but received type `undefined` in object `stakedState` in object `options`',
-            );
-        });
-        it('should throw Error when staked state has missing fields', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {
-                        nonce: 1,
-                    } as any,
-                    network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
-                });
-            }).to.throw(
-                'Expected property property `bonded` to be of type `object` but received type `undefined` in object `stakedState` in object `options`',
-            );
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {
-                        nonce: 1,
-                        bonded: new BigNumber('1000'),
-                    } as any,
-                    network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
-                });
-            }).to.throw(
-                'Expected property property `unbonded` to be of type `object` but received type `undefined` in object `stakedState` in object `options`',
-            );
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {
-                        nonce: 1,
-                        bonded: new BigNumber('1000'),
-                        unbonded: new BigNumber('2000'),
-                    } as any,
-                    network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
-                });
-            }).to.throw(
-                'Expected property property `unbondedFrom` to be of type `number` but received type `undefined` in object `stakedState` in object `options`',
-            );
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: {
-                        nonce: 1,
-                        bonded: new BigNumber('1000'),
-                        unbonded: new BigNumber('2000'),
-                        unbondedFrom: Date.now(),
-                    } as any,
-                    network: Mainnet,
-                    feeConfig: SAMPLE_FEE_CONFIG,
-                });
-            }).to.throw(
-                'Expected property property `address` to be of type `string` but received type `undefined` in object `stakedState` in object `options`',
+                'Expected property `nonce` to be of type `object` but received type `number` in object `options`',
             );
         });
 
         it('should set the network to Mainnet when not provided', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
-
-                feeConfig: SAMPLE_FEE_CONFIG,
+                nonce: SAMPLE_NONCE,
             });
 
             expect(builder.getNetwork()).to.deep.eq(Mainnet);
         });
 
-        it('should throw Error when fee config is missing', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: SAMPLE_STAKED_STATE,
-
-                    network: Mainnet,
-                } as any);
-            }).to.throw(
-                'Expected property `feeConfig` to be of type `object` but received type `undefined` in object `options`',
-            );
-        });
-
-        it('should throw Error when fee config is invalid', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: SAMPLE_STAKED_STATE,
-
-                    network: Mainnet,
-                    feeConfig: {} as any,
-                });
-            }).to.throw(
-                'Expected property property `algorithm` to be of type `string` but received type `undefined` in object `feeConfig` in object `options`',
-            );
-        });
-
-        it('should throw Error when the fee algorithm is not supported', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new WithdrawUnbondedTransactionBuilder({
-                    stakedState: SAMPLE_STAKED_STATE,
-
-                    network: Mainnet,
-                    feeConfig: {
-                        algorithm: 'unsupported-algorithm' as any,
-                    },
-                });
-            }).to.throw(
-                'Expected property property string `algorithm` to be one of `["LinearFee"]`, got `unsupported-algorithm` in object `feeConfig` in object `options`',
-            );
-        });
-
         it('should create a builder with the provided options', () => {
-            const stakedState = SAMPLE_STAKED_STATE;
-            const network = Devnet({
-                chainHexId: 'AB',
-            });
-            const feeConfig = SAMPLE_FEE_CONFIG;
+            const nonce = SAMPLE_NONCE;
+            const network = Mainnet;
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState,
+                nonce,
                 network,
-                feeConfig,
             });
 
-            expect(builder.getStakedState()).to.eq(stakedState);
+            expect(builder.getNonce()).to.eq(nonce);
             expect(builder.getNetwork()).to.eq(network);
-            expect(builder.getFeeConfig()).to.eq(feeConfig);
+            expect(builder.feeConfig).to.eq(Mainnet.feeConfig);
         });
     });
 
     describe('addOutput', () => {
         it('should throw Error when output is missing', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -224,9 +87,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when output has missing fields', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -257,9 +119,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when output address is invalid', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -274,11 +135,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when output address is under different network', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
-                network: Devnet({
-                    chainHexId: 'AB',
-                }),
-                feeConfig: SAMPLE_FEE_CONFIG,
+                nonce: SAMPLE_NONCE,
+                network: Testnet,
             });
 
             expect(() => {
@@ -292,9 +150,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return the WithdrawUnbondedTransactionBuilder', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.addOutput(SAMPLE_OUTPUT)).to.be.an.instanceOf(
@@ -302,54 +159,10 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
             );
         });
 
-        it('should return Error when trying to append an output with sum of output amount exceed unbonded amount', () => {
-            const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: {
-                    ...SAMPLE_STAKED_STATE,
-                    unbonded: new BigNumber('5000'),
-                },
-                network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
-            });
-
-            expect(() => {
-                builder.addOutput({
-                    ...SAMPLE_OUTPUT,
-                    value: new BigNumber('6000'),
-                });
-            }).to.throw('Output amount exceed unbonded amount');
-        });
-
-        it('should return Error when the output valid from is not the same as unbonded from time', () => {
-            const unbondedFrom = 1574240208;
-            const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: {
-                    ...SAMPLE_STAKED_STATE,
-
-                    unbondedFrom,
-                },
-                network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
-            });
-
-            expect(builder.outputsLength()).to.eq(0);
-
-            expect(() => {
-                builder.addOutput({
-                    address: SAMPLE_MAINNET_TRANSFER_ADDRESS,
-                    value: new BigNumber('1000'),
-                    validFrom: Timespec.fromSeconds(unbondedFrom - 1),
-                });
-            }).to.throw(
-                'Output valid from must be the same as staked state unbonded from',
-            );
-        });
-
         it('should append output to the builder', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.outputsLength()).to.eq(0);
@@ -361,9 +174,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return different transaction Id when new output is appended', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             const firstViewKeyPair = KeyPair.generateRandom();
@@ -383,9 +195,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('getTotalOutputAmount', () => {
         it('should return the sum of all output amount', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput({
@@ -410,9 +221,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('addViewKey', () => {
         it('should throw an Error when viewKey is missing', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -424,9 +234,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw an Error when viewKey is invalid', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -441,9 +250,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return the WithdrawUnbondedTransactionBuilder', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.addViewKey(SAMPLE_VIEW_KEY)).to.be.an.instanceOf(
@@ -453,9 +261,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should add viewKey', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.viewKeysLength()).to.eq(0);
@@ -467,9 +274,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return different transaction Id when new output is added', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT);
@@ -485,9 +291,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('estimateFee', () => {
         it('should throw Error when there is not output', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => builder.estimateFee()).to.throw(
@@ -497,13 +302,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return estimated fee', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: {
-                    algorithm: FeeAlgorithm.LinearFee,
-                    constant: new BigNumber('1.1'),
-                    coefficient: new BigNumber('1.25'),
-                },
             });
             builder.addOutput(SAMPLE_OUTPUT).addViewKey(SAMPLE_VIEW_KEY);
 
@@ -514,9 +314,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('sign', () => {
         it('should throw Error when KeyPair is missing', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -528,9 +327,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return WithdrawUnbondedTransactionBuilder', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.sign(KeyPair.generateRandom())).to.be.an.instanceOf(
@@ -540,9 +338,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should sign the transaction', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(builder.isSigned()).to.eq(false);
@@ -556,9 +353,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('isCompleted', () => {
         it('should return false when transaction is not signed', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT);
@@ -568,9 +364,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return false when there is no output', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.sign(KeyPair.generateRandom());
@@ -580,9 +375,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return true when the transaction is completed', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(KeyPair.generateRandom());
@@ -594,9 +388,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('txId', () => {
         it('should throw Error when transaction builder has no output', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             expect(() => {
@@ -606,9 +399,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return transaction Id', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT);
@@ -619,12 +411,78 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
         });
     });
 
+    describe('toUnsignedHex', () => {
+        it('should throw Error when there is no output', () => {
+            const builder = new WithdrawUnbondedTransactionBuilder({
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            expect(() => {
+                builder.toUnsignedHex();
+            }).to.throw('Builder has no output');
+        });
+
+        it('should return completed Hex given correct tendermint address', () => {
+            const builder = new WithdrawUnbondedTransactionBuilder({
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            builder.addOutput(SAMPLE_OUTPUT);
+
+            expect(builder.toUnsignedHex().toString('hex')).to.eq(
+                '00020100000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497de80300000000000001d0ffd45d00000000002a000100000000000000',
+            );
+        });
+    });
+
+    describe('toSignedPlainHex', () => {
+        it('should throw Error when there is no output', () => {
+            const builder = new WithdrawUnbondedTransactionBuilder({
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            builder.sign(SAMPLE_KEY_PAIR);
+
+            expect(() => {
+                builder.toSignedPlainHex();
+            }).to.throw('Builder has no output');
+        });
+
+        it('should throw Error when the builder is not signed', () => {
+            const builder = new WithdrawUnbondedTransactionBuilder({
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            builder.addOutput(SAMPLE_OUTPUT);
+
+            expect(() => {
+                builder.toSignedPlainHex();
+            }).to.throw('Builder is not signed');
+        });
+
+        it('should return completed Hex given correct tendermint address', () => {
+            const builder = new WithdrawUnbondedTransactionBuilder({
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);
+
+            expect(builder.toSignedPlainHex().toString('hex')).to.eq(
+                '00020100000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497de80300000000000001d0ffd45d00000000002a000100000000000000000167463afac53c8fe80e2724c3d1c40678a3e852adeada94d87d6670fb95043ab11200429a46fc03c3f0b95d8c6d60de61c69d3fa66fbbc4603e903bfc76b42088',
+            );
+        });
+    });
+
     describe('toHex', () => {
         it('should throw Error when Tendermint address is not http nor ws', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);
@@ -636,9 +494,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when the Tendermint address is invalid URL', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);
@@ -650,9 +507,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when there is no output', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.sign(SAMPLE_KEY_PAIR);
@@ -664,9 +520,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should throw Error when the builder is not signed', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT);
@@ -678,9 +533,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return completed Hex when Tendermint address is not provided', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);
@@ -693,9 +547,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
 
         it('should return completed Hex given correct tendermint address', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);
@@ -724,9 +577,8 @@ describe('WithdrawUnbondedTransactionBuilder', () => {
     describe('clone', () => {
         it('should return a deep clone copy of the builder', () => {
             const builder = new WithdrawUnbondedTransactionBuilder({
-                stakedState: SAMPLE_STAKED_STATE,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
-                feeConfig: SAMPLE_FEE_CONFIG,
             });
 
             builder.addOutput(SAMPLE_OUTPUT).sign(SAMPLE_KEY_PAIR);

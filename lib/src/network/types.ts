@@ -8,19 +8,9 @@ import { owFeeConfig } from '../fee/types';
  * @property {string} name Name of the network
  * @property {string} addressPrefix Prefix of the bech32 transfer address
  * @property {Buffer} chainHexId Two hex characters chainHexId
- * @property {FeeConfig} [feeConfig] Default fee configuration
+ * @property {FeeConfig} feeConfig Default fee configuration
  */
-export type NetworkConfig = MainnetConfig | TestnetConfig | DevnetConfig;
-
-export type MainnetConfig = FullNetworkConfig & {
-    name: NetworkEnum.Mainnet;
-};
-
-export type TestnetConfig = FullNetworkConfig & {
-    name: NetworkEnum.Testnet;
-};
-
-export type FullNetworkConfig = {
+export type NetworkConfig = {
     name: string;
     chainHexId: Buffer;
     addressPrefix: string;
@@ -28,14 +18,8 @@ export type FullNetworkConfig = {
     feeConfig: FeeConfig;
 };
 
-export type DevnetConfig = {
-    name: NetworkEnum.Devnet;
-    chainHexId: Buffer;
-    addressPrefix: string;
-    bip44Path: string;
-};
-
 export interface DevnetOptions {
+    feeConfig: FeeConfig;
     chainHexId: Buffer | string;
 }
 
@@ -80,6 +64,7 @@ const owDevnet = ow.object
         chainHexId: ow.buffer,
         addressPrefix: ow.string,
         bip44Path: ow.string,
+        feeConfig: owFeeConfig,
     })
     .validate((value: any) => ({
         validator: value.name === NetworkEnum.Devnet,
@@ -108,5 +93,6 @@ export const owOptionalChainId = ow.optional.any(
 );
 
 export const owDevnetOptions = ow.object.exactShape({
+    feeConfig: owFeeConfig,
     chainHexId: owChainHexId,
 });

@@ -8,11 +8,13 @@ import {
 import { Mainnet, Testnet } from '../../network';
 import { KeyPair } from '../../key_pair';
 import { staking } from '../../address';
+import { BigNumber } from '../../utils';
 
 const SAMPLE_KEY_PAIR = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
 const SAMPLE_STAKING_ADDRESS = staking({
     keyPair: SAMPLE_KEY_PAIR,
 });
+const SAMPLE_NONCE = new BigNumber(1);
 
 describe('UnjailTransactionBuilder', () => {
     describe('constructor', () => {
@@ -20,7 +22,7 @@ describe('UnjailTransactionBuilder', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new UnjailTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     network: Mainnet,
                 } as any);
             }).to.throw(
@@ -32,7 +34,7 @@ describe('UnjailTransactionBuilder', () => {
             expect(() => {
                 // eslint-disable-next-line no-new
                 new UnjailTransactionBuilder({
-                    nonce: 1,
+                    nonce: SAMPLE_NONCE,
                     stakingAddress: '0xInvalid',
                     network: Mainnet,
                 });
@@ -49,14 +51,14 @@ describe('UnjailTransactionBuilder', () => {
                     network: Mainnet,
                 } as any);
             }).to.throw(
-                'Expected property `nonce` to be of type `number` but received type `undefined` in object `options`',
+                'Expected property `nonce` to be of type `object` but received type `undefined` in object `options`',
             );
         });
 
         it('should use Mainnet when network is missing', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
             });
 
             expect(builder.getNetwork()).to.deep.eq(Mainnet);
@@ -64,7 +66,7 @@ describe('UnjailTransactionBuilder', () => {
 
         it('should create an instance of builder with the provided options', () => {
             const stakingAddress = SAMPLE_STAKING_ADDRESS;
-            const nonce = 1;
+            const nonce = SAMPLE_NONCE;
             const network = Testnet;
             const builder = new UnjailTransactionBuilder({
                 stakingAddress,
@@ -82,7 +84,7 @@ describe('UnjailTransactionBuilder', () => {
         it('should return false when the transaction is not signed', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
             });
 
@@ -92,7 +94,7 @@ describe('UnjailTransactionBuilder', () => {
         it('should return true when the transaction is signed', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
             });
 
@@ -106,7 +108,7 @@ describe('UnjailTransactionBuilder', () => {
         it('should return the transaction Id', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
             });
 
@@ -116,11 +118,25 @@ describe('UnjailTransactionBuilder', () => {
         });
     });
 
+    describe('toUnsignedHex', () => {
+        it('should return raw tx hex', () => {
+            const builder = new UnjailTransactionBuilder({
+                stakingAddress: SAMPLE_STAKING_ADDRESS,
+                nonce: SAMPLE_NONCE,
+                network: Mainnet,
+            });
+
+            expect(builder.toUnsignedHex().toString('hex')).to.eq(
+                '01010100000000000000001a642f0e3c3af545e7acbd38b07251b3990914f1002a0100000000000000',
+            );
+        });
+    });
+
     describe('toHex', () => {
         it('should throw Error when the builder is unsigned', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
             });
 
@@ -132,7 +148,7 @@ describe('UnjailTransactionBuilder', () => {
         it('should return completed Hex', () => {
             const builder = new UnjailTransactionBuilder({
                 stakingAddress: SAMPLE_STAKING_ADDRESS,
-                nonce: 1,
+                nonce: SAMPLE_NONCE,
                 network: Mainnet,
             });
 
@@ -147,7 +163,7 @@ describe('UnjailTransactionBuilder', () => {
 
 describe('verifySignedUnajilTxHex', () => {
     const DEFAULT_STAKING_ADDRESS = SAMPLE_STAKING_ADDRESS;
-    const DEFAULT_NONCE = 1;
+    const DEFAULT_NONCE = new BigNumber(1);
     const DEFAULT_NETWORK = Mainnet;
     const DEFAULT_KEY_PAIR = SAMPLE_KEY_PAIR;
 
@@ -182,7 +198,7 @@ describe('verifySignedUnajilTxHex', () => {
         expect(() => {
             verifySignedUnjailTxHex(signedTxHex, {
                 stakingAddress: DEFAULT_STAKING_ADDRESS,
-                nonce: 65535,
+                nonce: new BigNumber(65535),
                 network: DEFAULT_NETWORK,
             });
         }).to.throw('Mismatch staking account nonce');

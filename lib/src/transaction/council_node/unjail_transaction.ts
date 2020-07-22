@@ -8,15 +8,16 @@ import {
 import { KeyPair } from '../../key_pair';
 import { owKeyPair } from '../../key_pair/types';
 import { NetworkConfig } from '../../network';
+import { BigNumber } from '../../utils';
 
 const native = require('../../../../native');
 
 export class UnjailTransactionBuilder extends TransactionBuilder {
     private stakingAddress: string;
 
-    private nonce: number;
+    private nonce: BigNumber;
 
-    private unsignedRawTx!: string;
+    private unsignedRawTx!: Buffer;
 
     private innertTxId!: string;
 
@@ -26,7 +27,7 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
      * Creates an instance of UnjailTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
      * @param {string} options.stakingAddress Staking address to unbond from
-     * @param {number} options.nonce Staking address nonce
+     * @param {BigNumber} options.nonce Staking address nonce
      * @param {Network} [options.network] Network the transaction belongs to
      * @memberof UnjailTransactionBuilder
      */
@@ -48,7 +49,7 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
             txId,
         } = native.councilNodeTransaction.buildRawUnjailTransaction({
             stakingAddress: this.stakingAddress,
-            nonce: this.nonce,
+            nonce: this.nonce.toString(10),
             chainHexId: this.getNetwork().chainHexId,
         });
 
@@ -67,10 +68,10 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
 
     /**
      * Returns account nonce
-     * @returns {number} nonce
+     * @returns {BigNumber} nonce
      * @memberof UnjailTransactionBuilder
      */
-    public getNonce(): Readonly<number> {
+    public getNonce(): Readonly<BigNumber> {
         return this.nonce;
     }
 
@@ -111,7 +112,18 @@ export class UnjailTransactionBuilder extends TransactionBuilder {
     }
 
     /**
-     * Output broadcast-able transaction in hex
+     * Returns unsigned raw transaction in hex
+     *
+     * @throws {Error} error when transaction is not completed
+     * @returns {Buffer}
+     * @memberof NodeJoinTransactionBuilder
+     */
+    public toUnsignedHex(): Buffer {
+        return Buffer.concat([Buffer.from('0101', 'hex'), this.unsignedRawTx]);
+    }
+
+    /**
+     * Returns broadcast-able transaction in hex
      *
      * @throws {Error} error when transaction is not completed
      * @returns {Buffer}
@@ -140,13 +152,13 @@ export const verifySignedUnjailTxHex = (
 ) => {
     native.councilNodeTransaction.verifyUnjailTxAux(unjailTxHex, {
         stakingAddress: options.stakingAddress,
-        nonce: options.nonce,
+        nonce: options.nonce.toString(10),
         chainHexId: options.network.chainHexId,
     });
 };
 
 interface VerifySignedUnjailTxHexOption {
     stakingAddress: string;
-    nonce: number;
+    nonce: BigNumber;
     network: NetworkConfig;
 }

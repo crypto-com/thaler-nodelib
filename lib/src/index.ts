@@ -4,15 +4,7 @@ import * as network from './network';
 import * as transaction from './transaction';
 import * as utils from './utils';
 
-export {
-    parseStakedStateForNative,
-    parseStakedStateForNodelib,
-    NativeStakedState,
-    StakedState,
-    Input,
-    Output,
-    Timespec,
-} from './types';
+export { Input, Output, Timespec } from './types';
 
 export { address, fee, network, transaction, utils };
 

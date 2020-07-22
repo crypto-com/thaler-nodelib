@@ -9,17 +9,18 @@ import {
 } from './types';
 import { KeyPair } from '../../key_pair';
 import { owKeyPair } from '../../key_pair/types';
+import { BigNumber } from '../../utils';
 
 const native = require('../../../../native');
 
 export class NodeJoinTransactionBuilder extends TransactionBuilder {
     private stakingAddress: string;
 
-    private nonce: number;
+    private nonce: BigNumber;
 
     private nodeMetaData: NodeMetaData;
 
-    private unsignedRawTx!: string;
+    private unsignedRawTx!: Buffer;
 
     private innertTxId!: string;
 
@@ -29,7 +30,7 @@ export class NodeJoinTransactionBuilder extends TransactionBuilder {
      * Creates an instance of NodeJoinTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
      * @param {string} options.stakingAddress Staking address to unbond from
-     * @param {number} options.nonce Staking address nonce
+     * @param {BigNumber} options.nonce Staking address nonce
      * @param {NodeMetaData} options.nodeMetaData Node meta data
      * @param {Network} [options.network] Network the transaction belongs to
      * @memberof NodeJoinTransactionBuilder
@@ -54,7 +55,7 @@ export class NodeJoinTransactionBuilder extends TransactionBuilder {
             txId,
         } = native.councilNodeTransaction.buildRawNodeJoinTransaction({
             stakingAddress: this.stakingAddress,
-            nonce: this.nonce,
+            nonce: this.nonce.toString(10),
             nodeMetaData: JSON.stringify(
                 parseNodeMetaDataForNative(this.nodeMetaData),
             ),
@@ -76,10 +77,10 @@ export class NodeJoinTransactionBuilder extends TransactionBuilder {
 
     /**
      * Returns account nonce
-     * @returns {number} nonce
+     * @returns {BigNumber} nonce
      * @memberof NodeJoinTransactionBuilder
      */
-    public getNonce(): Readonly<number> {
+    public getNonce(): Readonly<BigNumber> {
         return this.nonce;
     }
 
@@ -126,6 +127,17 @@ export class NodeJoinTransactionBuilder extends TransactionBuilder {
         this.keyPair = keyPair;
 
         return this;
+    }
+
+    /**
+     * Returns unsigned raw transaction in hex
+     *
+     * @throws {Error} error when transaction is not completed
+     * @returns {Buffer}
+     * @memberof NodeJoinTransactionBuilder
+     */
+    public toUnsignedHex(): Buffer {
+        return Buffer.concat([Buffer.from('0102', 'hex'), this.unsignedRawTx]);
     }
 
     /**

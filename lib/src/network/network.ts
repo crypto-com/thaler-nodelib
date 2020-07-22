@@ -83,17 +83,15 @@ export const Devnet = (options: DevnetOptions): NetworkConfig => {
  * Get network constants from given chainHexId
  *
  * @param {Buffer} chainHexId two hex characters chainHexId
- * @returns {NetworkConfig} Network constants
+ * @returns {NetworkEnum} Network type
  */
-export const fromChainId = (chainHexId: Buffer): NetworkConfig => {
+export const fromChainId = (chainHexId: Buffer): NetworkEnum => {
     switch (chainHexId.toString('hex').toUpperCase()) {
         case '2A':
-            return Mainnet;
+            return NetworkEnum.Mainnet;
         case '42':
-            return Testnet;
+            return NetworkEnum.Testnet;
         default:
-            return Devnet({
-                chainHexId,
-            });
+            return NetworkEnum.Devnet;
     }
 };

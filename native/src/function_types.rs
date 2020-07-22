@@ -7,7 +7,7 @@ use chain_core::common::{Timespec, HASH_SIZE_256};
 use chain_core::init::address::CroAddress;
 use chain_core::init::coin::Coin;
 use chain_core::init::network::Network;
-use chain_core::state::account::StakedStateAddress;
+use chain_core::state::account::{Nonce, StakedStateAddress};
 use chain_core::tx::data::address::ExtendedAddr;
 use chain_core::tx::data::input::TxoPointer;
 use chain_core::tx::data::output::TxOut;
@@ -305,4 +305,9 @@ pub fn parse_linear_fee_config(
         Milli::from_str(&coefficient).chain_neon(ctx, "Invalid coefficient config in LinearFee")?;
 
     Ok(LinearFee::new(constant, coefficient))
+}
+
+#[inline]
+pub fn parse_account_nonce(ctx: &mut FunctionContext, nonce: String) -> NeonResult<Nonce> {
+    nonce.parse().chain_neon(ctx, "Invalid nonce")
 }

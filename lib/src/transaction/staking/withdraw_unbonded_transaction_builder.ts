@@ -14,8 +14,6 @@ import {
     ViewKey,
     owViewKey,
     owTendermintAddress,
-    StakedState,
-    parseStakedStateForNative,
     parseOutputForNative,
 } from '../../types';
 import { KeyPair } from '../../key_pair';
@@ -32,15 +30,13 @@ const native = require('../../../../native');
 export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
     private static MAX_OUTPUT_SIZE = 65536;
 
-    private stakedState: StakedState;
-
-    private feeConfig: FeeConfig;
+    private nonce: BigNumber;
 
     private outputs: Output[] = [];
 
     private viewKeys: ViewKey[] = [];
 
-    private unsignedRawTx?: string;
+    private unsignedRawTx?: Buffer;
 
     private innertTxId?: string;
 
@@ -49,8 +45,8 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
     /**
      * Creates an instance of WithdrawUnbondedTransactionBuilder.
      * @param {UnbondTransactionBuilderOptions} [options] Builder options
-     * @param {StakedState} options.stakedState Current account staked state
-     * @param {FeeConfig} options.feeConfig Network the transaction belongs to
+     * @param {BigNumber} options.nonce Staking account next nonce value
+     * @param {FeeConfigonfig Network the transaction belongs to
      * @param {Network} [options.network=Mainnet] Network of the transaction
      * @memberof UnbondTransactionBuilder
      */
@@ -59,18 +55,17 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
 
         ow(options, 'options', owWithdrawUnbondedTransactionBuilderOptions);
 
-        this.stakedState = options.stakedState;
-        this.feeConfig = options.feeConfig;
+        this.nonce = options.nonce;
         this.initNetwork(options.network);
     }
 
     /**
-     * Returns staked state
-     * @returns {string} stakingAddress
+     * Returns nonce
+     * @returns {BigNumber} nonce
      * @memberof WithdrawUnbondedTransactionBuilder
      */
-    public getStakedState(): Readonly<StakedState> {
-        return this.stakedState;
+    public getNonce(): Readonly<BigNumber> {
+        return this.nonce;
     }
 
     /**
@@ -78,13 +73,14 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
      * @returns {FeeConfig} fee configuration
      * @memberof WithdrawUnbondedTransactionBuilder
      */
-    public getFeeConfig(): Readonly<FeeConfig> {
-        return this.feeConfig;
+    public get feeConfig(): Readonly<FeeConfig> {
+        return this.network.feeConfig;
     }
 
     /**
-     * Append an output to the builder.
-     *
+     * Append an output to the builder. In Thaler Tesetnet v0.5, one must
+     * withdraw all the unbonded balance and the validFrom must be identical to
+     * the unbonded from value of the account staked state.
      * @param {WithdrawUnbondedOutput} output output to be added
      * @returns {WithdrawUnbondedTransactionBuilder}
      * @memberof WithdrawUnbondedTransactionBuilder
@@ -105,20 +101,6 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
             throw new Error('Address does not belongs to the builder network');
         }
 
-        if (
-            output.validFrom &&
-            output.validFrom.toNumber() !== this.stakedState.unbondedFrom
-        ) {
-            throw new Error(
-                'Output valid from must be the same as staked state unbonded from',
-            );
-        }
-
-        const totalOutputAmount = this.getTotalOutputAmount();
-        if (!this.canUnbondedCover(totalOutputAmount.plus(output.value))) {
-            throw new Error('Output amount exceed unbonded amount');
-        }
-
         this.clearPreparedRawTx();
 
         this.outputs.push(output);
@@ -136,10 +118,6 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
             (total, output) => total.plus(output.value),
             new BigNumber(0),
         );
-    }
-
-    private canUnbondedCover(targetAmount: BigNumber) {
-        return this.stakedState.unbonded.isGreaterThanOrEqualTo(targetAmount);
     }
 
     private isTransferAddressInNetwork(address: string): boolean {
@@ -232,6 +210,23 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
         return this.innertTxId!;
     }
 
+    /**
+     * Returns unsigned raw unobfuscated transaction in hex
+     *
+     * @returns {Buffer} transaction hex
+     * @memberof WithdrawUnbondedTransactionBuilder
+     */
+    public toUnsignedHex(): Readonly<Buffer> {
+        if (!this.isRawTxPrepared()) {
+            if (!this.hasOutput()) {
+                throw new Error('Builder has no output');
+            }
+            this.prepareRawTx();
+        }
+
+        return Buffer.concat([Buffer.from('0002', 'hex'), this.unsignedRawTx!]);
+    }
+
     private isRawTxPrepared(): boolean {
         return !!this.unsignedRawTx;
     }
@@ -241,8 +236,7 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
             unsignedRawTx,
             txId,
         } = native.stakingTransaction.buildRawWithdrawUnbondedTransaction({
-            stakingAddress: this.stakedState.address,
-            nonce: this.stakedState.nonce,
+            nonce: this.nonce.toString(10),
             outputs: this.outputs.map((output) => parseOutputForNative(output)),
             viewKeys: this.viewKeys,
             chainHexId: this.getNetwork().chainHexId,
@@ -282,6 +276,32 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
     }
 
     /**
+     * Returns signed plain (unobfuscated) transaction in hex
+     *
+     * @returns {Buffer} transaction hex
+     * @memberof WithdrawUnbondedTransactionBuilder
+     */
+    public toSignedPlainHex(): Readonly<Buffer> {
+        if (!this.isRawTxPrepared()) {
+            if (!this.hasOutput()) {
+                throw new Error('Builder has no output');
+            }
+            this.prepareRawTx();
+        }
+
+        if (!this.isSigned()) {
+            throw new Error('Builder is not signed');
+        }
+
+        const signedRawTx = native.stakingTransaction.withdrawUnbondedTransactionToSignedPlainHex(
+            this.unsignedRawTx,
+            this.keyPair!.toObject(),
+        );
+
+        return Buffer.concat([Buffer.from('00', 'hex'), signedRawTx]);
+    }
+
+    /**
      * Output broadcast-able transaction in hex
      *
      * @param {string} [tendermintAddress='ws://localhost:26657/websocket']
@@ -304,11 +324,10 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
             throw new Error('Builder is not signed');
         }
 
-        return native.stakingTransaction.withdrawUnbondedTransactionToHex(
+        // TODO: Refactor into object options
+        return native.stakingTransaction.withdrawUnbondedTransactionToObfuscatedHex(
             this.unsignedRawTx,
-            JSON.stringify(parseStakedStateForNative(this.stakedState)),
             this.keyPair!.toObject(),
-            parseFeeConfigForNative(this.feeConfig),
             tendermintAddress,
             getRustFeaturesFromEnv(process.env.NODE_ENV),
         );

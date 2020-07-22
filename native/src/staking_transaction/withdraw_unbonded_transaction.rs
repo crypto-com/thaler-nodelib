@@ -1,7 +1,6 @@
 use neon::prelude::*;
 
-use chain_core::init::coin::sum_coins;
-use chain_core::state::account::{StakedState, StakedStateOpWitness, WithdrawUnbondedTx};
+use chain_core::state::account::{Nonce, StakedStateOpWitness, WithdrawUnbondedTx};
 use chain_core::tx::data::access::{TxAccess, TxAccessPolicy};
 use chain_core::tx::data::attribute::TxAttributes;
 use chain_core::tx::data::output::TxOut;
@@ -69,31 +68,43 @@ pub fn estimate_withdraw_unbonded_transaction_fee(mut ctx: FunctionContext) -> J
     Ok(ctx.string(estimated_fee.trim_matches('"')))
 }
 
-pub fn withdraw_unbonded_transaction_to_hex(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
+pub fn withdraw_unbonded_transaction_to_signed_plain_hex(
+    mut ctx: FunctionContext,
+) -> JsResult<JsBuffer> {
     let withdraw_unbonded_tx = withdraw_unbonded_tx_argument(&mut ctx, 0)?;
-    let staked_state = ctx.argument::<JsString>(1)?.value();
-    let staked_state = serde_json::from_str::<StakedState>(&staked_state)
-        .chain_neon(&mut ctx, "Unable to deserialize stakedState")?;
 
-    let key_pair = key_pair_argument(&mut ctx, 2)?;
+    let key_pair = key_pair_argument(&mut ctx, 1)?;
     let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
         .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
 
-    let fee_config = ctx.argument::<JsObject>(3)?;
-    let fee_config = parse_linear_fee_config(&mut ctx, fee_config)?;
+    let signature = signer
+        .sign(&withdraw_unbonded_tx.id())
+        .map(StakedStateOpWitness::new)
+        .chain_neon(&mut ctx, "Error when signing transaction")?;
+    let signed_transaction =
+        SignedTransaction::WithdrawUnbondedStakeTransaction(withdraw_unbonded_tx, signature);
 
-    let tendermint_address = ctx.argument::<JsString>(4)?.value();
-    let features = Features::argument(&mut ctx, 5)?;
+    let raw_tx = signed_transaction.encode();
+    let mut raw_tx_buffer = ctx.buffer(raw_tx.len() as u32)?;
+    ctx.borrow_mut(&mut raw_tx_buffer, |data| {
+        let data = data.as_mut_slice();
+        data.copy_from_slice(&raw_tx)
+    });
 
-    let output_value = sum_coins(
-        withdraw_unbonded_tx
-            .outputs
-            .iter()
-            .map(|output| output.value),
-    )
-    .chain_neon(&mut ctx, "Unable to calculate total output amount")?;
+    Ok(raw_tx_buffer)
+}
 
-    let unbonded = staked_state.unbonded;
+pub fn withdraw_unbonded_transaction_to_obfuscated_hex(
+    mut ctx: FunctionContext,
+) -> JsResult<JsBuffer> {
+    let withdraw_unbonded_tx = withdraw_unbonded_tx_argument(&mut ctx, 0)?;
+
+    let key_pair = key_pair_argument(&mut ctx, 1)?;
+    let signer = KeyPairSigner::new(key_pair.0, key_pair.1)
+        .chain_neon(&mut ctx, "Unable to create KeyPair signer")?;
+
+    let tendermint_address = ctx.argument::<JsString>(2)?.value();
+    let features = Features::argument(&mut ctx, 3)?;
 
     let signature = signer
         .sign(&withdraw_unbonded_tx.id())
@@ -104,17 +115,6 @@ pub fn withdraw_unbonded_transaction_to_hex(mut ctx: FunctionContext) -> JsResul
     let tx_aux =
         signed_transaction_to_tx_aux(&mut ctx, signed_transaction, &tendermint_address, features)
             .chain_neon(&mut ctx, "Unable to obfuscate transaction")?;
-
-    // FIXME: Separate method to verify for fee correctness
-    let fee = fee_config
-        .calculate_for_txaux(&tx_aux)
-        .chain_neon(&mut ctx, "Unable to calculate fee from transaction")?
-        .to_coin();
-    let payable =
-        (unbonded - output_value).chain_neon(&mut ctx, "output amount exceeded unbonded amount")?;
-    if payable < fee {
-        return ctx.throw_error("Insufficient fee");
-    }
 
     tx_aux_to_hex(&mut ctx, tx_aux)
 }
@@ -132,7 +132,7 @@ fn withdraw_unbonded_tx_argument(
 }
 
 struct BuildWithdrawUnbondedTransactionOptions {
-    nonce: u64,
+    nonce: Nonce,
     outputs: Vec<TxOut>,
     view_keys: Vec<PublicKey>,
     chain_hex_id: u8,
@@ -146,10 +146,10 @@ impl BuildWithdrawUnbondedTransactionOptions {
 
         let nonce = options
             .get(ctx, "nonce")?
-            .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
-            .chain_neon(ctx, "Unable to downcast stakingAddress")?
+            .downcast_or_throw::<JsString, FunctionContext>(ctx)
+            .chain_neon(ctx, "Unable to downcast nonce")?
             .value();
-        let nonce = nonce as u64;
+        let nonce = parse_account_nonce(ctx, nonce)?;
 
         let chain_hex_id = options
             .get(ctx, "chainHexId")?

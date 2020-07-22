@@ -92,10 +92,10 @@ impl BuildUnbondTransactionOptions {
 
         let nonce = options
             .get(ctx, "nonce")?
-            .downcast_or_throw::<JsNumber, FunctionContext>(ctx)
+            .downcast_or_throw::<JsString, FunctionContext>(ctx)
             .chain_neon(ctx, "Unable to downcast stakingAddress")?
             .value();
-        let nonce = nonce as u64;
+        let nonce = parse_account_nonce(ctx, nonce)?;
 
         let amount = options
             .get(ctx, "amount")?

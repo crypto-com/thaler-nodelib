@@ -5,8 +5,15 @@ import { DepositTransactionBuilder } from './deposit_transaction_builder';
 import { Mainnet, Devnet } from '../../network';
 import { KeyPair } from '../../key_pair';
 import { PrevOutputPointer } from './types';
+import { FeeConfig, FeeAlgorithm } from '../../fee';
+import { BigNumber } from '../../utils';
 
 describe('DepositTransactionBuilder', () => {
+    const SAMPLE_FEE_CONFIG: FeeConfig = {
+        algorithm: FeeAlgorithm.LinearFee,
+        constant: new BigNumber(1.1),
+        coefficient: new BigNumber(1.25),
+    };
     const SAMPLE_INPUT: PrevOutputPointer = {
         prevTxId:
             '0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF',
@@ -47,9 +54,10 @@ describe('DepositTransactionBuilder', () => {
             expect(builder.getNetwork()).to.deep.eq(Mainnet);
         });
 
-        it('should create builder with the provded config', () => {
+        it('should create builder with the provided config', () => {
             const stakingAddress = SAMPLE_STAKING_ADDRESS;
             const network = Devnet({
+                feeConfig: SAMPLE_FEE_CONFIG,
                 chainHexId: 'AB',
             });
             const builder = new DepositTransactionBuilder({
@@ -528,6 +536,31 @@ describe('DepositTransactionBuilder', () => {
                 .signInput(1, SAMPLE_KEY_PAIR);
 
             expect(builder.isCompleted()).to.eq(true);
+        });
+    });
+
+    describe('toUnsignedHex', () => {
+        it('should throw Error when the builder has no input', () => {
+            const builder = new DepositTransactionBuilder({
+                stakingAddress: SAMPLE_STAKING_ADDRESS,
+            });
+
+            expect(() => {
+                builder.toUnsignedHex();
+            }).to.throw('Builder has no input');
+        });
+
+        it('should return raw transaction Hex', () => {
+            const builder = new DepositTransactionBuilder({
+                stakingAddress: SAMPLE_STAKING_ADDRESS,
+            });
+
+            builder.addInput(SAMPLE_INPUT).signInput(0, SAMPLE_KEY_PAIR);
+
+            const txHex = builder.toUnsignedHex();
+            expect(txHex.toString('hex')).to.deep.eq(
+                '040123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef020000b5698ee21f69a6184afbe59b3626ed9d4bd755b0002a0100000000000000',
+            );
         });
     });
 

@@ -5,7 +5,12 @@ import { KeyPair } from './key_pair';
 describe('KeyPair', () => {
     const validPublicKey = (): Buffer =>
         Buffer.from(
-            '0317b7e1ce1f9f94c32a43739229f88c0b0333296fb46e8f72865849c6ae34b84e',
+            '04405f598dfbd9749d84da2084a9abcd165a4cfaf9045c51b4944a22b0a90ccce44d1b3583d296f70969b3279efcce6b5a0c0b98717e3d7fd8a5cbc8f6578e62df',
+            'hex',
+        );
+    const validCompressedPublicKey = (): Buffer =>
+        Buffer.from(
+            '03405f598dfbd9749d84da2084a9abcd165a4cfaf9045c51b4944a22b0a90ccce4',
             'hex',
         );
 
@@ -24,7 +29,7 @@ describe('KeyPair', () => {
 
         it('should throw Error when Public Key is invalid', () => {
             const invalidPublicKey = Buffer.alloc(65);
-            validPublicKey().copy(invalidPublicKey);
+            validCompressedPublicKey().copy(invalidPublicKey);
             invalidPublicKey[0] = 15;
 
             expect(() => KeyPair.fromPublicKey(invalidPublicKey)).to.throw(
@@ -34,10 +39,16 @@ describe('KeyPair', () => {
 
         it('should return KeyPair with the provided PublicKey', () => {
             const publicKey = validPublicKey();
+            const expectedCompressedPublicKey = validCompressedPublicKey();
             const keyPair = KeyPair.fromPublicKey(publicKey);
 
             expect(keyPair.hasPublicKey()).to.eq(true);
-            expect(keyPair.publicKey).to.deep.eq(publicKey);
+            expect(keyPair.publicKey.toString('hex')).to.eq(
+                publicKey.toString('hex'),
+            );
+            expect(keyPair.compressedPublicKey.toString('hex')).to.eq(
+                expectedCompressedPublicKey.toString('hex'),
+            );
         });
     });
 
@@ -62,11 +73,12 @@ describe('KeyPair', () => {
             expect(keyPair.hasPrivateKey()).to.eq(true);
             expect(keyPair.privateKey).to.deep.eq(privateKey);
             expect(keyPair.publicKey).to.have.lengthOf(65);
-            expect(keyPair.publicKey).to.deep.eq(
-                Buffer.from(
-                    '041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1',
-                    'hex',
-                ),
+            expect(keyPair.publicKey.toString('hex')).to.eq(
+                '041b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f70beaf8f588b541507fed6a642c5ab42dfdf8120a7f639de5122d47a69a8e8d1',
+            );
+            expect(keyPair.compressedPublicKey).to.have.lengthOf(33);
+            expect(keyPair.compressedPublicKey.toString('hex')).to.eq(
+                '031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f',
             );
         });
     });
@@ -86,6 +98,9 @@ describe('KeyPair', () => {
             expect(firstKeyPair.publicKey).not.to.deep.eq(
                 secondKeyPair.publicKey,
             );
+            expect(firstKeyPair.compressedPublicKey).not.to.deep.eq(
+                secondKeyPair.publicKey,
+            );
             expect(firstKeyPair.privateKey).not.to.deep.eq(
                 secondKeyPair.privateKey,
             );
@@ -98,6 +113,9 @@ describe('KeyPair', () => {
 
             const obj = keyPair.toObject();
             expect(obj.publicKey).to.deep.eq(keyPair.publicKey);
+            expect(obj.compressedPublicKey).to.deep.eq(
+                keyPair.compressedPublicKey,
+            );
             expect(obj.privateKey).to.deep.eq(keyPair.privateKey);
         });
     });
