@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/axios": "0.14.0",
     "@types/bignumber.js": "5.0.0",
-    "@types/chai": "4.2.11",
+    "@types/chai": "4.2.12",
     "@types/deep-equal": "1.0.1",
     "@types/lodash": "4.14.155",
     "@types/lossless-json": "1.0.0",
