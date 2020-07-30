@@ -14,7 +14,7 @@
     "bignumber.js": "9.0.0",
     "bip32": "2.0.5",
     "bip39": "3.0.2",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "lossless-json": "1.0.4",
     "ow": "0.15.0"
   },
@@ -35,7 +35,7 @@
     "chai-as-promised": "7.1.1",
     "deep-equal": "2.0.3",
     "eslint": "6.8.0",
-    "eslint-config-airbnb-base": "14.1.0",
+    "eslint-config-airbnb-base": "14.2.0",
     "eslint-config-prettier": "6.11.0",
     "eslint-plugin-import": "2.22.0",
     "eslint-plugin-prettier": "3.1.4",
