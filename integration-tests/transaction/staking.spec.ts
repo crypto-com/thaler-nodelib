@@ -19,11 +19,7 @@ import {
     TransactionChangeKind,
 } from '../common/assertion';
 import { RPCStakedState, parseStakedStateFromRPC } from '../common/staking';
-import {
-    DEVNET_TX_TENDERMINT_ADDRESS,
-    DEVNET_FEE_CONFIG,
-    DEVNET_CHAIN_HEX_ID,
-} from '../common/constant';
+import { DEVNET_TX_TENDERMINT_ADDRESS, DEVNET } from '../common/constant';
 
 describe('Staking Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -64,6 +60,7 @@ describe('Staking Transaction', () => {
         // Deposit 100000000 basic unit to staking account
         console.log('[Log] Submitting deposit transaction');
         const depositAmount = '100000000';
+        // The actual amount deposited will be deducted with a fee
         const utxo = await walletRpc.faucet(defaultWallet, {
             toAddress: transferAddress,
             value: cro.utils.toBigNumber(depositAmount),
@@ -107,7 +104,7 @@ describe('Staking Transaction', () => {
         const unbondTxBuilder = new cro.transaction.staking.UnbondTransactionBuilder(
             {
                 stakingAddress,
-                nonce: stakeStateAfterDeposit.nonce.toNumber(),
+                nonce: stakeStateAfterDeposit.nonce,
                 amount: cro.utils.toBigNumber(unbondAmount),
                 network,
             },
@@ -140,11 +137,9 @@ describe('Staking Transaction', () => {
 
         console.log('[Log] Withdrawing stake from staking account');
         const withdrawAllAmount = stakeStateAfterUnbond.unbonded.toString(10);
-        const feeConfig = DEVNET_FEE_CONFIG;
         const withdrawUnbondedTxBuilder = new cro.transaction.staking.WithdrawUnbondedTransactionBuilder(
             {
-                stakedState: stakeStateAfterUnbond,
-                feeConfig,
+                nonce: stakeStateAfterUnbond.nonce,
                 network,
             },
         );
@@ -193,7 +188,7 @@ describe('Staking Transaction', () => {
             walletRpc,
             createdWallet,
             transferAddress,
-            stakeStateAfterUnbond,
+            stakeStateAfterUnbond.unbondedFrom,
             withdrawAmount.toString(10),
             withdrawUnbondedTxId,
         );
@@ -204,9 +199,7 @@ const setupTestEnv = async (walletRpc: WalletRpc) => {
     const transferKeyPair = cro.KeyPair.generateRandom();
     const stakingKeyPair = cro.KeyPair.generateRandom();
     const viewKeyPair = cro.KeyPair.generateRandom();
-    const network = cro.network.Devnet({
-        chainHexId: DEVNET_CHAIN_HEX_ID,
-    });
+    const network = DEVNET;
     const transferAddress = cro.address.transfer({
         keyPair: transferKeyPair,
         network,
@@ -420,7 +413,7 @@ const assertWithdrawShouldSucceed = async (
     walletRpc: WalletRpc,
     createdWallet: WalletRequest,
     transferAddress: string,
-    stakeStateAfterUnbond: cro.StakedState,
+    unbondedFrom: number,
     withdrawAmount: string,
     withdrawUnbondedTxId: string,
 ) => {
@@ -464,7 +457,7 @@ const assertWithdrawShouldSucceed = async (
             outputs: [
                 {
                     address: transferAddress,
-                    validFrom: stakeStateAfterUnbond.unbondedFrom,
+                    validFrom: unbondedFrom,
                     value: withdrawAmount,
                 },
             ],

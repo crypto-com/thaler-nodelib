@@ -6,7 +6,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 ../chain/integration-tests/cleanup.sh
 
 # ensure dependencies for integration tests
-../chain/integration-tests/deps.sh
+# ../chain/integration-tests/deps.sh
+./deps.sh
 PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-"../chain/integration-tests/bot/.venv"}
 source $PYTHON_VENV_DIR/bin/activate
 

@@ -1,7 +1,7 @@
 import { NetworkConfig, Mainnet } from '../network';
 
 export abstract class TransactionBuilder {
-    private network!: NetworkConfig;
+    protected network!: NetworkConfig;
 
     protected initNetwork(network?: NetworkConfig) {
         if (network) {

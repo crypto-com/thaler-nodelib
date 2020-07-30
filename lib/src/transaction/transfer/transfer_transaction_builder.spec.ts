@@ -6,8 +6,8 @@ import { TransferTransactionBuilder } from './transfer_transaction_builder';
 import { KeyPair } from '../../key_pair';
 import { transfer, SINGLE_SIGN_ADDRESS } from '../../address';
 import { MAX_COIN_BN } from '../../init';
-import { FeeAlgorithm, ZERO_LINEAR_FEE } from '../../fee';
-import { Mainnet, Devnet } from '../../network';
+import { FeeAlgorithm, ZERO_LINEAR_FEE, FeeConfig } from '../../fee';
+import { Mainnet, Devnet, Testnet } from '../../network';
 import { Timespec } from '../../types/timespec';
 
 const native = require('../../../../native/index.node');
@@ -20,80 +20,12 @@ describe('TransferTransactionBuilder', () => {
             expect(builder.getNetwork()).to.deep.eq(Mainnet);
         });
 
-        it('should throw Error when fee config is invalid', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new TransferTransactionBuilder({
-                    feeConfig: {
-                        algorithm: FeeAlgorithm.LinearFee,
-                    },
-                } as any);
-            }).to.throw(
-                'Expected property property `constant` to be of type `object` but received type `undefined` in object `feeConfig` in object',
-            );
-        });
-
-        it('should throw unsupported fee algorithm error when fee algorithm is unsupported', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new TransferTransactionBuilder({
-                    feeConfig: {
-                        algorithm: 'Invalid',
-                    },
-                } as any);
-            }).to.throw(
-                'Expected property property string `algorithm` to be one of `["LinearFee"]`, got `Invalid` in object `feeConfig` in object',
-            );
-        });
-
-        it('should throw Error when Linear fee constant and/or coefficient is invalid', () => {
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new TransferTransactionBuilder({
-                    feeConfig: {
-                        algorithm: FeeAlgorithm.LinearFee,
-                        constant: new BigNumber('-1'),
-                        coefficient: new BigNumber('1001'),
-                    },
-                });
-            }).to.throw(
-                'Expected property property value to be greater than or equal to 0 in object `feeConfig` in object',
-            );
-
-            expect(() => {
-                // eslint-disable-next-line no-new
-                new TransferTransactionBuilder({
-                    feeConfig: {
-                        algorithm: FeeAlgorithm.LinearFee,
-                        constant: new BigNumber('-1'),
-                        coefficient: new BigNumber('1001'),
-                    },
-                });
-            }).to.throw(
-                'Expected property property value to be greater than or equal to 0 in object `feeConfig` in object',
-            );
-        });
-
-        it('should set fee algorithm as Linear fee when fee algorithm is not provided', () => {
-            const builder = new TransferTransactionBuilder();
-
-            expect(builder.getFeeConfig().algorithm).to.eq(
-                FeeAlgorithm.LinearFee,
-            );
-        });
-
-        it('should use the fee config provided', () => {
+        it('should use the network fee config', () => {
             const builder = new TransferTransactionBuilder({
-                feeConfig: {
-                    algorithm: FeeAlgorithm.LinearFee,
-                    constant: new BigNumber('1000'),
-                    coefficient: new BigNumber('1001'),
-                },
+                network: Testnet,
             });
 
-            expect(builder.getFeeConfig().algorithm).to.eq(
-                FeeAlgorithm.LinearFee,
-            );
+            expect(builder.feeConfig).to.deep.eq(Testnet.feeConfig);
         });
     });
 
@@ -394,6 +326,12 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('addOutput', () => {
+        const SAMPLE_FEE_CONFIG: FeeConfig = {
+            algorithm: FeeAlgorithm.LinearFee,
+            constant: new BigNumber('1000'),
+            coefficient: new BigNumber('1001'),
+        };
+
         it('should throw Error when address is invalid', () => {
             const builder = new TransferTransactionBuilder();
 
@@ -432,6 +370,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when value is invalid', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
+                    feeConfig: SAMPLE_FEE_CONFIG,
                     chainHexId: 'AB',
                 }),
             });
@@ -450,6 +389,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when value is greater than maximum coin', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
+                    feeConfig: SAMPLE_FEE_CONFIG,
                     chainHexId: 'AB',
                 }),
             });
@@ -468,6 +408,7 @@ describe('TransferTransactionBuilder', () => {
         it('should throw Error when valid from is invalid', () => {
             const builder = new TransferTransactionBuilder({
                 network: Devnet({
+                    feeConfig: SAMPLE_FEE_CONFIG,
                     chainHexId: 'AB',
                 }),
             });
@@ -641,14 +582,13 @@ describe('TransferTransactionBuilder', () => {
 
         it('should return estimated fee in string', () => {
             const builder = new TransferTransactionBuilder({
-                feeConfig: {
-                    algorithm: FeeAlgorithm.LinearFee,
-                    constant: new BigNumber('1.1'),
-                    coefficient: new BigNumber('1.25'),
-                },
+                network: Mainnet,
             });
             const keyPair = KeyPair.generateRandom();
-            const transferAddress = transfer({ keyPair, network: Mainnet });
+            const transferAddress = transfer({
+                keyPair,
+                network: Mainnet,
+            });
 
             builder
                 .addInput({
@@ -1244,6 +1184,11 @@ describe('TransferTransactionBuilder', () => {
     });
 
     describe('toHex', () => {
+        const ZERO_FEE_DEVNET = Devnet({
+            feeConfig: ZERO_LINEAR_FEE,
+            chainHexId: 'AB',
+        });
+
         it('should throw Error when the tendermint address is not ws', () => {
             const builder = new TransferTransactionBuilder();
 
@@ -1423,7 +1368,7 @@ describe('TransferTransactionBuilder', () => {
 
         it('should throw Error when the transaction output amount exceeds input amount', () => {
             const builder = new TransferTransactionBuilder({
-                feeConfig: ZERO_LINEAR_FEE,
+                network: ZERO_FEE_DEVNET,
             });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
@@ -1435,7 +1380,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Mainnet,
+                            network: ZERO_FEE_DEVNET,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1443,7 +1388,7 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addOutput({
                     address:
-                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        'dcro1qkwn2jde2cq5e6ef6jd0s60y24vxc9zdv5ejp0kyy7d6td7n2kdqyq4n4v',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -1464,7 +1409,7 @@ describe('TransferTransactionBuilder', () => {
 
         it('should return completed Hex', () => {
             const builder = new TransferTransactionBuilder({
-                feeConfig: ZERO_LINEAR_FEE,
+                network: ZERO_FEE_DEVNET,
             });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
@@ -1476,7 +1421,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Mainnet,
+                            network: ZERO_FEE_DEVNET,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1489,7 +1434,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Mainnet,
+                            network: ZERO_FEE_DEVNET,
                         }),
                         value: new BigNumber('1000'),
                     },
@@ -1497,7 +1442,7 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addOutput({
                     address:
-                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        'dcro1qkwn2jde2cq5e6ef6jd0s60y24vxc9zdv5ejp0kyy7d6td7n2kdqyq4n4v',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -1511,13 +1456,13 @@ describe('TransferTransactionBuilder', () => {
             builder.signInput(1, keyPair);
 
             expect(builder.toHex().toString('hex')).to.eq(
-                '0000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100010000000000000000000000000000000000000000008d0500080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c0001000000000000000800f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f00f82e78f5ed675752a760015b073e0f0533f264513eff6b1d934db4fcac063e1989372e1d0ef971099bbcb21d327bee574b3ff2ef49b340ebadad498cd70b8314001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f942d22a5019ee2af5d6790fe30b02493d63098ed32beb6522cef81bb0f86e327',
+                '0000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100010000000000000000000000000000000000000000008d05000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000400059d3549b956014ceb29d49af869e455586c144d653320bec4279ba5b7d3559adc050000000000000000ab040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000008009e0400eb47cb60e896d9876f85823d8d4b9b685f7fa4193e3508f9f08004b10caae91ba2000cb48b35a2333b8a9dc5c90849b82147b3e791c8d7ff323d47faff001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f009e0400eb47cb60e896d9876f85823d8d4b9b685f7fa4193e3508f9f08004b10caae91ba2000cb48b35a2333b8a9dc5c90849b82147b3e791c8d7ff323d47faff001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078fd1d2c971db2e1016dfd67209d62675e82b329a9362f0e39e11218f441ddbbabe',
             );
         });
 
         it('should return completed Hex given correct tendermint address', () => {
             const builder = new TransferTransactionBuilder({
-                feeConfig: ZERO_LINEAR_FEE,
+                network: ZERO_FEE_DEVNET,
             });
 
             const keyPair = KeyPair.fromPrivateKey(Buffer.alloc(32, 1));
@@ -1529,7 +1474,7 @@ describe('TransferTransactionBuilder', () => {
                     prevOutput: {
                         address: transfer({
                             keyPair,
-                            network: Mainnet,
+                            network: ZERO_FEE_DEVNET,
                         }),
                         value: new BigNumber('2000'),
                     },
@@ -1537,7 +1482,7 @@ describe('TransferTransactionBuilder', () => {
                 })
                 .addOutput({
                     address:
-                        'cro1p8c38xgv26c0wlzf0m8gugnn3fpaucrf5p98zhfaqvj4xr8mf97sp54ap3',
+                        'dcro1qkwn2jde2cq5e6ef6jd0s60y24vxc9zdv5ejp0kyy7d6td7n2kdqyq4n4v',
                     value: new BigNumber('1500'),
                 })
                 .addViewKey(
@@ -1552,24 +1497,24 @@ describe('TransferTransactionBuilder', () => {
             expect(
                 builder.toHex('ws://127.0.0.1/websocket').toString('hex'),
             ).to.eq(
-                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d030004000000000000000000000000000000000000000000000000000000000000000000000400059d3549b956014ceb29d49af869e455586c144d653320bec4279ba5b7d3559adc050000000000000000ab040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004006913d40ceca57ae9330c493b4e9d38ef0beebf638ca86df187b000832d6e3f8bc8e766c61a8fc7c611b3b6ef0e9094346af856c983864f6bfccf217c5dd6b7d4001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f93ccef4bfff2fe0ce9b0d4276ce45d1aa91be72fb8c1f479ba04e7bd3ed2f04b',
             );
             expect(
                 builder.toHex('ws://localhost/websocket').toString('hex'),
             ).to.eq(
-                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d030004000000000000000000000000000000000000000000000000000000000000000000000400059d3549b956014ceb29d49af869e455586c144d653320bec4279ba5b7d3559adc050000000000000000ab040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004006913d40ceca57ae9330c493b4e9d38ef0beebf638ca86df187b000832d6e3f8bc8e766c61a8fc7c611b3b6ef0e9094346af856c983864f6bfccf217c5dd6b7d4001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f93ccef4bfff2fe0ce9b0d4276ce45d1aa91be72fb8c1f479ba04e7bd3ed2f04b',
             );
             expect(
                 builder
                     .toHex('ws://tendermint-zerofee:26657/websocket')
                     .toString('hex'),
             ).to.eq(
-                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d030004000000000000000000000000000000000000000000000000000000000000000000000400059d3549b956014ceb29d49af869e455586c144d653320bec4279ba5b7d3559adc050000000000000000ab040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004006913d40ceca57ae9330c493b4e9d38ef0beebf638ca86df187b000832d6e3f8bc8e766c61a8fc7c611b3b6ef0e9094346af856c983864f6bfccf217c5dd6b7d4001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f93ccef4bfff2fe0ce9b0d4276ce45d1aa91be72fb8c1f479ba04e7bd3ed2f04b',
             );
             expect(
                 builder.toHex('wss://localhost/websocket').toString('hex'),
             ).to.eq(
-                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d03000400000000000000000000000000000000000000000000000000000000000000000000040009f113990c56b0f77c497ece8e22738a43de6069a04a715d3d0325530cfb497ddc0500000000000000002a040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004001ff386086212d8aaccc5f8c5279140ff056df821425d6878dd4e2bb91f46354f3a163acf567e5d280d98e4a8068aa8b9b2952b029bfbce604638c8c11f19e09b001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f3a9312f434ff1f8367d34d5bffe0e3b2ff1b02c5b6dd978d74e52a936743fa8f',
+                '00000400000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000007d030004000000000000000000000000000000000000000000000000000000000000000000000400059d3549b956014ceb29d49af869e455586c144d653320bec4279ba5b7d3559adc050000000000000000ab040248b7c5f2325a7ef7dcd68066368fd63a7aad8c4a894414fcd81b227b2178322c00010000000000000004006913d40ceca57ae9330c493b4e9d38ef0beebf638ca86df187b000832d6e3f8bc8e766c61a8fc7c611b3b6ef0e9094346af856c983864f6bfccf217c5dd6b7d4001b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f93ccef4bfff2fe0ce9b0d4276ce45d1aa91be72fb8c1f479ba04e7bd3ed2f04b',
             );
         });
     });

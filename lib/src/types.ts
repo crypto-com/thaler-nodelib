@@ -171,72 +171,15 @@ export const owInput = ow.object.exactShape({
 
 export const owUnixTimestamp = ow.number.integer;
 
-// Simplified staked state
-// TODO: To be removed after WithdrawUnbondedTransactionBuilder is changed to
-// accept only required fields
-export interface StakedState {
-    nonce: number;
-    bonded: BigNumber;
-    unbonded: BigNumber;
-    unbondedFrom: number;
-    address: string;
-}
-
-export const owAccountNonce = ow.number.int16;
-
-export const owStakedState = ow.object.exactShape({
-    nonce: owAccountNonce,
-    bonded: owBigNumber,
-    unbonded: owBigNumber,
-    unbondedFrom: owUnixTimestamp,
-    address: owStakingAddress,
-    punishment: ow.optional.object.exactShape({
-        kind: ow.string,
-        jailedUntil: owUnixTimestamp,
-        slashAmount: owBigNumber,
-    }),
-    councilNode: ow.optional.object.exactShape({
-        name: ow.string,
-        securityContact: ow.optional.string,
-        consensusPubkey: ow.object.exactShape({
-            type: ow.string,
-            value: ow.string,
-        }),
-    }),
-});
-
-/* eslint-disable camelcase */
-export interface NativeStakedState {
-    nonce: number;
-    bonded: string;
-    unbonded: string;
-    unbonded_from: number;
-    address: string;
-}
-/* eslint-enable camelcase */
-
-export const parseStakedStateForNative = (
-    stakedState: StakedState,
-): NativeStakedState => {
-    return {
-        nonce: stakedState.nonce,
-        bonded: stakedState.bonded.toString(10),
-        unbonded: stakedState.unbonded.toString(10),
-        unbonded_from: stakedState.unbondedFrom,
-        address: stakedState.address,
-    };
-};
-
-/* eslint-disable camelcase */
-export const parseStakedStateForNodelib = (
-    stakedState: NativeStakedState,
-): StakedState => {
-    return {
-        nonce: stakedState.nonce,
-        bonded: new BigNumber(stakedState.bonded),
-        unbonded: new BigNumber(stakedState.unbonded),
-        unbondedFrom: stakedState.unbonded_from,
-        address: stakedState.address,
-    };
-};
-/* eslint-enable camelcase */
+const bigNumberU64Max = new BigNumber(2).pow(64);
+// export const owAccountNonce = ow.number.int16;
+export const owAccountNonce = ow.object.validate((value: object) => ({
+    validator:
+        BigNumber.isBigNumber(value) &&
+        value.isInteger() &&
+        value.isGreaterThanOrEqualTo(0) &&
+        value.isLessThanOrEqualTo(bigNumberU64Max),
+    message: `Expected value to be positive BigNumber within maximum nonce: ${bigNumberU64Max.toString(
+        10,
+    )}`,
+}));

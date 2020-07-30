@@ -1,6 +1,5 @@
 import ow, { NumberPredicate } from 'ow';
 import cloneDeep from 'lodash/cloneDeep';
-import BigNumber from 'bignumber.js';
 
 import {
     owTransferTransactionBuilderOptions,
@@ -37,15 +36,12 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private viewKeys: ViewKey[] = [];
 
-    private feeConfig!: FeeConfig;
-
     private incompleteHex?: Buffer;
 
     /**
      * Creates an instance of TransferTransactionBuilder.
      * @param {TransferTransactionBuilderOptions} [options] Builder options
      * @param {Network} options.network Network the transaction belongs to
-     * @param {FeeConfig} [options.feeConfig=LinearFee] Fee configuration
      * @memberof TransferTransactionBuilder
      */
     public constructor(options?: TransferTransactionBuilderOptions) {
@@ -58,18 +54,6 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private parseOptions(options?: TransferTransactionBuilderOptions) {
         this.initNetwork(options?.network);
-
-        if (options?.feeConfig) {
-            this.feeConfig = options.feeConfig;
-        } else {
-            // FIXME: Do not provide default fee configuration
-            // https://mcoproduct.atlassian.net/browse/CEV2-159
-            this.feeConfig = {
-                algorithm: FeeAlgorithm.LinearFee,
-                constant: new BigNumber('1000'),
-                coefficient: new BigNumber('1001'),
-            };
-        }
     }
 
     /**
@@ -78,8 +62,8 @@ export class TransferTransactionBuilder extends TransactionBuilder {
      * @returns {FeeConfig} current fee configuration
      * @memberof TransferTransactionBuilder
      */
-    public getFeeConfig(): Readonly<FeeConfig> {
-        return this.feeConfig;
+    public get feeConfig(): Readonly<FeeConfig> {
+        return this.network.feeConfig;
     }
 
     /**

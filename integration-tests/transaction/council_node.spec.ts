@@ -18,12 +18,8 @@ import { NodeMetaData } from '../../lib/src/transaction/council_node/types';
 import {
     RPCStakedState,
     parseRPCCouncilNodeFromNodeMetaData,
-    parseStakedStateFromRPC,
 } from '../common/staking';
-import {
-    DEVNET_TX_TENDERMINT_ADDRESS,
-    DEVNET_CHAIN_HEX_ID,
-} from '../common/constant';
+import { DEVNET_TX_TENDERMINT_ADDRESS, DEVNET } from '../common/constant';
 
 describe('Council Node Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -114,7 +110,7 @@ describe('Council Node Transaction', () => {
         const nodeJoinTxBuilder = new cro.transaction.councilNode.NodeJoinTransactionBuilder(
             {
                 stakingAddress,
-                nonce: stakeStateAfterDeposit.nonce.toNumber(),
+                nonce: stakeStateAfterDeposit.nonce,
                 nodeMetaData,
                 network,
             },
@@ -143,9 +139,7 @@ const setupTestEnv = async (walletRpc: WalletRpc) => {
     const transferKeyPair = cro.KeyPair.generateRandom();
     const stakingKeyPair = cro.KeyPair.generateRandom();
     const viewKeyPair = cro.KeyPair.generateRandom();
-    const network = cro.network.Devnet({
-        chainHexId: DEVNET_CHAIN_HEX_ID,
-    });
+    const network = DEVNET;
     const transferAddress = cro.address.transfer({
         keyPair: transferKeyPair,
         network,
@@ -335,7 +329,7 @@ const assertNodeJoinShouldSucceed = async (
     walletRpc: WalletRpc,
 ) => {
     const maxTrials = 15;
-    const stakeStateAfterNodeJoin = await waitForStakedState(
+    await waitForStakedState(
         walletRequest,
         stakingAddress,
         {
@@ -346,6 +340,4 @@ const assertNodeJoinShouldSucceed = async (
         maxTrials,
         'Expected staking address to become an council node',
     );
-
-    return parseStakedStateFromRPC(stakeStateAfterNodeJoin);
 };

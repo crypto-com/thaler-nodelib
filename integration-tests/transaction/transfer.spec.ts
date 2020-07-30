@@ -3,11 +3,7 @@ import * as cro from '../../lib/src';
 import { newTendermintRPC, newWalletRPC, WalletRequest } from '../common/utils';
 import { TendermintRpc } from '../common/tendermint-rpc';
 import { WalletRpc } from '../common/wallet-rpc';
-import {
-    DEVNET_CHAIN_HEX_ID,
-    DEVNET_FEE_CONFIG,
-    DEVNET_TX_TENDERMINT_ADDRESS,
-} from '../common/constant';
+import { DEVNET_TX_TENDERMINT_ADDRESS, DEVNET } from '../common/constant';
 
 describe('Transfer Transaction', () => {
     let tendermintRpc: TendermintRpc;
@@ -39,9 +35,7 @@ describe('Transfer Transaction', () => {
 
         const transferAddress = cro.address.transfer({
             keyPair,
-            network: cro.network.Devnet({
-                chainHexId: DEVNET_CHAIN_HEX_ID,
-            }),
+            network: DEVNET,
         });
 
         const utxo = await walletRpc.faucet(defaultWallet, {
@@ -56,10 +50,7 @@ describe('Transfer Transaction', () => {
         });
 
         const builder = new cro.TransferTransactionBuilder({
-            network: cro.network.Devnet({
-                chainHexId: DEVNET_CHAIN_HEX_ID,
-            }),
-            feeConfig: DEVNET_FEE_CONFIG,
+            network: DEVNET,
         });
 
         builder
@@ -129,17 +120,13 @@ describe('Transfer Transaction', () => {
         const fromTransferAddressKeyPair = wallet.derive("m/44'/0'/0'/0/0");
         const fromTransferAddress = cro.address.transfer({
             keyPair: fromTransferAddressKeyPair,
-            network: cro.network.Devnet({
-                chainHexId: DEVNET_CHAIN_HEX_ID,
-            }),
+            network: DEVNET,
         });
 
         const toTransferAddressKeyPair = wallet.derive("m/44'/0'/0'/0/0");
         const toTransferAddress = cro.address.transfer({
             keyPair: toTransferAddressKeyPair,
-            network: cro.network.Devnet({
-                chainHexId: DEVNET_CHAIN_HEX_ID,
-            }),
+            network: DEVNET,
         });
 
         const utxo = await walletRpc.faucet(defaultWallet, {
@@ -149,10 +136,7 @@ describe('Transfer Transaction', () => {
         });
 
         const builder = new cro.TransferTransactionBuilder({
-            network: cro.network.Devnet({
-                chainHexId: DEVNET_CHAIN_HEX_ID,
-            }),
-            feeConfig: DEVNET_FEE_CONFIG,
+            network: DEVNET,
         });
 
         builder

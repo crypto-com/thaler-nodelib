@@ -6,17 +6,32 @@ import { owOptionalNetworkConfig } from '../../network/types';
 import {
     owCoin,
     owTxId,
-    owStakedState,
     Output,
-    StakedState,
     Timespec,
     owAccountNonce,
     owTransferAddress,
     owStakingAddress,
+    owUnixTimestamp,
+    owBigNumber,
 } from '../../types';
-import { FeeConfig } from '../../fee';
-import { owFeeConfig } from '../../fee/types';
 import { owTimespec } from '../../types/timespec';
+
+// Simplified staked state
+export interface State {
+    nonce: number;
+    bonded: BigNumber;
+    unbonded: BigNumber;
+    unbondedFrom: number;
+    address: string;
+}
+
+export const owState = ow.object.exactShape({
+    nonce: owAccountNonce,
+    bonded: owBigNumber,
+    unbonded: owBigNumber,
+    unbondedFrom: owUnixTimestamp,
+    address: owStakingAddress,
+});
 
 // TODO: Change transfer transaction builder to use this interface
 /**
@@ -58,7 +73,7 @@ export const owDepositTransactionOptions = ow.object.exactShape({
 
 export interface UnbondTransactionBuilderOptions {
     stakingAddress: string;
-    nonce: number;
+    nonce: BigNumber;
     amount: BigNumber;
     network?: NetworkConfig;
 }
@@ -71,15 +86,13 @@ export const owUnbondTransactionBuilderOptions = ow.object.exactShape({
 });
 
 export interface WithdrawUnbondedTransactionBuilderOptions {
-    stakedState: StakedState;
-    feeConfig: FeeConfig;
+    nonce: BigNumber;
     network?: NetworkConfig;
 }
 
 export const owWithdrawUnbondedTransactionBuilderOptions = ow.object.exactShape(
     {
-        stakedState: owStakedState,
-        feeConfig: owFeeConfig,
+        nonce: owAccountNonce,
         network: owOptionalNetworkConfig,
     },
 );
@@ -93,3 +106,8 @@ export const owWithdrawUnbondedOutput = ow.object.exactShape({
     value: owCoin,
     validFrom: owTimespec,
 });
+
+export const owStakedStateOpWitness = ow.buffer.validate((buf: Buffer) => ({
+    validator: buf.length === 66,
+    message: 'Expected signature to be 66 bytes long',
+}));

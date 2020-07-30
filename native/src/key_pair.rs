@@ -18,19 +18,55 @@ pub fn verify_private_key(mut ctx: FunctionContext) -> JsResult<JsUndefined> {
     Ok(ctx.undefined())
 }
 
-pub fn get_public_key_from_private_key(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
+pub fn get_public_keys_from_private_key(mut ctx: FunctionContext) -> JsResult<JsObject> {
     let private_key = private_key_argument(&mut ctx, 0)?;
 
     let public_key = PublicKey::from(&private_key);
+    let compressed_public_key = public_key.serialize_compressed();
     let public_key = public_key.serialize();
 
-    let value = &public_key;
-    let mut buffer = ctx.buffer(value.len() as u32)?;
-    ctx.borrow_mut(&mut buffer, |data| {
+    let mut public_key_buf = ctx.buffer(public_key.len() as u32)?;
+    ctx.borrow_mut(&mut public_key_buf, |data| {
         let slice = data.as_mut_slice();
-        slice.copy_from_slice(&value);
+        slice.copy_from_slice(&public_key);
     });
-    Ok(buffer)
+
+    let mut compressed_public_key_buf = ctx.buffer(compressed_public_key.len() as u32)?;
+    ctx.borrow_mut(&mut compressed_public_key_buf, |data| {
+        let slice = data.as_mut_slice();
+        slice.copy_from_slice(&compressed_public_key);
+    });
+
+    let js_object = JsObject::new(&mut ctx);
+    js_object.set(&mut ctx, "publicKey", public_key_buf)?;
+    js_object.set(&mut ctx, "compressedPublicKey", compressed_public_key_buf)?;
+
+    Ok(js_object)
+}
+
+pub fn get_public_keys_from_any_public_key(mut ctx: FunctionContext) -> JsResult<JsObject> {
+    let public_key = public_key_argument(&mut ctx, 0)?;
+
+    let compressed_public_key = public_key.serialize_compressed();
+    let public_key = public_key.serialize();
+
+    let mut public_key_buf = ctx.buffer(public_key.len() as u32)?;
+    ctx.borrow_mut(&mut public_key_buf, |data| {
+        let slice = data.as_mut_slice();
+        slice.copy_from_slice(&public_key);
+    });
+
+    let mut compressed_public_key_buf = ctx.buffer(compressed_public_key.len() as u32)?;
+    ctx.borrow_mut(&mut compressed_public_key_buf, |data| {
+        let slice = data.as_mut_slice();
+        slice.copy_from_slice(&compressed_public_key);
+    });
+
+    let js_object = JsObject::new(&mut ctx);
+    js_object.set(&mut ctx, "publicKey", public_key_buf)?;
+    js_object.set(&mut ctx, "compressedPublicKey", compressed_public_key_buf)?;
+
+    Ok(js_object)
 }
 
 pub fn new_private_key(mut ctx: FunctionContext) -> JsResult<JsBuffer> {
@@ -68,11 +104,20 @@ pub fn register_key_pair_module(ctx: &mut ModuleContext) -> NeonResult<()> {
     let verify_public_key_fn = JsFunction::new(ctx, verify_public_key)?;
     js_object.set(ctx, "verifyPublicKey", verify_public_key_fn)?;
 
-    let get_public_key_from_private_key_fn = JsFunction::new(ctx, get_public_key_from_private_key)?;
+    let get_public_keys_from_private_key_fn =
+        JsFunction::new(ctx, get_public_keys_from_private_key)?;
     js_object.set(
         ctx,
-        "getPublicKeyFromPrivateKey",
-        get_public_key_from_private_key_fn,
+        "getPublicKeysFromPrivateKey",
+        get_public_keys_from_private_key_fn,
+    )?;
+
+    let get_public_keys_from_any_public_key_fn =
+        JsFunction::new(ctx, get_public_keys_from_any_public_key)?;
+    js_object.set(
+        ctx,
+        "getPublicKeysFromAnyPublicKey",
+        get_public_keys_from_any_public_key_fn,
     )?;
 
     let new_private_key_fn = JsFunction::new(ctx, new_private_key)?;

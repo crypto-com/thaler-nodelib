@@ -10,3 +10,7 @@ export const DEVNET_FEE_CONFIG: FeeConfig = {
     constant: cro.utils.toBigNumber(1.1),
     coefficient: cro.utils.toBigNumber(1.25),
 };
+export const DEVNET = cro.network.Devnet({
+    feeConfig: DEVNET_FEE_CONFIG,
+    chainHexId: DEVNET_CHAIN_HEX_ID,
+});

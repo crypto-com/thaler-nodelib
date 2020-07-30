@@ -14,7 +14,33 @@ Crypto.com Chain and this library is currently in the alpha development phase an
 
 ## Installation
 
-Right now the library has not been published to npm yet. It will be available once a publishable version is ready.
+### Build manually
+
+1. Clone this repository to your project
+    ```bash
+    git clone https://github.com/crypto-com/chain-nodelib 
+    ```
+
+1. Install and build `chain-nodelib`
+    ```bash
+    cd chain-node-lib
+    npm install
+    npm build
+    ```
+
+1. Add chain-nodelib to your `package.json`
+    ```json
+    {
+        ...
+        "dependencies": {
+            "@cryptocom/chain-nodelib": "file:./chain-nodelib",
+        }
+    }
+    ```
+
+### NPM
+
+Right now the library has not been published to NPM yet. It will be available once a publishable version is ready.
 
 ## Examples
 
@@ -32,14 +58,14 @@ If you couldn't find an example for your use case, please [open an issue](https:
 - [Generate random view key](integration-tests/viewKey.spec.ts#L8)
 
 #### Transaction
-
-- [Create transfer transaction](integration-tests/transaction/transfer.spec.ts#L33)
-
+- [Create transfer transaction](integration-tests/transaction/transfer.spec.ts#L29)
 
 #### Staking and Council Node
-- [Create deposit transaction](integration-tests/transaction/staking.spec.ts#L63)
+- [Create deposit transaction](integration-tests/transaction/staking.spec.ts#L60)
 - [Create unbond transaction](integration-tests/transaction/staking.spec.ts#L101)
-- [Create withdraw staked transaction](integration-tests/transaction/staking.spec.ts#L129)
+- [Create withdraw staked transaction](integration-tests/transaction/staking.spec.ts#L130)
+- [Create node-join transaction](integration-tests/transaction/council_node.spec.ts#L100)
+- [Create unjail transaction](lib/src/transaction/council_node/unjail_transaction.spec.ts#148)
 
 #### HD Wallet
 

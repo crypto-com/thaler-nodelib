@@ -1,8 +1,8 @@
 {
   "name": "chain-nodelib",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Crypto.com Chain library for Node.js",
-  "main": "lib/index.js",
+  "main": "lib/dist/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/crypto-com/chain-nodelib"
