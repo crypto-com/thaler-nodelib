@@ -8,7 +8,6 @@ import {
 import {
     Input,
     Output,
-    ViewKey,
     owInput,
     owOutput,
     owTendermintAddress,
@@ -34,7 +33,7 @@ export class TransferTransactionBuilder extends TransactionBuilder {
 
     private outputs: Output[] = [];
 
-    private viewKeys: ViewKey[] = [];
+    private viewKeys: Buffer[] = [];
 
     private incompleteHex?: Buffer;
 

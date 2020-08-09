@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module Root
+ */
 import BigNumber from 'bignumber.js';
 
 export const MAX_COIN = '10000000000000000000';

@@ -16,19 +16,34 @@ export type LinearFeeConfig = {
     coefficient: BigNumber;
 };
 
+/**
+ * @internal
+ */
 export const owFeeAlgorithm = ow.string.oneOf(Object.values(FeeAlgorithm));
 
+/**
+ * @internal
+ */
 const owLinearFeeMilli = ow.object.validate((value: object) => ({
     validator: BigNumber.isBigNumber(value) && value.isGreaterThanOrEqualTo(0),
     message: 'Expected value to be greater than or equal to 0',
 }));
+/**
+ * @internal
+ */
 const owLinearFeeConfig = ow.object.exactShape({
     algorithm: owFeeAlgorithm,
     constant: owLinearFeeMilli,
     coefficient: owLinearFeeMilli,
 });
 
+/**
+ * @internal
+ */
 export const owFeeConfig = ow.any(owLinearFeeConfig);
+/**
+ * @internal
+ */
 export const owOptionalFeeConfig = ow.optional.any(owLinearFeeConfig);
 
 export const parseFeeConfigForNative = (

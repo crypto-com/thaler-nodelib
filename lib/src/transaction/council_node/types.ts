@@ -26,21 +26,33 @@ export enum NodePublicKeyType {
     Ed25519 = 'tendermint/PubKeyEd25519',
 }
 
+/**
+ * @internal
+ */
 export const owNodePublicKeyType = ow.string.oneOf(
     Object.values(NodePublicKeyType),
 );
 
+/**
+ * @internal
+ */
 export const owNodePublicKey = ow.object.exactShape({
     type: owNodePublicKeyType,
     value: ow.string,
 });
 
+/**
+ * @internal
+ */
 export const owNodeMetaData = ow.object.exactShape({
     name: ow.string,
     securityContact: ow.optional.string,
     consensusPublicKey: owNodePublicKey,
 });
 
+/**
+ * @internal
+ */
 export const owNodeJoinTransactionBuilderOptions = ow.object.exactShape({
     stakingAddress: owStakingAddress,
     nonce: owAccountNonce,
@@ -83,6 +95,9 @@ export interface UnjailTransactionBuilderOptions {
     network?: NetworkConfig;
 }
 
+/**
+ * @internal
+ */
 export const owUnjailTransactionBuilderOptions = ow.object.exactShape({
     stakingAddress: owStakingAddress,
     nonce: owAccountNonce,

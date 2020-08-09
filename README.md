@@ -89,6 +89,16 @@ If you couldn't find an example for your use case, please [open an issue](https:
 - [create at particular path with format argument](integration-tests/hdwallet.spec.ts#L119)
 - [Spend UTXO of transfer address generated with HD wallet](integration-tests/transaction/transfer.spec.ts#L173)
 
+## Documentation
+
+You can generate API documentation by running
+
+```bash
+npm run docs:generate
+```
+
+Generated documentation is available at `docs/dist`
+
 ## Browser support
 
 Right now the library does not support Browser.

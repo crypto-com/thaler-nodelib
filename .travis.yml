@@ -37,6 +37,7 @@ build_base: &build_base
   - PATH=$HOME/.local/bin:$PATH
   - LD_LIBRARY_PATH=$HOME/lib
   - PKG_CONFIG_PATH=$HOME/lib/pkgconfig
+  - NODE_ENV=development
   before_install: # versions from https://github.com/erickt/rust-zmq/blob/master/.travis.yml
   - ./ci-scripts/install-zeromq.sh
 
@@ -127,6 +128,14 @@ jobs:
     - cargo-audit -h
     - npm run lint || travis_terminate 1
     #   - npm run audit || travis_terminate 1
+  - name: Documentation Test
+    language: node_js
+    node_js: 10
+    install:
+    - node -v
+    - npm -v
+    script: 
+    - npm run docs:build
   - stage: Build and Publish
     name: Latest node (OSX)
     <<: *publish_job
@@ -178,6 +187,7 @@ jobs:
     node_js: 8
   - stage: Push Artifact
     <<: *rust_build_base
+    if: (type == push) AND (branch == master)
     script:
     - npm install
     - rm -f native/index.node

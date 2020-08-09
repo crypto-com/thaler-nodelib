@@ -25,6 +25,9 @@ export interface State {
     address: string;
 }
 
+/**
+ * @internal
+ */
 export const owState = ow.object.exactShape({
     nonce: owAccountNonce,
     bonded: owBigNumber,
@@ -56,6 +59,9 @@ export interface WitnessedPrevOutputPointer {
     witness?: Buffer;
 }
 
+/**
+ * @internal
+ */
 export const owPrevOutputPointer = ow.object.exactShape({
     prevTxId: owTxId,
     prevIndex: ow.number.uint16,
@@ -66,6 +72,9 @@ export interface DepositTransactionBuilderOptions {
     network?: NetworkConfig;
 }
 
+/**
+ * @internal
+ */
 export const owDepositTransactionOptions = ow.object.exactShape({
     stakingAddress: owStakingAddress,
     network: owOptionalNetworkConfig,
@@ -78,6 +87,9 @@ export interface UnbondTransactionBuilderOptions {
     network?: NetworkConfig;
 }
 
+/**
+ * @internal
+ */
 export const owUnbondTransactionBuilderOptions = ow.object.exactShape({
     stakingAddress: owStakingAddress,
     nonce: owAccountNonce,
@@ -90,6 +102,9 @@ export interface WithdrawUnbondedTransactionBuilderOptions {
     network?: NetworkConfig;
 }
 
+/**
+ * @internal
+ */
 export const owWithdrawUnbondedTransactionBuilderOptions = ow.object.exactShape(
     {
         nonce: owAccountNonce,
@@ -101,12 +116,18 @@ export interface WithdrawUnbondedOutput extends Output {
     validFrom: Timespec;
 }
 
+/**
+ * @internal
+ */
 export const owWithdrawUnbondedOutput = ow.object.exactShape({
     address: owTransferAddress,
     value: owCoin,
     validFrom: owTimespec,
 });
 
+/**
+ * @internal
+ */
 export const owStakedStateOpWitness = ow.buffer.validate((buf: Buffer) => ({
     validator: buf.length === 66,
     message: 'Expected signature to be 66 bytes long',
