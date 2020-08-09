@@ -1,102 +1,179 @@
 clean_cache: &clean_cache
-    language: rust
-    sudo: required
-    dist: trusty
-    if: type = cron
-    cache:
-        directories: # cargo caching from https://docs.travis-ci.com/user/caching/#rust-cargo-cache
-            - $HOME/.cargo
-            - $HOME/.rustup/toolchains
-            - $HOME/lib
-            - $HOME/include
-            - $HOME/bin
-    install:
-    script: echo "Cleaning cargo cache ..."
-        rm -rf $HOME/.cargo/registry
-        rm -rf $HOME/.rustup/toolchains
-        cargo clean
+  language: rust
+  sudo: required
+  os: linux
+  if: type = cron
+  cache:
+    directories: # cargo caching from https://docs.travis-ci.com/user/caching/#rust-cargo-cache
+    - $HOME/.cargo
+    - $HOME/.rustup/toolchains
+    - $HOME/lib
+    - $HOME/include
+    - $HOME/bin
+  script:
+  - echo "Cleaning cargo cache ..."
+  - rm -rf $HOME/.cargo/registry
+  - rm -rf $HOME/.rustup/toolchains
+  - cargo clean
 
-rust: &rust
-    language: rust
-    dist: trusty
-    addons:
-        apt:
-            packages:
-                - libssl-dev
-                - libcurl4-openssl-dev
-                - libelf-dev
-                - libdw-dev
-                - cmake
-                - gcc
-                - binutils-dev
-                - libc6-dev
-    cache:
-        directories:
-            - $HOME/.cargo
-            - $HOME/.rustup/toolchains
-            - $HOME/lib
-            - $HOME/include
-            - $HOME/bin
-    before_cache:
-        - du -sh $HOME/.cargo $HOME/.rustup/toolchains $HOME/lib $HOME/include $HOME/bin
-        - rm -rf $HOME/.cargo/registry/src
-    env:
-        - RUST_BACKTRACE=1
-        - RUSTFLAGS="-Ctarget-feature=+aes,+sse2,+sse4.1,+ssse3"
-        - PATH=$HOME/.local/bin:$PATH
-        - LD_LIBRARY_PATH=$HOME/lib
-        - PKG_CONFIG_PATH=$HOME/lib/pkgconfig
-    before_install: # versions from https://github.com/erickt/rust-zmq/blob/master/.travis.yml
-        - ./ci-scripts/install-zeromq.sh
-        - nvm install 10
-        - nvm use 10
+build_base: &build_base
+  addons:
+    apt:
+      packages:
+      - libssl-dev
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - cmake
+      - gcc
+      - binutils-dev
+      - libc6-dev
+  cache:
+  - cargo
+  - npm
+  env:
+  - RUST_BACKTRACE=1
+  - RUSTFLAGS="-Ctarget-feature=+aes,+sse2,+sse4.1,+ssse3"
+  - PATH=$HOME/.local/bin:$PATH
+  - LD_LIBRARY_PATH=$HOME/lib
+  - PKG_CONFIG_PATH=$HOME/lib/pkgconfig
+  before_install: # versions from https://github.com/erickt/rust-zmq/blob/master/.travis.yml
+  - ./ci-scripts/install-zeromq.sh
+
+test_env: &test_env
+  <<: *build_base
+  language: rust
+  os: linux
+  install:
+  - nvm install 10
+  - nvm use 10
+  - rustc --version
+  - cargo --version
+  - npm -v
+  - node -v
+
+publish_base: &publish_base
+  <<: *build_base
+  language: node_js
+  if: (type != cron) AND (branch == master)
+  install:
+  - rustc --version
+  - cargo --version
+  - node -v
+  - npm -v
+  script:
+  - npm install
+  - npm run binary:publish
+publish_job: &publish_job
+  <<: *publish_base
+  before_install:
+  - curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
+  - sh /tmp/rustup.sh -y
+  - export PATH="$HOME/.cargo/bin:$PATH"
+  - source "$HOME/.cargo/env"
+publish_job_windows: &publish_job_windows
+  <<: *publish_base
+  before_install:
+  - curl https://sh.rustup.rs -sSf > /tmp/rustup.sh
+  - sh /tmp/rustup.sh -y
+  - export PATH="$HOME/.cargo/bin:$PATH"
 
 jobs:
-    allow_failures:
-        - rust: nightly
-    include:
-        - stage: Build and Test
-          name: Build (stable)
-          <<: *rust
-          rust: stable
-          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
-          script:
-              - npm install
-              - npm run build || travis_terminate 1
-        - <<: *rust
-          name: Build (nightly)
-          rust: nightly
-          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
-          script:
-              - npm install
-              - npm run build || travis_terminate 1
-        - <<: *rust
-          name: Test (stable)
-          rust: stable
-          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
-          script:
-              - npm install
-              - npm run neon-build || travis_terminate 1
-              - npm run test || travis_terminate 1
-        - <<: *rust
-          name: Test (nightly)
-          rust: nightly
-          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
-          script:
-              - npm install
-              - npm run neon-build || travis_terminate 1
-              - npm run test || travis_terminate 1
-        - <<: *rust
-          name: Lint and Audit
-          if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
-          script:
-              - npm install
-              - |
-                  rustfmt --version || rustup component add rustfmt
-                  cargo-clippy --version || rustup component add clippy
-                  cargo-audit -h || cargo install cargo-audit
-              - rustfmt --version
-              - cargo-clippy --version
-              - cargo-audit -h
-              - npm run lint || travis_terminate 1
-            #   - npm run audit || travis_terminate 1
+  allow_failures:
+  - rust: nightly
+  include:
+  - stage: Build Test and Code Test
+    name: Build Test (stable)
+    <<: *test_env
+    rust: stable
+    if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
+    script:
+    - npm install
+    - npm run build || travis_terminate 1
+  - <<: *test_env
+    name: Build Test (nightly)
+    rust: nightly
+    if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
+    script:
+    - npm install
+    - npm run build || travis_terminate 1
+  - <<: *test_env
+    name: Code Test (stable)
+    rust: stable
+    if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
+    script:
+    - npm install
+    - npm run build:neon || travis_terminate 1
+    - npm run test || travis_terminate 1
+  - <<: *test_env
+    name: Code Test (nightly)
+    rust: nightly
+    if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
+    script:
+    - npm install
+    - npm run build:neon || travis_terminate 1
+    - npm run test || travis_terminate 1
+  - <<: *test_env
+    name: Lint and Audit
+    if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
+    script:
+    - npm install
+    - |
+        rustfmt --version || rustup component add rustfmt
+        cargo-clippy --version || rustup component add clippy
+        cargo-audit -h || cargo install cargo-audit
+    - rustfmt --version
+    - cargo-clippy --version
+    - cargo-audit -h
+    - npm run lint || travis_terminate 1
+    #   - npm run audit || travis_terminate 1
+  - stage: Build and Publish
+    name: Latest node (OSX)
+    <<: *publish_job
+    os: osx
+    node_js: node
+  - name: Node.js 10 (OSX)
+    <<: *publish_job
+    os: osx
+    node_js: 10
+  - name: Node.js 9 (OSX)
+    <<: *publish_job
+    os: osx
+    node_js: 9
+  - name: Node.js 8 (OSX)
+    <<: *publish_job
+    os: osx
+    node_js: 8
+  - name: Latest node (Linux)
+    <<: *publish_job
+    os: linux
+    node_js: node
+  - name: Node.js 10 (Linux)
+    <<: *publish_job
+    os: linux
+    node_js: 10
+  - name: Node.js 9 (Linux)
+    <<: *publish_job
+    os: linux
+    node_js: 9
+  - name: Node.js 8 (Linux)
+    <<: *publish_job
+    os: linux
+    node_js: 8
+  - name: Latest node (Windows)
+    <<: *publish_job_windows
+    os: windows
+    node_js: node
+  - name: Node.js 10 (Windows)
+    <<: *publish_job_windows
+    os: windows
+    node_js: 10
+  - name: Node.js 9 (Windows)
+    <<: *publish_job_windows
+    os: windows
+    node_js: 9
+  - name: Node.js 8 (Windows)
+    <<: *publish_job_windows
+    os: windows
+    node_js: 8
+

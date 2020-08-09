@@ -5,17 +5,35 @@
   "main": "lib/dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crypto-com/chain-nodelib"
+    "url": "https://github.com/crypto-com/chain-nodelib.git"
   },
   "author": "Crypto.com <chain@crypto.com>",
   "license": "Apache-2.0",
+  "files": [
+    "native/index.node",
+    "lib/dist",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "binary": {
+    "module_name": "index",
+    "host": "https://github.com/crypto-com/chain-nodelib/releases/download/",
+    "remote_path": "{version}",
+    "package_name": "{node_abi}-{platform}-{arch}.tar.gz",
+    "module_path": "./native",
+    "pkg_path": "."
+  },
   "dependencies": {
+    "@amilajack/node-pre-gyp": "github:amilajack/node-pre-gyp#neon-compat",
     "axios": "0.19.2",
     "bignumber.js": "9.0.0",
     "bip32": "2.0.5",
     "bip39": "3.0.2",
     "lodash": "4.17.20",
     "lossless-json": "1.0.4",
+    "node-pre-gyp-github": "1.4.3",
     "ow": "0.15.0"
   },
   "devDependencies": {
@@ -48,19 +66,23 @@
     "typescript": "3.9.7"
   },
   "scripts": {
-    "neon-build": "neon build",
-    "tsc-build": "tsc",
-    "build": "npm run neon-build && npm run tsc-build",
+    "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
+    "build": "npm run build:neon && npm run build:tsc",
+    "build:neon": "neon build --release",
+    "build:tsc": "tsc",
+    "binary:publish": "npm run binary:package && npm run binary:upload",
+    "binary:package": "node-pre-gyp package",
+    "binary:upload": "node-pre-gyp-github publish",
     "clean": "rm -rf ./native/target && rm ./native/index.node",
-    "lint": "npm run eslint && npm run rust-lint",
-    "eslint": "eslint 'lib/**'",
-    "rust-lint": "cd native && cargo fmt -- --check --color=auto",
-    "audit": "npm run npm-audit && npm run rust-audit",
-    "npm-audit": "npm audit --audit-level=moderate",
-    "rust-audit": "cd native && cargo audit",
-    "test:watch": "NODE_ENV=test nodemon",
+    "lint": "npm run lint:typescript && npm run lint:rust",
+    "lint:typescript": "eslint 'lib/**'",
+    "lint:rust": "cd native && cargo fmt -- --check --color=auto",
+    "audit": "npm run audit:npm && npm run audit:rust",
+    "audit:npm": "npm audit --audit-level=moderate",
+    "audit:rust": "cd native && cargo audit",
     "test": "NODE_ENV=test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'lib/src/**/*.spec.ts'",
-    "ci:withdraw-all-stake": "ts-node ./integration-tests/withdraw-all-stake.ts",
-    "integration-tests": "NODE_ENV=integration-test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'integration-tests/**/*.spec.ts'"
+    "test:watch": "NODE_ENV=test nodemon",
+    "test:integration": "NODE_ENV=integration-test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'integration-tests/**/*.spec.ts'",
+    "ci:withdraw-all-stake": "ts-node ./integration-tests/withdraw-all-stake.ts"
   }
 }

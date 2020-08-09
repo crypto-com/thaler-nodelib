@@ -65,7 +65,7 @@ function runtest() {
         npm install
         npm run build
         npm run ci:withdraw-all-stake
-        npm run integration-tests
+        npm run test:integration
         RETCODE=$?
         popd
 

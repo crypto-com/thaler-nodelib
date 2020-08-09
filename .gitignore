@@ -8,6 +8,7 @@ native/artifacts.json
 **/*~
 **/node_modules
 lib/dist
+build/
 
 # IDE
 .vscode
