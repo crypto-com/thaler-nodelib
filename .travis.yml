@@ -55,7 +55,7 @@ test_env: &test_env
 publish_base: &publish_base
   <<: *build_base
   language: node_js
-  if: (type != cron) AND (branch == master)
+  if: (type == push) AND (branch == master)
   install:
   - rustc --version
   - cargo --version
