@@ -40,7 +40,7 @@ build_base: &build_base
   before_install: # versions from https://github.com/erickt/rust-zmq/blob/master/.travis.yml
   - ./ci-scripts/install-zeromq.sh
 
-test_env: &test_env
+rust_build_base: &rust_build_base
   <<: *build_base
   language: rust
   os: linux
@@ -84,20 +84,20 @@ jobs:
   include:
   - stage: Build Test and Code Test
     name: Build Test (stable)
-    <<: *test_env
+    <<: *rust_build_base
     rust: stable
     if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
     script:
     - npm install
     - npm run build || travis_terminate 1
-  - <<: *test_env
+  - <<: *rust_build_base
     name: Build Test (nightly)
     rust: nightly
     if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
     script:
     - npm install
     - npm run build || travis_terminate 1
-  - <<: *test_env
+  - <<: *rust_build_base
     name: Code Test (stable)
     rust: stable
     if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
@@ -105,7 +105,7 @@ jobs:
     - npm install
     - npm run build:neon || travis_terminate 1
     - npm run test || travis_terminate 1
-  - <<: *test_env
+  - <<: *rust_build_base
     name: Code Test (nightly)
     rust: nightly
     if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
@@ -113,7 +113,7 @@ jobs:
     - npm install
     - npm run build:neon || travis_terminate 1
     - npm run test || travis_terminate 1
-  - <<: *test_env
+  - <<: *rust_build_base
     name: Lint and Audit
     if: (type != cron) AND (branch != staging.tmp) AND (branch != trying.tmp)
     script:
@@ -176,4 +176,12 @@ jobs:
     <<: *publish_job_windows
     os: windows
     node_js: 8
+  - stage: Push Artifact
+    <<: *rust_build_base
+    script:
+    - npm install
+    - curl -fL https://getcli.jfrog.io | sh
+    - ./jfrog rt config --url "$ARTIFACTORY_URL" --user "$ARTIFACTORY_USER" --password "$ARTIFACTORY_PASSWORD" --interactive=false &&
+      ./jfrog rt npmi --build-name=TravisCI --build-number=$TRAVIS_BUILD_NUMBER "$ARTIFACTORY_NAME" &&
+      ./jfrog rt npmp --build-name=TravisCI --build-number=$TRAVIS_BUILD_NUMBER "$ARTIFACTORY_NAME"
 
