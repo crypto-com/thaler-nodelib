@@ -70,12 +70,12 @@
   },
   "include": [
     "lib/src/**/*.ts",
-    "native/index.node",
+    "native/index.node"
   ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
     "chain",
-    "lib/dist",
+    "lib/dist"
   ]
 }
