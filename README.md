@@ -20,6 +20,18 @@ Crypto.com Chain and this library is currently in the alpha development phase an
 npm install @crypto-com/chain-nodelib
 ```
 
+Depending on your Node.js languages:
+
+1. TypeScript
+    ```typescript
+    import * as cro from "@crypto-com/chain-nodelib";
+    ```
+
+2. JavaScript:
+    ```javascript
+    const cro = require("@crypto-com/chain-nodelib");
+    ```
+
 ### Build manually
 
 1. Clone this repository to your project
