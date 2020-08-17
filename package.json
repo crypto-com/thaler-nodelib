@@ -1,11 +1,11 @@
 {
-  "name": "chain-nodelib",
+  "name": "@crypto-com/chain-nodelib",
   "version": "0.3.0",
   "description": "Crypto.com Chain library for Node.js",
   "main": "lib/dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crypto-com/chain-nodelib.git"
+    "url": "git+https://github.com/crypto-com/chain-nodelib.git"
   },
   "author": "Crypto.com <chain@crypto.com>",
   "license": "Apache-2.0",
@@ -84,5 +84,13 @@
     "test:watch": "NODE_ENV=test nodemon",
     "test:integration": "NODE_ENV=integration-test mocha --require ./node_modules/ts-node/register --exit --color --recursive 'integration-tests/**/*.spec.ts'",
     "ci:withdraw-all-stake": "ts-node ./integration-tests/withdraw-all-stake.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/crypto-com/chain-nodelib/issues"
+  },
+  "homepage": "https://github.com/crypto-com/chain-nodelib#readme",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
   }
 }

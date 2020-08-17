@@ -14,6 +14,12 @@ Crypto.com Chain and this library is currently in the alpha development phase an
 
 ## Installation
 
+### Install via NPM
+
+```bash
+npm install @crypto-com/chain-nodelib
+```
+
 ### Build manually
 
 1. Clone this repository to your project
@@ -37,10 +43,6 @@ Crypto.com Chain and this library is currently in the alpha development phase an
         }
     }
     ```
-
-### NPM
-
-Right now the library has not been published to NPM yet. It will be available once a publishable version is ready.
 
 ## Examples
 
