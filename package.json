@@ -10,8 +10,8 @@
   "author": "Crypto.com <chain@crypto.com>",
   "license": "Apache-2.0",
   "files": [
-    "native/index.node",
     "lib/dist",
+    "native/.npmkeep",
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
