@@ -1,3 +1,9 @@
+## 0.3.1 (Thaler Testnet v0.5)
+
+### NPM
+
+- Add NPM organization scope `crypto-com`
+
 ## 0.3.0 (Thaler Testnet v0.5)
 
 ### New features

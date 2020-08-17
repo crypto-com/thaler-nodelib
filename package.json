@@ -1,6 +1,6 @@
 {
   "name": "@crypto-com/chain-nodelib",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Crypto.com Chain library for Node.js",
   "main": "lib/dist/index.js",
   "repository": {
