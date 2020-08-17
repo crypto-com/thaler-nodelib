@@ -2,7 +2,11 @@
 
 ### NPM
 
-- Add NPM organization scope `crypto-com`
+- Added NPM organization scope `crypto-com`
+
+### Bug Fixes
+
+- Fixed incorrect native addon version on NPM install
 
 ## 0.3.0 (Thaler Testnet v0.5)
 
@@ -20,7 +24,7 @@
 - `WithdrawUnbondedTransactionBuilder` now accepts nonce and staking address instead of the whole staking state
 - Staking account related transaction builders now accepts nonce in BigNumber (before it accepts a number)
 
-### Bug FIxes
+### Bug Fixes
 
 - Fixed transaction builders previously supported account nonce up to 2^16, now it accepts up to 2^32 through `BigNumber`
 - Fixed `package.json` main is pointing to the wrong index file
