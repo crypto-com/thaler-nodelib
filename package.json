@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@amilajack/node-pre-gyp": "github:amilajack/node-pre-gyp#neon-compat",
-    "axios": "0.19.2",
+    "axios": "0.20.0",
     "bignumber.js": "9.0.0",
     "bip32": "2.0.5",
     "bip39": "3.0.2",
@@ -48,7 +48,7 @@
     "@types/sinon": "9.0.4",
     "@typescript-eslint/eslint-plugin": "2.34.0",
     "@typescript-eslint/parser": "2.34.0",
-    "axios": "0.19.2",
+    "axios": "0.20.0",
     "chai": "4.2.0",
     "chai-as-promised": "7.1.1",
     "deep-equal": "2.0.3",
