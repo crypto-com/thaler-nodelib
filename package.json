@@ -57,7 +57,7 @@
     "eslint-config-prettier": "6.11.0",
     "eslint-plugin-import": "2.22.0",
     "eslint-plugin-prettier": "3.1.4",
-    "mocha": "8.1.1",
+    "mocha": "8.1.2",
     "neon-cli": "0.4.0",
     "nodemon": "2.0.4",
     "prettier": "2.1.0",
