@@ -180,6 +180,7 @@ jobs:
     <<: *rust_build_base
     script:
     - npm install
+    - rm -f native/index.node
     - curl -fL https://getcli.jfrog.io | sh
     - ./jfrog rt config --url "$ARTIFACTORY_URL" --user "$ARTIFACTORY_USER" --password "$ARTIFACTORY_PASSWORD" --interactive=false &&
       ./jfrog rt npmi --build-name=TravisCI --build-number=$TRAVIS_BUILD_NUMBER "$ARTIFACTORY_NAME" &&

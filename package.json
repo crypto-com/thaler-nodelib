@@ -12,6 +12,7 @@
   "files": [
     "lib/dist",
     "native/.npmkeep",
+    "native/index.node",
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
