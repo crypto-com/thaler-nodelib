@@ -3,6 +3,7 @@
 
 # Build
 native/target
+native/dist
 native/index.node
 native/artifacts.json
 **/*~

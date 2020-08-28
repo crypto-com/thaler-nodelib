@@ -3,7 +3,7 @@ use std::str::FromStr;
 use lazy_static::lazy_static;
 use neon::prelude::*;
 
-use chain_core::common::{Timespec, HASH_SIZE_256};
+use chain_core::common::{H256, Timespec, HASH_SIZE_256};
 use chain_core::init::address::CroAddress;
 use chain_core::init::coin::Coin;
 use chain_core::init::network::Network;
@@ -32,11 +32,77 @@ pub fn u8_buffer_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<Vec<u
 }
 
 #[inline]
+pub fn h256_str_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<H256> {
+    let hash_str = ctx
+        .argument::<JsString>(i)?
+        .downcast_or_throw::<JsString, FunctionContext>(ctx)
+        .chain_neon(ctx, "Unable to downcast h256 argument")?
+        .value();
+
+    let decoded_hash_array =
+        hex::decode(&hash_str).chain_neon(ctx, "input hash is not a valid hex string")?;
+
+    if decoded_hash_array.len() != HASH_SIZE_256 {
+        return ctx.throw_error(format!(
+            "input hash should be a hex string of 32 bytes, {:?} is {} bytes",
+            decoded_hash_array,
+            decoded_hash_array.len()
+        ));
+    }
+
+    let mut h256_hash: H256 = [0; HASH_SIZE_256];
+    h256_hash.copy_from_slice(&decoded_hash_array);
+
+    Ok(h256_hash)
+}
+
+#[inline]
+pub fn h256_buffer_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<H256> {
+    let buffer = ctx.argument::<JsBuffer>(i)?;
+    let buffer = ctx.borrow(&buffer, |data| data.as_slice::<u8>().to_vec());
+
+    if buffer.len() != HASH_SIZE_256 {
+        return ctx.throw_error(format!(
+            "input hash should be a hex string of 32 bytes, {:?} is {} bytes",
+            buffer,
+            buffer.len()
+        ));
+    }
+
+    let mut h256_hash: H256 = [0; HASH_SIZE_256];
+    h256_hash.copy_from_slice(&buffer);
+
+    Ok(h256_hash)
+}
+
+#[inline]
 pub fn public_key_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<PublicKey> {
     let public_key = ctx.argument::<JsBuffer>(i)?;
     let public_key = ctx.borrow(&public_key, |data| data.as_slice::<u8>());
 
     PublicKey::deserialize_from(public_key).chain_neon(ctx, "Unable to deserialize public key")
+}
+
+#[inline]
+pub fn public_key_vector_argument(ctx: &mut FunctionContext, i: i32) -> NeonResult<Vec<PublicKey>> {
+    let public_key_vector_handle: Handle<JsArray> = ctx.argument::<JsArray>(i)?;
+    let public_key_vector = public_key_vector_handle
+        .downcast_or_throw::<JsArray, FunctionContext>(ctx)
+        .chain_neon(ctx, "Unable to downcast public key array")?
+        .to_vec(ctx)?;
+
+    let public_keys = public_key_vector
+        .iter()
+        .map(|&public_key| {
+            let public_key = public_key
+                .downcast_or_throw::<JsBuffer, FunctionContext>(ctx)
+                .chain_neon(ctx, "Unable to downcast public key")?;
+            let public_key = public_key.borrow(&ctx.lock()).as_slice();
+            let public_key = hex::encode_upper(public_key);
+            PublicKey::from_str(&public_key).chain_neon(ctx, "Unable to deserialize public key")
+        })
+        .collect::<NeonResult<Vec<PublicKey>>>()?;
+    Ok(public_keys)
 }
 
 #[allow(dead_code)]
