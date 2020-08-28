@@ -62,7 +62,7 @@ publish_base: &publish_base
   - node -v
   - npm -v
   script:
-  - npm install
+  - travis_wait 30 npm install
   - npm run binary:publish
 publish_job: &publish_job
   <<: *publish_base
