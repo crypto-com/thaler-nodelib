@@ -23,17 +23,29 @@ export interface DevnetOptions {
     chainHexId: Buffer | string;
 }
 
+/**
+ * @internal
+ */
 const owNetworkEnumValidateFn = (value: any) => ({
     validator: value === 'Mainnet' || value === 'Testnet' || value === 'Devnet',
     message:
         'Expected value to be one of the network variants (Mainnet, Testnet, Devnet)',
 });
 
+/**
+ * @internal
+ */
 export const owNetworkEnum = ow.string.validate(owNetworkEnumValidateFn);
+/**
+ * @internal
+ */
 export const owOptionalNetworkEnum = ow.optional.string.validate(
     owNetworkEnumValidateFn,
 );
 
+/**
+ * @internal
+ */
 const owMainnet = ow.object
     .exactShape({
         name: owNetworkEnum,
@@ -46,6 +58,9 @@ const owMainnet = ow.object
         validator: value.name === NetworkEnum.Mainnet,
         message: `Expected network name to be ${NetworkEnum.Mainnet}`,
     }));
+/**
+ * @internal
+ */
 const owTestnet = ow.object
     .exactShape({
         name: owNetworkEnum,
@@ -58,6 +73,9 @@ const owTestnet = ow.object
         validator: value.name === NetworkEnum.Testnet,
         message: `Expected network name to be ${NetworkEnum.Testnet}`,
     }));
+/**
+ * @internal
+ */
 const owDevnet = ow.object
     .exactShape({
         name: owNetworkEnum,
@@ -71,27 +89,48 @@ const owDevnet = ow.object
         message: `Expected network name to be ${NetworkEnum.Devnet}`,
     }));
 
+/**
+ * @internal
+ */
 export const owNetworkConfig = ow.any(owMainnet, owTestnet, owDevnet);
+/**
+ * @internal
+ */
 export const owOptionalNetworkConfig = ow.optional.any(
     owMainnet,
     owTestnet,
     owDevnet,
 );
 
+/**
+ * @internal
+ */
 const owChainHexIdStr = ow.string.validate((value: any) => ({
     validator: /^[0-9a-fA-F]{2}$/.test(value),
     message: 'Expected value to be two hex characters of chain Id',
 }));
+/**
+ * @internal
+ */
 const owChainHexIdBuffer = ow.buffer.validate((value: any) => ({
     validator: /^[0-9a-fA-F]{2}$/.test(value.toString('hex')),
     message: 'Expected value to be two hex characters of chain Id',
 }));
+/**
+ * @internal
+ */
 export const owChainHexId = ow.any(owChainHexIdStr, owChainHexIdBuffer);
+/**
+ * @internal
+ */
 export const owOptionalChainId = ow.optional.any(
     owChainHexIdStr,
     owChainHexIdBuffer,
 );
 
+/**
+ * @internal
+ */
 export const owDevnetOptions = ow.object.exactShape({
     feeConfig: owFeeConfig,
     chainHexId: owChainHexId,

@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module Root
+ */
 import BigNumber from 'bignumber.js';
 import ow from 'ow';
 import { URL } from 'url';
@@ -10,11 +14,17 @@ const native = require('../../native');
 
 export { Timespec };
 
+/**
+ * @internal
+ */
 export const owBigNumber = ow.object.validate((value: object) => ({
     validator: BigNumber.isBigNumber(value),
     message: 'Expected value to be a BigNumber',
 }));
 
+/**
+ * @internal
+ */
 export const owCoin = ow.object.validate((value: object) => ({
     validator:
         BigNumber.isBigNumber(value) &&
@@ -39,28 +49,36 @@ const validateTransferAddress = (value: string): boolean => {
     return native.address.isTransferAddressValid(value, network);
 };
 
+/**
+ * @internal
+ */
 export const owTransferAddress = ow.string.validate((value: string) => ({
     validator: validateTransferAddress(value),
     message: 'Expected value to be a valid transfer address',
 }));
 
+/**
+ * @internal
+ */
 const validateStakingAddress = (value: string): boolean => {
     return native.address.isStakingAddressValid(value);
 };
 
+/**
+ * @internal
+ */
 export const owStakingAddress = ow.string.validate((value: string) => ({
     validator: validateStakingAddress(value),
     message: 'Expected value to be a valid staking address',
 }));
 
+/**
+ * @internal
+ */
 export const owViewKey = ow.buffer.validate((value: Buffer) => ({
     validator: native.keyPair.isValidViewKey(value),
     message: 'Expected value to be a valid view key',
 }));
-
-export type PublicKey = Buffer;
-
-export type ViewKey = Buffer;
 
 const isURL = (url: string): boolean => {
     try {
@@ -72,6 +90,9 @@ const isURL = (url: string): boolean => {
     }
 };
 
+/**
+ * @internal
+ */
 export const owTendermintAddress = ow.string.validate((value: string) => ({
     validator: /^(ws)s?/.test(value) && isURL(value),
     message: 'Expected value to be HTTP or WS tendermint address',
@@ -90,6 +111,9 @@ export interface Output {
     validFrom?: Timespec;
 }
 
+/**
+ * @internal
+ */
 export const parseOutputForNative = (output: Output): NativeOutput => {
     const nativeOutput: NativeOutput = {
         address: output.address,
@@ -102,12 +126,18 @@ export const parseOutputForNative = (output: Output): NativeOutput => {
     return nativeOutput;
 };
 
+/**
+ * @internal
+ */
 export interface NativeOutput {
     address: string;
     value: string;
     validFrom?: number;
 }
 
+/**
+ * @internal
+ */
 export const owOutput = ow.object.exactShape({
     address: owTransferAddress,
     value: owCoin,
@@ -128,6 +158,9 @@ export interface Input {
     addressParams: InputAddressParams;
 }
 
+/**
+ * @internal
+ */
 interface NativeInput {
     prevTxId: string;
     prevIndex: number;
@@ -140,6 +173,9 @@ export interface InputAddressParams {
     totalSigners: number;
 }
 
+/**
+ * @internal
+ */
 export const parseInputForNative = (input: Input): NativeInput => {
     return {
         ...input,
@@ -147,8 +183,14 @@ export const parseInputForNative = (input: Input): NativeInput => {
     };
 };
 
+/**
+ * @internal
+ */
 export const owTxId = ow.string.matches(/^[0-9A-Fa-f]{64}$/);
 
+/**
+ * @internal
+ */
 export const owInputAddressParams = ow.object
     .exactShape({
         requiredSigners: ow.number.integer.greaterThan(0),
@@ -162,6 +204,9 @@ export const owInputAddressParams = ow.object
             'Total signers should be greater than or equal to required signers',
     }));
 
+/**
+ * @internal
+ */
 export const owInput = ow.object.exactShape({
     prevTxId: owTxId,
     prevIndex: ow.number.integer.greaterThanOrEqual(0),
@@ -169,10 +214,15 @@ export const owInput = ow.object.exactShape({
     addressParams: owInputAddressParams,
 });
 
+/**
+ * @internal
+ */
 export const owUnixTimestamp = ow.number.integer;
 
 const bigNumberU64Max = new BigNumber(2).pow(64);
-// export const owAccountNonce = ow.number.int16;
+/**
+ * @internal
+ */
 export const owAccountNonce = ow.object.validate((value: object) => ({
     validator:
         BigNumber.isBigNumber(value) &&

@@ -7,6 +7,9 @@ export type TransferTransactionBuilderOptions = {
     network?: NetworkConfig;
 };
 
+/**
+ * @internal
+ */
 export const owTransferTransactionBuilderOptions = ow.optional.object.exactShape(
     {
         network: owOptionalNetworkConfig,

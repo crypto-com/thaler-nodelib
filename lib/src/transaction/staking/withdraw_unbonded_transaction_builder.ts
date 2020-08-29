@@ -12,7 +12,6 @@ import {
 } from './types';
 import {
     Output,
-    ViewKey,
     owViewKey,
     owTendermintAddress,
     parseOutputForNative,
@@ -35,7 +34,7 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
 
     private outputs: Output[] = [];
 
-    private viewKeys: ViewKey[] = [];
+    private viewKeys: Buffer[] = [];
 
     private unsignedRawTx?: Buffer;
 
@@ -148,7 +147,7 @@ export class WithdrawUnbondedTransactionBuilder extends TransactionBuilder {
      * @returns {WithdrawUnbondedTransactionBuilder}
      * @memberof WithdrawUnbondedTransactionBuilder
      */
-    public addViewKey(viewKey: ViewKey): WithdrawUnbondedTransactionBuilder {
+    public addViewKey(viewKey: Buffer): WithdrawUnbondedTransactionBuilder {
         ow(viewKey, 'viewKey', owViewKey);
 
         this.clearPreparedRawTx();

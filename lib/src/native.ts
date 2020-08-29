@@ -1,9 +1,15 @@
+/**
+ * @internal
+ */
 export enum Features {
     AllDefault = 'AllDefault',
     MockAbci = 'MockAbci',
     MockObfuscation = 'MockObfuscation',
 }
 
+/**
+ * @internal
+ */
 export const getRustFeaturesFromEnv = (nodeEnv?: string): Features => {
     switch (nodeEnv) {
         case 'test':

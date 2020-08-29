@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v0.5
   pull: if-not-exists
   commands:
   - export CARGO_HOME=$PWD/drone/cargo
@@ -16,7 +16,7 @@ steps:
   - ./integration-tests/build.sh
 
 - name: integration-tests
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v0.5
   pull: if-not-exists
   privileged: true
   volumes:
@@ -34,7 +34,7 @@ steps:
   - ./integration-tests/run.sh
 
 - name: teardown
-  image: cryptocom/chain-test:latest
+  image: cryptocom/chain-test:v0.5
   pull: if-not-exists
   commands:
   - ./integration-tests/cleanup.sh
@@ -58,6 +58,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 34039d6944cd1c2cb1b1083914031fa07aa547b6773e4ea804af548618e184c3
+hmac: ea35175237135c70994b826c97ddaeee9f5f4c329eda107cbc9140dd9c0002ad
 
 ...

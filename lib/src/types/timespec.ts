@@ -29,5 +29,11 @@ export class Timespec {
     }
 }
 
+/**
+ * @internal
+ */
 export const owTimespec = ow.object.instanceOf(Timespec);
+/**
+ * @internal
+ */
 export const owOptionalTimespec = ow.optional.object.instanceOf(Timespec);
