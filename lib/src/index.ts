@@ -11,3 +11,4 @@ export { address, fee, network, transaction, utils };
 export { HDWallet } from './hd_wallet';
 export { KeyPair } from './key_pair';
 export { TransferTransactionBuilder } from './transaction/transfer';
+export { MultiSigBuilder } from './multi_sig';
