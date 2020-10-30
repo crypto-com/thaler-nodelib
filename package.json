@@ -42,7 +42,7 @@
     "@types/bignumber.js": "5.0.0",
     "@types/chai": "4.2.12",
     "@types/deep-equal": "1.0.1",
-    "@types/lodash": "4.14.160",
+    "@types/lodash": "4.14.164",
     "@types/lossless-json": "1.0.0",
     "@types/mocha": "8.0.3",
     "@types/node": "14.6.0",
