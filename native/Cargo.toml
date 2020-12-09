@@ -15,7 +15,7 @@ name = "cro_nodelib"
 crate-type = ["cdylib"]
 
 [build-dependencies]
-neon-build = "0.4.0"
+neon-build = "0.6.0"
 
 [dependencies]
 gcd = "2.0.0"
