@@ -401,7 +401,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "neon",
- "neon-build",
+ "neon-build 0.7.1",
  "parity-scale-codec",
  "secp256k1zkp",
  "secstr",
@@ -1678,7 +1678,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6cac4691701b686e6c07b2eb5b51a9f26f5c11179c5d7924b78100dd387fc99d"
 dependencies = [
  "cslice",
- "neon-build",
+ "neon-build 0.4.0",
  "neon-runtime",
  "semver",
 ]
@@ -1692,6 +1692,12 @@ dependencies = [
  "cfg-if",
  "neon-sys",
 ]
+
+[[package]]
+name = "neon-build"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40aa98b2816150f1b0e4f9283b6cb8df101aba9a5e8c5facba32e607e80bedac"
 
 [[package]]
 name = "neon-runtime"
